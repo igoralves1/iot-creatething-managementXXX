@@ -13,20 +13,11 @@ custom:
 
   BUCKET_NAME: 'iot-things-certificates'
 
-  PREFIX:
-    prod: ''
-    production: ''
-    other: '${self:provider.stage}-'
   SUFFIX:
     prod: ''
     production: ''
     other: '-${self:provider.stage}'
-  DYNAMO-ARN: 'arn:aws:dynamodb:${self:provider.region}:*:table'
-  ERROR_LOG_TABLE_NAME: '${self:custom.PREFIX.${self:provider.stage}, self:custom.PREFIX.other}iot-error-logs'
-  ACCESS_LOG_TABLE_NAME: '${self:custom.PREFIX.${self:provider.stage}, self:custom.PREFIX.other}iot-access-logs'
-  ENDPOINTS_TABLE_NAME: '${self:custom.PREFIX.${self:provider.stage}, self:custom.PREFIX.other}iot-endpoints'
-  ENDPOINT: 'https://iot.scicanapi.com'
-  ENDPOINT_TARGET: 'machine'
+  
   # Append stage name to domainName e.g iot-dev. No suffix if stage is production/prod. 
   # To CREATE domain run: serverless create_domain --stage stageName. 
   # To DELETE domain run: serverless delete_domain --stage stageName
@@ -105,15 +96,6 @@ resourcePolicy:
       Action:
         - 's3:*'
       Resource: 'arn:aws:s3:::${self:custom.BUCKET_NAME}-${self:provider.stage}/*'
-
-    - Effect: Allow
-      Action:
-        - dynamodb:DescribeTable
-        - dynamodb:Query
-        - dynamodb:Scan
-        - dynamodb:GetItem
-        - dynamodb:PutItem
-      Resource: '${self:custom.DYNAMO-ARN}/*'
       
   environment:
     BUCKET_NAME: ${self:custom.BUCKET_NAME}-${self:provider.stage}
@@ -147,43 +129,4 @@ functions:
       PRIVATE_KEY: ${file(env.yml):${self:provider.stage}.CEFLA_PRIVATE_KEY}
       LOG_PROCESS_NAME: ${file(env.yml):CEFLA_COMPANY_NAME}-${self:provider.stage}-${self:custom.fnCreateThing}
       POLICY_NAME: ${file(env.yml):CEFLA_COMPANY_NAME}-iot-policy-${self:provider.stage}
-    memorySize: 256  
-
-  geterrorlogs:
-    name: ${self:provider.stage}-${self:custom.fnGetErrorLogst}
-    handler: get-logs.main
-    events:
-      - http:
-          path: error-logs/{lamdaId}
-          method: get
-          private: false
-    environment:
-      tableName: ${self:custom.ERROR_LOG_TABLE_NAME}
-    memorySize: 256
- 
-resources:
-  - ${file(resources/iot-error-logs-resources.yml)}
-  - ${file(resources/iot-access-logs-resources.yml)}
-  - ${file(resources/iot-endpoints-resources.yml)}
-  - Outputs:
-      IOTErrorLogsTableArn:
-        Value:
-            Fn::GetAtt:
-            - IOTErrorLogsTable
-            - Arn
-        Export:
-          Name: ${self:provider.stage}-IOTErrorLogsTableArn
-      IOTAccessLogsTableArn:
-        Value:
-            Fn::GetAtt:
-            - IOTAccessLogsTable
-            - Arn
-        Export:
-          Name: ${self:provider.stage}-IOTAccessLogsTableArn
-      IOTEndpointsTableArn:
-        Value:
-            Fn::GetAtt:
-            - IOTEndpointsTable
-            - Arn
-        Export:
-          Name: ${self:provider.stage}-IOTEndpointsTableArn
+    memorySize: 256 
