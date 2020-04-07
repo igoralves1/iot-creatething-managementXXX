@@ -1,0 +1,189 @@
+service: iot-creatething-management
+
+# You can pin your service to only deploy with a specific Serverless version
+# Check out our docs for more details
+# frameworkVersion: "=X.X.X"
+
+plugins:
+  # To install run npm install serverless-domain-manager
+  - serverless-domain-manager
+
+custom:
+  fnCreateThing: 'createThing'
+
+  BUCKET_NAME: 'iot-things-certificates'
+
+  PREFIX:
+    prod: ''
+    production: ''
+    other: '${self:provider.stage}-'
+  SUFFIX:
+    prod: ''
+    production: ''
+    other: '-${self:provider.stage}'
+  DYNAMO-ARN: 'arn:aws:dynamodb:${self:provider.region}:*:table'
+  ERROR_LOG_TABLE_NAME: '${self:custom.PREFIX.${self:provider.stage}, self:custom.PREFIX.other}iot-error-logs'
+  ACCESS_LOG_TABLE_NAME: '${self:custom.PREFIX.${self:provider.stage}, self:custom.PREFIX.other}iot-access-logs'
+  ENDPOINTS_TABLE_NAME: '${self:custom.PREFIX.${self:provider.stage}, self:custom.PREFIX.other}iot-endpoints'
+  ENDPOINT: 'https://iot.scicanapi.com'
+  ENDPOINT_TARGET: 'machine'
+  # Append stage name to domainName e.g iot-dev. No suffix if stage is production/prod. 
+  # To CREATE domain run: serverless create_domain --stage stageName. 
+  # To DELETE domain run: serverless delete_domain --stage stageName
+  customDomain:
+    domainName: iot${self:custom.SUFFIX.${self:provider.stage}, self:custom.SUFFIX.other}.scicanapi.com
+    basePath: '(none)' 
+    stage: ${self:provider.stage}
+    createRoute53Record: true
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  stage: ${opt:stage, 'dev'}
+  region: ${file(env.yml):${self:provider.stage}.region}
+
+resourcePolicy:
+    - Effect: Allow
+      Principal: '*'
+      Action: execute-api:Invoke
+      Resource:
+        - "arn:aws:execute-api:${file(env.yml):${self:provider.stage}.region}:366229877060:lm3pu9q1ag/${self:provider.stage}/POST/${file(env.yml):SCICAN_COMPANY_NAME}/things"
+      Condition:
+        IpAddress:
+          aws:SourceIp:
+            - '69.17.128.238'
+            - '54.149.160.209'
+            - '74.65.0.83'
+            - '99.228.248.94'
+
+  apiKeys:    
+    - name: ${file(env.yml):SCICAN_KEY_NAME_${self:provider.stage}} 
+      value: ${file(env.yml):SCICAN_KEY_VALUE_${self:provider.stage}}
+    - name: ${file(env.yml):CEFLA_KEY_NAME_${self:provider.stage}} 
+      value: ${file(env.yml):CEFLA_KEY_VALUE_${self:provider.stage}}
+
+    # - free:
+    #   - ${self:provider.stage}-clientOne
+    #   - ${self:provider.stage}-clientTwo
+    #   - ${self:provider.stage}-${file(env.yml):CEFLA_COMPANY_NAME}
+    #   - ${self:provider.stage}-${file(env.yml):SCICAN_COMPANY_NAME}
+    # - paid:
+    #   - ${self:provider.stage}-clientFour
+      
+  usagePlan:
+    quota:
+      limit: 10
+      offset: 0
+      period: DAY
+    throttle:
+      burstLimit: 1
+      rateLimit: 1
+    # - free:
+    #   quota:
+    #     limit: 10
+    #     offset: 5
+    #     period: DAY
+    #   throttle:
+    #     burstLimit: 1
+    #     rateLimit: 1
+    # - paid:
+    #   quota:
+    #     limit: 5000
+    #     offset: 0
+    #     period: MONTH
+    #   throttle:
+    #     burstLimit: 1
+    #     rateLimit: 1
+
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "iot:*"
+      Resource: '*'
+
+    - Effect: 'Allow'
+      Action:
+        - 's3:*'
+      Resource: 'arn:aws:s3:::${self:custom.BUCKET_NAME}-${self:provider.stage}/*'
+
+    - Effect: Allow
+      Action:
+        - dynamodb:DescribeTable
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+      Resource: '${self:custom.DYNAMO-ARN}/*'
+      
+  environment:
+    BUCKET_NAME: ${self:custom.BUCKET_NAME}-${self:provider.stage}
+
+functions:
+  scicancreatething:
+    name: ${self:provider.stage}-${file(env.yml):SCICAN_COMPANY_NAME}-${self:custom.fnCreateThing}
+    handler: create-thing.createThing
+    events:
+      - http:
+          path: ${file(env.yml):SCICAN_COMPANY_NAME}/things
+          method: post
+          private: true
+    environment:
+      COMPANY_NAME: ${file(env.yml):SCICAN_COMPANY_NAME}
+      PRIVATE_KEY: ${file(env.yml):${self:provider.stage}.SCICAN_PRIVATE_KEY}
+      LOG_PROCESS_NAME: ${file(env.yml):SCICAN_COMPANY_NAME}-${self:provider.stage}-${self:custom.fnCreateThing}
+      POLICY_NAME: ${file(env.yml):SCICAN_COMPANY_NAME}-iot-policy-${self:provider.stage}
+    memorySize: 256
+
+  ceflacreatething:
+    name: ${self:provider.stage}-${file(env.yml):CEFLA_COMPANY_NAME}-${self:custom.fnCreateThing}
+    handler: create-thing.createThing
+    events:
+      - http:
+          path: ${file(env.yml):CEFLA_COMPANY_NAME}/things
+          method: post
+          private: true
+    environment:
+      COMPANY_NAME: ${file(env.yml):CEFLA_COMPANY_NAME}
+      PRIVATE_KEY: ${file(env.yml):${self:provider.stage}.CEFLA_PRIVATE_KEY}
+      LOG_PROCESS_NAME: ${file(env.yml):CEFLA_COMPANY_NAME}-${self:provider.stage}-${self:custom.fnCreateThing}
+      POLICY_NAME: ${file(env.yml):CEFLA_COMPANY_NAME}-iot-policy-${self:provider.stage}
+    memorySize: 256  
+
+  geterrorlogs:
+    name: ${self:provider.stage}-${self:custom.fnGetErrorLogst}
+    handler: get-logs.main
+    events:
+      - http:
+          path: error-logs/{lamdaId}
+          method: get
+          private: false
+    environment:
+      tableName: ${self:custom.ERROR_LOG_TABLE_NAME}
+    memorySize: 256
+ 
+resources:
+  - ${file(resources/iot-error-logs-resources.yml)}
+  - ${file(resources/iot-access-logs-resources.yml)}
+  - ${file(resources/iot-endpoints-resources.yml)}
+  - Outputs:
+      IOTErrorLogsTableArn:
+        Value:
+            Fn::GetAtt:
+            - IOTErrorLogsTable
+            - Arn
+        Export:
+          Name: ${self:provider.stage}-IOTErrorLogsTableArn
+      IOTAccessLogsTableArn:
+        Value:
+            Fn::GetAtt:
+            - IOTAccessLogsTable
+            - Arn
+        Export:
+          Name: ${self:provider.stage}-IOTAccessLogsTableArn
+      IOTEndpointsTableArn:
+        Value:
+            Fn::GetAtt:
+            - IOTEndpointsTable
+            - Arn
+        Export:
+          Name: ${self:provider.stage}-IOTEndpointsTableArn
