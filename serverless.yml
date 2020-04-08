@@ -33,19 +33,19 @@ provider:
   stage: ${opt:stage, 'dev'}
   region: ${file(env.yml):${self:provider.stage}.region}
 
-resourcePolicy:
-    - Effect: Allow
-      Principal: '*'
-      Action: execute-api:Invoke
-      Resource:
-        - "arn:aws:execute-api:${file(env.yml):${self:provider.stage}.region}:366229877060:lm3pu9q1ag/${self:provider.stage}/POST/${file(env.yml):SCICAN_COMPANY_NAME}/things"
-      Condition:
-        IpAddress:
-          aws:SourceIp:
-            - '69.17.128.238'
-            - '54.149.160.209'
-            - '74.65.0.83'
-            - '99.228.248.94'
+  # resourcePolicy:
+  #   - Effect: Allow
+  #     Principal: '*'
+  #     Action: execute-api:Invoke
+  #     Resource:
+  #       - "arn:aws:execute-api:${file(env.yml):${self:provider.stage}.region}:366229877060:lm3pu9q1ag/${self:provider.stage}/POST/${file(env.yml):SCICAN_COMPANY_NAME}/things"
+  #     Condition:
+  #       IpAddress:
+  #         aws:SourceIp:
+  #           - '69.17.128.238'
+  #           - '54.149.160.209'
+  #           - '74.65.0.83'
+  #           - '99.228.248.94'
 
   apiKeys:    
     - name: ${file(env.yml):SCICAN_KEY_NAME_${self:provider.stage}} 
