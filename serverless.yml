@@ -48,10 +48,10 @@ provider:
   #           - '99.228.248.94'
 
   apiKeys:    
-    - name: ${file(env.yml):SCICAN_KEY_NAME_${self:provider.stage}} 
-      value: ${file(env.yml):SCICAN_KEY_VALUE_${self:provider.stage}}
-    - name: ${file(env.yml):CEFLA_KEY_NAME_${self:provider.stage}} 
-      value: ${file(env.yml):CEFLA_KEY_VALUE_${self:provider.stage}}
+    - name: ${self:service}-${file(env.yml):SCICAN_KEY_NAME_${self:provider.stage}} 
+      value: ${self:service}-${file(env.yml):SCICAN_KEY_VALUE_${self:provider.stage}}
+    - name: ${self:service}-${file(env.yml):CEFLA_KEY_NAME_${self:provider.stage}} 
+      value: ${self:service}-${file(env.yml):CEFLA_KEY_VALUE_${self:provider.stage}}
 
     # - free:
     #   - ${self:provider.stage}-clientOne
