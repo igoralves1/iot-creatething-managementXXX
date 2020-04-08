@@ -23,7 +23,7 @@ custom:
   # To DELETE domain run: serverless delete_domain --stage stageName
   customDomain:
     domainName: iot${self:custom.SUFFIX.${self:provider.stage}, self:custom.SUFFIX.other}.scicanapi.com
-    basePath: '(none)' 
+    basePath: 'things' 
     stage: ${self:provider.stage}
     createRoute53Record: true
 
@@ -106,7 +106,7 @@ functions:
     handler: create-thing.createThing
     events:
       - http:
-          path: ${file(env.yml):SCICAN_COMPANY_NAME}/things
+          path: ${file(env.yml):SCICAN_COMPANY_NAME}
           method: post
           private: true
     environment:
@@ -121,7 +121,7 @@ functions:
     handler: create-thing.createThing
     events:
       - http:
-          path: ${file(env.yml):CEFLA_COMPANY_NAME}/things
+          path: ${file(env.yml):CEFLA_COMPANY_NAME}
           method: post
           private: true
     environment:
