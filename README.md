@@ -1,6 +1,7 @@
 # Get Endpoint
-Install plugins
-- To install run npm install serverless-domain-manager
+Install plugins. To install run:
+- npm install --save-dev serverless-domain-manager
+- npm install --save-dev serverless-add-api-key
 
 path: companyName
 domain: iot-{stage}.scicanapi.com

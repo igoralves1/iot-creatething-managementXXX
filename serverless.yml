@@ -5,8 +5,9 @@ service: iot-creatething-management
 # frameworkVersion: "=X.X.X"
 
 plugins:
-  # To install run npm install serverless-domain-manager
+  # To install run npm install
   - serverless-domain-manager
+  - serverless-add-api-key
 
 custom:
   fnCreateThing: 'createThing'
@@ -26,6 +27,11 @@ custom:
     basePath: 'things' 
     stage: ${self:provider.stage}
     createRoute53Record: true
+  apiKeys:    
+    - name: ${file(env.yml):SCICAN_KEY_NAME_${self:provider.stage}} 
+      value: ${file(env.yml):SCICAN_KEY_VALUE_${self:provider.stage}}
+    - name: ${file(env.yml):CEFLA_KEY_NAME_${self:provider.stage}} 
+      value: ${file(env.yml):CEFLA_KEY_VALUE_${self:provider.stage}}
 
 provider:
   name: aws
@@ -47,11 +53,11 @@ provider:
   #           - '74.65.0.83'
   #           - '99.228.248.94'
 
-  apiKeys:    
-    - name: ${self:service}-${file(env.yml):SCICAN_KEY_NAME_${self:provider.stage}} 
-      value: ${self:service}-${file(env.yml):SCICAN_KEY_VALUE_${self:provider.stage}}
-    - name: ${self:service}-${file(env.yml):CEFLA_KEY_NAME_${self:provider.stage}} 
-      value: ${self:service}-${file(env.yml):CEFLA_KEY_VALUE_${self:provider.stage}}
+  #apiKeys:    
+  #  - name: ${self:service}-${file(env.yml):SCICAN_KEY_NAME_${self:provider.stage}} 
+  #    value: ${self:service}-${file(env.yml):SCICAN_KEY_VALUE_${self:provider.stage}}
+  #  - name: ${self:service}-${file(env.yml):CEFLA_KEY_NAME_${self:provider.stage}} 
+  #    value: ${self:service}-${file(env.yml):CEFLA_KEY_VALUE_${self:provider.stage}}
 
     # - free:
     #   - ${self:provider.stage}-clientOne
