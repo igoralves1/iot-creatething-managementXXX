@@ -24,7 +24,7 @@ custom:
   # To DELETE domain run: serverless delete_domain --stage stageName
   customDomain:
     domainName: iot${self:custom.SUFFIX.${self:provider.stage}, self:custom.SUFFIX.other}.scicanapi.com
-    basePath: 'things' 
+    basePath: 'thing' 
     stage: ${self:provider.stage}
     createRoute53Record: true
   apiKeys:    
