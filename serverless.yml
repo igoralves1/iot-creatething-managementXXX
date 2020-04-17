@@ -30,8 +30,24 @@ custom:
   apiKeys:    
     - name: ${file(env.yml):SCICAN_KEY_NAME_${self:provider.stage}} 
       value: ${file(env.yml):SCICAN_KEY_VALUE_${self:provider.stage}}
+      usagePlan:
+        name: "usageplan-${file(env.yml):SCICAN_KEY_NAME_${self:provider.stage}}"
+        quota:
+          limit: 1000
+          period: DAY
+        throttle:
+          burstLimit: 100
+          rateLimit: 20
     - name: ${file(env.yml):CEFLA_KEY_NAME_${self:provider.stage}} 
       value: ${file(env.yml):CEFLA_KEY_VALUE_${self:provider.stage}}
+      usagePlan:
+        name: "usageplan-${file(env.yml):CEFLA_KEY_NAME_${self:provider.stage}}"
+        quota:
+          limit: 1000
+          period: DAY
+        throttle:
+          burstLimit: 100
+          rateLimit: 20
 
 provider:
   name: aws
@@ -67,14 +83,14 @@ provider:
     # - paid:
     #   - ${self:provider.stage}-clientFour
       
-  usagePlan:
-    quota:
-      limit: 10
-      offset: 0
-      period: DAY
-    throttle:
-      burstLimit: 1
-      rateLimit: 1
+  # usagePlan:
+  #   quota:
+  #     limit: 10
+  #     offset: 0
+  #     period: DAY
+  #   throttle:
+  #     burstLimit: 1
+  #     rateLimit: 1
     # - free:
     #   quota:
     #     limit: 10
