@@ -4,3 +4,4 @@ jspm_packages
 
 # Serverless directories
 .serverless
+doc/Scican-workspace.code-workspace
