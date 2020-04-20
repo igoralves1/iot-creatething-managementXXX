@@ -29,7 +29,7 @@ url scican: iot-dev-ub.scicanapi.com/things/scican
 ## Tests
 
 ### QA
-End point SciCan - `iot-qa.scicanapi.com/thing/scican`  
+End point SciCan - POST `iot-qa.scicanapi.com/thing/scican`  
 x-api-key - `70efExmuKV6x2RP9mEdzl7YeERTyOblN5rau4WK9`  
 
 `
@@ -39,7 +39,7 @@ x-api-key - `70efExmuKV6x2RP9mEdzl7YeERTyOblN5rau4WK9`
 }  
 `  
 
-End point Cefla - `iot-qa.scicanapi.com/thing/cefla`  
+End point Cefla - POST `iot-qa.scicanapi.com/thing/cefla`  
 x-api-key - `S9FADNS9tb1epKIRhj367fzywX8H4jy2NlFN6ZXg`  
 
 `
@@ -49,7 +49,7 @@ x-api-key - `S9FADNS9tb1epKIRhj367fzywX8H4jy2NlFN6ZXg`
 }
 `
 ### PROD
-End point SciCan - `iot.scicanapi.com/thing/scican`  
+End point SciCan - POST `iot.scicanapi.com/thing/scican`  
 x-api-key - `t3GwdX9YuH1t0LdJ1qXVR9Dswe1Newxn4ZXOyH34`  
 
 `  
@@ -59,7 +59,7 @@ x-api-key - `t3GwdX9YuH1t0LdJ1qXVR9Dswe1Newxn4ZXOyH34`
 }
 `  
 
-End point Cefla - `iot.scicanapi.com/thing/cefla`  
+End point Cefla - POST `iot.scicanapi.com/thing/cefla`  
 x-api-key - `IyQKqVDSx62zFXYWO1nSB8R2Ew6rPHhv5YgTkVjR`  
 
 `
