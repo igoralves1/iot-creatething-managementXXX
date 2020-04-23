@@ -48,7 +48,8 @@ module.exports.createThing = async (event, context, callback) => {
 
   const schema = Joi.object({
     serialNumber: Joi.string().alphanum().required(),
-    privateKey: Joi.string().min(53).max(53).required()
+    privateKey: Joi.string().min(53).max(53).required(),
+    macAddress: Joi.string().required()
   })
   const { error, value } = schema.validate(jsonBody)
 
@@ -59,7 +60,7 @@ module.exports.createThing = async (event, context, callback) => {
     }
   }
 
-  const { serialNumber, privateKey } = jsonBody
+  const { serialNumber, privateKey, macAddress } = jsonBody
   const POLICY_NAME = process.env.POLICY_NAME
   const COMPANY_NAME = process.env.COMPANY_NAME
 
@@ -70,7 +71,8 @@ module.exports.createThing = async (event, context, callback) => {
     }
   }
 
-  const name = COMPANY_NAME + '_' + serialNumber + '_' + dtTime + '_' +uuidv1()
+  const scUUID = serialNumber + '_' + dtTime + '_' + uuidv1()
+  const name = COMPANY_NAME + '_' + scUUID
   await createThing({ thingName: name })
   const { certificateArn, certificateId, certificatePem, keyPair } = await createCertificates({ setAsActive: true })
   const { PublicKey, PrivateKey } = keyPair
@@ -81,6 +83,7 @@ module.exports.createThing = async (event, context, callback) => {
   const response = {
     'certificatePem':certificatePem,
     'privateKey':PrivateKey,
+    'scUUID': scUUID,
   }
 
   var info = {
@@ -88,7 +91,8 @@ module.exports.createThing = async (event, context, callback) => {
     'thingName':createThingObj.thingName,
     'thingArn':createThingObj.thingArn,
     'thingId':createThingObj.thingId,
-    'thingUUID': name,
+    'scUUID': scUUID,
+    'macAddress': macAddress,
     'certificateArn':certificateArn,
     'certificateId':certificateId,
     'certificatePem':certificatePem,
