@@ -71,8 +71,8 @@ module.exports.createThing = async (event, context, callback) => {
     }
   }
 
-  const scUUID = serialNumber + '_' + dtTime + '_' + uuidv1()
-  const name = COMPANY_NAME + '_' + scUUID
+  const scuuid = serialNumber + '_' + dtTime + '_' + uuidv1()
+  const name = COMPANY_NAME + '_' + scuuid
   await createThing({ thingName: name })
   const { certificateArn, certificateId, certificatePem, keyPair } = await createCertificates({ setAsActive: true })
   const { PublicKey, PrivateKey } = keyPair
@@ -83,7 +83,7 @@ module.exports.createThing = async (event, context, callback) => {
   const response = {
     'certificatePem':certificatePem,
     'privateKey':PrivateKey,
-    'scUUID': scUUID,
+    'scuuid': scuuid,
   }
 
   var info = {
@@ -91,7 +91,7 @@ module.exports.createThing = async (event, context, callback) => {
     'thingName':createThingObj.thingName,
     'thingArn':createThingObj.thingArn,
     'thingId':createThingObj.thingId,
-    'scUUID': scUUID,
+    'scuuid': scuuid,
     'macAddress': macAddress,
     'certificateArn':certificateArn,
     'certificateId':certificateId,
