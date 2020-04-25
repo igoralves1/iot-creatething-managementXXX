@@ -13,6 +13,16 @@ custom:
   fnCreateThing: 'createThing'
 
   BUCKET_NAME: 'iot-things-certificates'
+  
+  
+  DYNAMO-ARN: 'arn:aws:dynamodb:${self:provider.region}:*:table'
+  SCUUID_TABLE_NAME: '${self:custom.PREFIX.${self:provider.stage}, self:custom.PREFIX.other}${file(env.yml):scuuidTable}'
+  
+
+  PREFIX:
+    prod: ''
+    production: ''
+    other: '${self:provider.stage}-'
 
   SUFFIX:
     prod: ''
@@ -118,6 +128,15 @@ provider:
       Action:
         - 's3:*'
       Resource: 'arn:aws:s3:::${self:custom.BUCKET_NAME}-${self:provider.stage}/*'
+
+    - Effect: Allow
+      Action:
+        - dynamodb:DescribeTable
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+      Resource: '${self:custom.DYNAMO-ARN}/*'
       
   environment:
     BUCKET_NAME: ${self:custom.BUCKET_NAME}-${self:provider.stage}
@@ -136,6 +155,7 @@ functions:
       PRIVATE_KEY: ${file(env.yml):${self:provider.stage}.SCICAN_PRIVATE_KEY}
       LOG_PROCESS_NAME: ${file(env.yml):SCICAN_COMPANY_NAME}-${self:provider.stage}-${self:custom.fnCreateThing}
       POLICY_NAME: ${file(env.yml):SCICAN_COMPANY_NAME}-iot-policy-${self:provider.stage}
+      SCUUID_TABLE_NAME: ${self:custom.SCUUID_TABLE_NAME}
     memorySize: 256
 
   ceflacreatething:
@@ -151,4 +171,16 @@ functions:
       PRIVATE_KEY: ${file(env.yml):${self:provider.stage}.CEFLA_PRIVATE_KEY}
       LOG_PROCESS_NAME: ${file(env.yml):CEFLA_COMPANY_NAME}-${self:provider.stage}-${self:custom.fnCreateThing}
       POLICY_NAME: ${file(env.yml):CEFLA_COMPANY_NAME}-iot-policy-${self:provider.stage}
+      SCUUID_TABLE_NAME: ${self:custom.SCUUID_TABLE_NAME}
     memorySize: 256 
+
+resources:
+  - ${file(resources/scuuid-resources.yml)}
+  - Outputs:
+      SCUUIDTableArn:
+        Value:
+            Fn::GetAtt:
+            - SCUUIDTable
+            - Arn
+        Export:
+          Name: ${self:provider.stage}-SCUUIDTableArn

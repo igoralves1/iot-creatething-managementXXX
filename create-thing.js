@@ -2,8 +2,9 @@
 const AWS = require('aws-sdk')
 const iot = new AWS.Iot()
 const S3 = new AWS.S3()
+const DocumentClient = new AWS.DynamoDB.DocumentClient()
 const Joi = require('@hapi/joi')
-const uuidv1 = require('uuid/v1')
+const { v4: uuidv4 } = require('uuid');
 let createThingObj = {}
 
 const createCertificates = (params) =>
@@ -17,8 +18,8 @@ const attachCertificates = (params) =>
 async function uploadToS3 (keyName, mybody) {
   const objectParams = { Bucket: process.env.BUCKET_NAME, Key: keyName, Body: mybody }
   await S3.putObject(objectParams).promise().then(function (data) {
-    // console.log('Successfully uploaded data to ' + process.env.BUCKET_NAME)
-    // console.log(JSON.stringify(data))
+    console.log('Successfully uploaded data to ' + process.env.BUCKET_NAME)
+    console.log(JSON.stringify(data))
   }).catch(function (err) {
     console.log('Error on uploadPromise')
     console.error(err, err.stack)
@@ -42,6 +43,17 @@ async function createThing (params) {
   })
 }
 
+async function saveInDynamo (params) {  
+  DocumentClient.put(params, function(err, data) {
+    if (err) {
+      console.log(err);
+    }
+    else {
+      console.log(data);
+    }
+  });
+}
+
 module.exports.createThing = async (event, context, callback) => {
   const dtTime = new Date().getTime()
   const jsonBody = JSON.parse(event.body)
@@ -51,6 +63,7 @@ module.exports.createThing = async (event, context, callback) => {
     privateKey: Joi.string().min(53).max(53).required(),
     macAddress: Joi.string().required()
   })
+
   const { error, value } = schema.validate(jsonBody)
 
   if (!(typeof error === 'undefined')) {
@@ -71,7 +84,7 @@ module.exports.createThing = async (event, context, callback) => {
     }
   }
 
-  const scuuid = serialNumber + '_' + dtTime + '_' + uuidv1()
+  const scuuid = serialNumber + '_' + dtTime + '_' + uuidv4()
   const name = COMPANY_NAME + '_' + scuuid
   await createThing({ thingName: name })
   const { certificateArn, certificateId, certificatePem, keyPair } = await createCertificates({ setAsActive: true })
@@ -104,6 +117,15 @@ module.exports.createThing = async (event, context, callback) => {
   await uploadToS3(`${name}/private.pem.key`, PrivateKey)
   await uploadToS3(`${name}/public.pem.key`, PublicKey)
   await uploadToS3(`${name}/info.json`, JSON.stringify(info))
+
+  const params = {
+    TableName: process.env.SCUUID_TABLE_NAME,
+    Item: {
+      scUUID: scuuid 
+    }
+  }
+
+  await saveInDynamo(params)
 
   return {
     statusCode: 200,
