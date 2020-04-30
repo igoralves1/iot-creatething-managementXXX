@@ -4,7 +4,6 @@ const iot = new AWS.Iot()
 const S3 = new AWS.S3()
 const DocumentClient = new AWS.DynamoDB.DocumentClient()
 const Joi = require('@hapi/joi')
-const { v4: uuidv4 } = require('uuid');
 let createThingObj = {}
 
 const createCertificates = (params) =>
@@ -54,14 +53,47 @@ async function saveInDynamo (params) {
   });
 }
 
+async function month (jsMonth) {
+  const month = new Array();
+  month[0] = "01" //"January";
+  month[1] = "02" //"February";
+  month[2] = "03" //"March";
+  month[3] = "04" //"April";
+  month[4] = "05" //"May";
+  month[5] = "06" //"June";
+  month[6] = "07" //"July";
+  month[7] = "08" //"August";
+  month[8] = "09" //"September";
+  month[9] = "10" //"October";
+  month[10] = "11" //"November";
+  month[11] = "12" //"December";
+  return month[jsMonth]
+}
+
+async function to2Digits (jsDt) {
+  if(jsDt >= 10) return jsDt
+  else return "0" + jsDt
+}
+
 module.exports.createThing = async (event, context, callback) => {
-  const dtTime = new Date().getTime()
+  const dt = new Date()
+  const YYYY = dt.getFullYear()
+  const MM = await month(dt.getMonth())
+  const DD = await to2Digits(dt.getDate())
+  const HH = await to2Digits(dt.getHours())
+  const mm = await to2Digits(dt.getMinutes())
+  const ss = await to2Digits(dt.getSeconds())
+  const mmm = dt.getMilliseconds()
+  const dtTime = YYYY + "-" + MM + "-" + DD + "-" + HH + "-" + mm + "-" + ss + "-" + mmm
+  const stage = event.requestContext.stage
+  const awsRequestId = context.awsRequestId
+
   const jsonBody = JSON.parse(event.body)
 
   const schema = Joi.object({
-    serialNumber: Joi.string().alphanum().required(),
+    serialNumber: Joi.string().alphanum().max(20).required(),
     privateKey: Joi.string().min(53).max(53).required(),
-    macAddress: Joi.string().required()
+    macAddress: Joi.string().max(23).required()
   })
 
   const { error, value } = schema.validate(jsonBody)
@@ -84,8 +116,8 @@ module.exports.createThing = async (event, context, callback) => {
     }
   }
 
-  const scuuid = serialNumber + '_' + dtTime + '_' + uuidv4()
-  const name = COMPANY_NAME + '_' + scuuid
+  const scuuid = serialNumber  + '-' + awsRequestId
+  const name = stage + '-' + COMPANY_NAME + '-' + scuuid
   await createThing({ thingName: name })
   const { certificateArn, certificateId, certificatePem, keyPair } = await createCertificates({ setAsActive: true })
   const { PublicKey, PrivateKey } = keyPair
@@ -100,7 +132,8 @@ module.exports.createThing = async (event, context, callback) => {
   }
 
   var info = {
-    'deviceId':serialNumber,
+    'serialNumber':serialNumber,
+    'creationDate':dtTime,
     'thingName':createThingObj.thingName,
     'thingArn':createThingObj.thingArn,
     'thingId':createThingObj.thingId,
