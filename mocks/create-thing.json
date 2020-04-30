@@ -1,0 +1,11 @@
+{
+    "body": "{\"serialNumber\":\"ubKKKK\",\"privateKey\":\"scKQ$0enfb3P1Q0zPmSU$2iFU8kz$KP&tmC4CgBbBU&QHlDC!DzD7\",\"macAddress\":\"sdf76\"}",
+    "headers": {
+      "x-api-key": "70efExmuKV6x2RP9mEdzl7YeERTyOblN5rau4WK9"
+    }, 
+    "requestContext": {
+      "identity": {
+        "cognitoIdentityId": "USER-SUB-1234"
+      }
+    }
+  }

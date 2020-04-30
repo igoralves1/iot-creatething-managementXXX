@@ -167,3 +167,6 @@ Note:
     "scuuid": "string.max(70)",
 }
 ```
+
+## Invoke Local TEST - file is in the mocks directory.
+sls invoke local --function scicancreatething --path mocks/create-thing.json --stage qa 
