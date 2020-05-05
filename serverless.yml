@@ -11,6 +11,7 @@ plugins:
 
 custom:
   fnCreateThing: 'createThing'
+  fnCertificateInfo: 'certificateInfo'
 
   BUCKET_NAME: 'iot-things-certificates'
   
@@ -173,6 +174,20 @@ functions:
       POLICY_NAME: ${file(env.yml):CEFLA_COMPANY_NAME}-iot-policy-${self:provider.stage}
       SCUUID_TABLE_NAME: ${self:custom.SCUUID_TABLE_NAME}
     memorySize: 256 
+
+  certificateinfo:
+    name: ${self:provider.stage}-${self:custom.fnCertificateInfo}
+    handler: certificateInfofs.fncertificateInfo
+    events:
+      - http:
+          path: certificateInfo
+          method: get
+          private: false
+          request:
+            parameters:
+              querystrings:
+                scuuid: true
+    memorySize: 256
 
 resources:
   - ${file(resources/scuuid-resources.yml)}
