@@ -212,25 +212,25 @@ functions:
         - Effect: 'Allow'
           Action:
           - 'rds:*'
-          Resource: 'arn:aws:rds:us-east-1:366229877060:db:scican-testing'
+          Resource: 'arn:aws:rds:${self:provider.region}:366229877060:db:${file(env.yml):rdsMySqlCluster-${self:provider.stage}}'
 
         - Effect: 'Allow'
           Action:
-          - 'ec2:*'
-          Resource: '*'
-    vpc:
-      securityGroupIds:
-        - sg-0150d8996dc8beb43
-      subnetIds:
-        - subnet-a046c5f8
-        - subnet-80368eaa
-        - subnet-fe90fb88
-        - subnet-b3d64ed6
+          - 'logs:CreateLogGroup'
+          - 'logs:CreateLogStream'
+          - 'logs:PutLogEvents'
+          - 'ec2:CreateNetworkInterface'
+          - 'ec2:DescribeNetworkInterfaces'
+          - 'ec2:DeleteNetworkInterfaces'
+          Resource: "*"
+          
+    vpc: ${file(env.yml):vpc-${self:provider.stage}}
+
     environment:
-      rdsMySqlDb: ${file(env.yml):rdsMySqlDb}
-      rdsMySqlHost: ${file(env.yml):rdsMySqlHost}
-      rdsMySqlUsername: ${file(env.yml):rdsMySqlUsername}
-      rdsMySqlPassword: ${file(env.yml):rdsMySqlPassword}
+      rdsMySqlDb: ${file(env.yml):rdsMySqlDb-${self:provider.stage}}
+      rdsMySqlHost: ${file(env.yml):rdsMySqlHost-${self:provider.stage}}
+      rdsMySqlUsername: ${file(env.yml):rdsMySqlUsername-${self:provider.stage}}
+      rdsMySqlPassword: ${file(env.yml):rdsMySqlPassword-${self:provider.stage}}
       
 resources:
   - ${file(resources/scuuid-resources.yml)}

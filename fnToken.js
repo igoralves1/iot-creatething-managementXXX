@@ -1,21 +1,20 @@
 'use strict';
-
-
-var mysql = require('mysql2/promise')
-
-var pool = mysql.createPool({
-    host     : process.env.rdsMySqlHost,
-    user     : process.env.rdsMySqlUsername,
-    password : process.env.rdsMySqlPassword,
-    database : process.env.rdsMySqlDb
-})
-
+const mysql = require('mysql2/promise')
 
 async function GetToken(serial_number, scuuid) {
     try {
-        const sql = `SELECT token FROM scican.online_access_tokens WHERE serial_number='${serial_number}' AND uuid='${scuuid}' AND is_active=1`
-        const sqlResult = await pool.query(sql)
-        return sqlResult
+      
+      const pool = mysql.createPool({
+        host     : process.env.rdsMySqlHost,
+        user     : process.env.rdsMySqlUsername,
+        password : process.env.rdsMySqlPassword,
+        database : process.env.rdsMySqlDb
+      })
+
+      const sql = `SELECT token FROM scican.online_access_tokens WHERE serial_number='${serial_number}' AND uuid='${scuuid}' AND is_active=1`
+      const sqlResult = await pool.query(sql)
+      return sqlResult
+
     } catch (error) {
         return {
             success: false,
@@ -31,7 +30,7 @@ module.exports.fnToken = async event => {
     let sn = event.queryStringParameters.serial_number
     let scuuid = event.queryStringParameters.scuuid
     
-    let onlineAccessCode = 0
+    let onlineAccessCode = ""
     let status = 1 //! 0-Success, 1-SomeError
 
     const sqlResult = await GetToken(sn, scuuid)
