@@ -11,7 +11,7 @@ async function GetToken(serial_number, scuuid) {
         database : process.env.rdsMySqlDb
       })
 
-      const sql = `SELECT token FROM scican.online_access_tokens WHERE serial_number='${serial_number}' AND uuid='${scuuid}' AND is_active=1`
+      const sql = `SELECT token FROM online_access_tokens WHERE serial_number='${serial_number}' AND uuid='${scuuid}' AND is_active=1`
       const sqlResult = await pool.query(sql)
       return sqlResult
 
