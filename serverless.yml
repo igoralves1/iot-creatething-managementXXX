@@ -14,6 +14,7 @@ custom:
   fnCreateThing: 'createThing'
   fnCertificateInfo: 'certificateInfo'
   fnToken: 'token'
+  fnTokenInsert: 'tokenInsert'
 
   BUCKET_NAME: 'iot-things-certificates'
   
@@ -226,6 +227,38 @@ functions:
           
     vpc: ${file(env.yml):vpc-${self:provider.stage}}
 
+    environment:
+      rdsMySqlDb: ${file(env.yml):rdsMySqlDb-${self:provider.stage}}
+      rdsMySqlHost: ${file(env.yml):rdsMySqlHost-${self:provider.stage}}
+      rdsMySqlUsername: ${file(env.yml):rdsMySqlUsername-${self:provider.stage}}
+      rdsMySqlPassword: ${file(env.yml):rdsMySqlPassword-${self:provider.stage}}
+  
+  tokenInsert:
+    name: ${self:provider.stage}-${self:custom.fnTokenInsert}
+    handler: fnTokenInsert.fnTokenInsert
+    events:
+    - http:
+        path: tokenInsert
+        method: POST  
+    memorySize: 256
+    private: true
+    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnTokenInsert}-iamRoleStatementLambdaRDSMySQL
+    iamRoleStatements:
+        - Effect: 'Allow'
+          Action:
+          - 'rds:*'
+          Resource: 'arn:aws:rds:${self:provider.region}:366229877060:db:${file(env.yml):rdsMySqlCluster-${self:provider.stage}}'
+
+        - Effect: 'Allow'
+          Action:
+          - 'logs:CreateLogGroup'
+          - 'logs:CreateLogStream'
+          - 'logs:PutLogEvents'
+          - 'ec2:CreateNetworkInterface'
+          - 'ec2:DescribeNetworkInterfaces'
+          - 'ec2:DeleteNetworkInterfaces'
+          Resource: "*"
+    vpc: ${file(env.yml):vpc-${self:provider.stage}}
     environment:
       rdsMySqlDb: ${file(env.yml):rdsMySqlDb-${self:provider.stage}}
       rdsMySqlHost: ${file(env.yml):rdsMySqlHost-${self:provider.stage}}
