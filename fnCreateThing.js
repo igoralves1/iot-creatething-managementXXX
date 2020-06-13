@@ -4,7 +4,12 @@ const iot = new AWS.Iot()
 const S3 = new AWS.S3()
 const DocumentClient = new AWS.DynamoDB.DocumentClient()
 const Joi = require('@hapi/joi')
+const iotdata = new AWS.IotData({endpoint: process.env.MQTT_ENDPOINT});
 let createThingObj = {}
+
+const publishMqtt = (params) =>
+  new Promise((resolve, reject) =>
+  iotdata.publish(params, (err, res) => resolve(res)))
 
 const createCertificates = (params) =>
   new Promise((resolve, reject) =>
@@ -17,8 +22,8 @@ const attachCertificates = (params) =>
 async function uploadToS3 (keyName, mybody) {
   const objectParams = { Bucket: process.env.BUCKET_NAME, Key: keyName, Body: mybody }
   await S3.putObject(objectParams).promise().then(function (data) {
-    console.log('Successfully uploaded data to ' + process.env.BUCKET_NAME)
-    console.log(JSON.stringify(data))
+    // console.log('Successfully uploaded data to ' + process.env.BUCKET_NAME)
+    // console.log(JSON.stringify(data))
   }).catch(function (err) {
     console.log('Error on uploadPromise')
     console.error(err, err.stack)
@@ -45,10 +50,10 @@ async function createThing (params) {
 async function saveInDynamo (params) {  
   DocumentClient.put(params, function(err, data) {
     if (err) {
-      console.log(err);
+      console.log("err-saveInDynamo", err);
     }
     else {
-      console.log(data);
+      // console.log("success-saveInDynamo", data);
     }
   });
 }
@@ -75,7 +80,7 @@ async function to2Digits (jsDt) {
   else return "0" + jsDt
 }
 
-module.exports.createThing = async (event, context, callback) => {
+module.exports.fnCreateThing = async (event, context, callback) => {
   const dt = new Date()
   const YYYY = dt.getFullYear()
   const MM = await month(dt.getMonth())
@@ -116,16 +121,16 @@ module.exports.createThing = async (event, context, callback) => {
     }
   }
 
+  // Create THING and attach Policy/Crtificate
   const scuuid = serialNumber  + '-' + awsRequestId
   const name = stage + '-' + COMPANY_NAME + '-' + scuuid
   await createThing({ thingName: name })
   const { certificateArn, certificateId, certificatePem, keyPair } = await createCertificates({ setAsActive: true })
   const { PublicKey, PrivateKey } = keyPair
-
   await attachPolicy({ policyName: POLICY_NAME, target: certificateArn })
   await attachCertificates({ principal: certificateArn, thingName: name })
 
-  const response = {
+  const httpsResponse = {
     'certificatePem':certificatePem,
     'privateKey':PrivateKey,
     'scuuid': scuuid,
@@ -146,22 +151,38 @@ module.exports.createThing = async (event, context, callback) => {
     'privateKey':PrivateKey,
   }
 
+  // Save in S3
   await uploadToS3(`${name}/certificate.pem.crt`, certificatePem)
   await uploadToS3(`${name}/private.pem.key`, PrivateKey)
   await uploadToS3(`${name}/public.pem.key`, PublicKey)
   await uploadToS3(`${name}/info.json`, JSON.stringify(info))
 
+  // Save in DynamoDB
   const params = {
     TableName: process.env.SCUUID_TABLE_NAME,
     Item: {
       scUUID: scuuid 
     }
   }
-
   await saveInDynamo(params)
 
+  // Publish MQTT
+  const mqttTopic = `sican/sys/createThing/serialNumber/${serialNumber}/scuuid/${scuuid}`
+  const payLoadJSON = {
+    'topic' : mqttTopic,
+    'payload' : info
+  }
+  
+  const mqttParams = {
+    topic: mqttTopic,
+    payload: JSON.stringify(payLoadJSON),
+    qos: '0'
+  };
+  await publishMqtt(mqttParams)
+
+  // End function
   return {
     statusCode: 200,
-    body: JSON.stringify(response)
+    body: JSON.stringify(httpsResponse)
   }
 }

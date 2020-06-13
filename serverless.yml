@@ -152,7 +152,7 @@ provider:
 functions:
   scicancreatething:
     name: ${self:provider.stage}-${file(env.yml):SCICAN_COMPANY_NAME}-${self:custom.fnCreateThing}
-    handler: create-thing.createThing
+    handler: fnCreateThing.fnCreateThing
     events:
       - http:
           path: ${file(env.yml):SCICAN_COMPANY_NAME}
@@ -164,11 +164,30 @@ functions:
       LOG_PROCESS_NAME: ${file(env.yml):SCICAN_COMPANY_NAME}-${self:provider.stage}-${self:custom.fnCreateThing}
       POLICY_NAME: ${file(env.yml):SCICAN_COMPANY_NAME}-iot-policy-${self:provider.stage}
       SCUUID_TABLE_NAME: ${self:custom.SCUUID_TABLE_NAME}
+      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
     memorySize: 256
+    iamRoleStatementsName: ${self:provider.stage}-${file(env.yml):SCICAN_COMPANY_NAME}-${self:custom.fnCreateThing}-iamRoleStatementLambdaRDSMySQL
+    iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "iot:*"
+      Resource: '*'
+    - Effect: 'Allow'
+      Action:
+        - 's3:*'
+      Resource: 'arn:aws:s3:::${self:custom.BUCKET_NAME}-${self:provider.stage}/*'
+    - Effect: Allow
+      Action:
+        - dynamodb:DescribeTable
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+      Resource: '${self:custom.DYNAMO-ARN}/*'  
 
   ceflacreatething:
     name: ${self:provider.stage}-${file(env.yml):CEFLA_COMPANY_NAME}-${self:custom.fnCreateThing}
-    handler: create-thing.createThing
+    handler: fnCreateThing.fnCreateThing
     events:
       - http:
           path: ${file(env.yml):CEFLA_COMPANY_NAME}
@@ -180,7 +199,26 @@ functions:
       LOG_PROCESS_NAME: ${file(env.yml):CEFLA_COMPANY_NAME}-${self:provider.stage}-${self:custom.fnCreateThing}
       POLICY_NAME: ${file(env.yml):CEFLA_COMPANY_NAME}-iot-policy-${self:provider.stage}
       SCUUID_TABLE_NAME: ${self:custom.SCUUID_TABLE_NAME}
-    memorySize: 256 
+      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
+    memorySize: 256
+    iamRoleStatementsName: ${self:provider.stage}-${file(env.yml):CEFLA_COMPANY_NAME}-${self:custom.fnCreateThing}-iamRoleStatementLambdaRDSMySQL
+    iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "iot:*"
+      Resource: '*'
+    - Effect: 'Allow'
+      Action:
+        - 's3:*'
+      Resource: 'arn:aws:s3:::${self:custom.BUCKET_NAME}-${self:provider.stage}/*'
+    - Effect: Allow
+      Action:
+        - dynamodb:DescribeTable
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+      Resource: '${self:custom.DYNAMO-ARN}/*'
 
   certificateinfo:
     name: ${self:provider.stage}-${self:custom.fnCertificateInfo}
