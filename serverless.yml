@@ -15,6 +15,7 @@ custom:
   fnCertificateInfo: 'certificateInfo'
   fnToken: 'token'
   fnTokenInsert: 'tokenInsert'
+  fnTokenInsert2: 'tokenInsert2'
 
   BUCKET_NAME: 'iot-things-certificates'
   
@@ -143,7 +144,7 @@ provider:
         - dynamodb:GetItem
         - dynamodb:PutItem
       Resource: '${self:custom.DYNAMO-ARN}/*'
-       
+
   environment:
     BUCKET_NAME: ${self:custom.BUCKET_NAME}-${self:provider.stage}
 
@@ -265,6 +266,63 @@ functions:
       rdsMySqlUsername: ${file(env.yml):rdsMySqlUsername-${self:provider.stage}}
       rdsMySqlPassword: ${file(env.yml):rdsMySqlPassword-${self:provider.stage}}
       
+  tokenInsert2:
+    name: ${self:provider.stage}-${self:custom.fnTokenInsert2}
+    handler: fnTokenInsert2.fnTokenInsert2
+    events:
+    - http:
+        path: tokenInsert2
+        method: POST  
+    memorySize: 256
+    timeout: 600
+    private: true
+    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnTokenInsert2}-iamRoleStatementLambdaRDSMySQL
+    iamRoleStatements:
+        - Effect: 'Allow'
+          Action:
+          - 'rds:*'
+          Resource: 'arn:aws:rds:${self:provider.region}:366229877060:db:${file(env.yml):rdsMySqlCluster-${self:provider.stage}}'
+
+        - Effect: 'Allow'
+          Action:
+          - 'logs:CreateLogGroup'
+          - 'logs:CreateLogStream'
+          - 'logs:PutLogEvents'
+          - 'ec2:CreateNetworkInterface'
+          - 'ec2:DescribeNetworkInterfaces'
+          - 'ec2:DeleteNetworkInterfaces'
+          Resource: "*"
+        
+        - Effect: "Allow"
+          Action:
+            - "iot:*"
+          Resource: '*'
+
+        - Effect: 'Allow'
+          Action:
+            - 's3:*'
+          Resource: 'arn:aws:s3:::${self:custom.BUCKET_NAME}-${self:provider.stage}/*'
+
+        - Effect: Allow
+          Action:
+            - dynamodb:DescribeTable
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+          Resource: '${self:custom.DYNAMO-ARN}/*'   
+    vpc: ${file(env.yml):vpc-${self:provider.stage}}
+    environment:
+      COMPANY_NAME: ${file(env.yml):CEFLA_COMPANY_NAME}
+      PRIVATE_KEY: ${file(env.yml):${self:provider.stage}.CEFLA_PRIVATE_KEY}
+      LOG_PROCESS_NAME: ${file(env.yml):CEFLA_COMPANY_NAME}-${self:provider.stage}-${self:custom.fnCreateThing}
+      POLICY_NAME: ${file(env.yml):CEFLA_COMPANY_NAME}-iot-policy-${self:provider.stage}
+      SCUUID_TABLE_NAME: ${self:custom.SCUUID_TABLE_NAME}
+      rdsMySqlDb: ${file(env.yml):rdsMySqlDb-${self:provider.stage}}
+      rdsMySqlHost: ${file(env.yml):rdsMySqlHost-${self:provider.stage}}
+      rdsMySqlUsername: ${file(env.yml):rdsMySqlUsername-${self:provider.stage}}
+      rdsMySqlPassword: ${file(env.yml):rdsMySqlPassword-${self:provider.stage}}
+
 resources:
   - ${file(resources/scuuid-resources.yml)}
   - Outputs:
