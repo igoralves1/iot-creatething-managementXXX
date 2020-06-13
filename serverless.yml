@@ -15,6 +15,7 @@ custom:
   fnCertificateInfo: 'certificateInfo'
   fnToken: 'token'
   fnTokenInsert: 'tokenInsert'
+  fnPublishMqtt: 'publishMqtt'
   fnTokenInsert2: 'tokenInsert2'
 
   BUCKET_NAME: 'iot-things-certificates'
@@ -225,7 +226,6 @@ functions:
           - 'ec2:DescribeNetworkInterfaces'
           - 'ec2:DeleteNetworkInterfaces'
           Resource: "*"
-          
     vpc: ${file(env.yml):vpc-${self:provider.stage}}
 
     environment:
@@ -233,7 +233,7 @@ functions:
       rdsMySqlHost: ${file(env.yml):rdsMySqlHost-${self:provider.stage}}
       rdsMySqlUsername: ${file(env.yml):rdsMySqlUsername-${self:provider.stage}}
       rdsMySqlPassword: ${file(env.yml):rdsMySqlPassword-${self:provider.stage}}
-  
+
   tokenInsert:
     name: ${self:provider.stage}-${self:custom.fnTokenInsert}
     handler: fnTokenInsert.fnTokenInsert
@@ -265,7 +265,7 @@ functions:
       rdsMySqlHost: ${file(env.yml):rdsMySqlHost-${self:provider.stage}}
       rdsMySqlUsername: ${file(env.yml):rdsMySqlUsername-${self:provider.stage}}
       rdsMySqlPassword: ${file(env.yml):rdsMySqlPassword-${self:provider.stage}}
-      
+
   tokenInsert2:
     name: ${self:provider.stage}-${self:custom.fnTokenInsert2}
     handler: fnTokenInsert2.fnTokenInsert2
@@ -322,6 +322,24 @@ functions:
       rdsMySqlHost: ${file(env.yml):rdsMySqlHost-${self:provider.stage}}
       rdsMySqlUsername: ${file(env.yml):rdsMySqlUsername-${self:provider.stage}}
       rdsMySqlPassword: ${file(env.yml):rdsMySqlPassword-${self:provider.stage}}
+
+  publishmqtt:
+    name: ${self:provider.stage}-${self:custom.fnPublishMqtt}
+    handler: fnPublishMqtt.fnPublishMqtt
+    events:
+      - http:
+          path: publishmqtt
+          method: post
+          private: false
+    environment:    
+      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'      
+    memorySize: 256
+    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnPublishMqtt}-iamRoleStatementLambdaRDSMySQL
+    iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "iot:*"
+      Resource: '*'
 
 resources:
   - ${file(resources/scuuid-resources.yml)}
