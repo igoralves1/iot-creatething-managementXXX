@@ -167,7 +167,7 @@ module.exports.fnCreateThing = async (event, context, callback) => {
   await saveInDynamo(params)
 
   // Publish MQTT
-  const mqttTopic = `sican/sys/createThing/serialNumber/${serialNumber}/scuuid/${scuuid}`
+  const mqttTopic = `scican/sys/cmd/fnCreateThing/serialNumber/${serialNumber}/scuuid/${scuuid}`
   const payLoadJSON = {
     'topic' : mqttTopic,
     'payload' : info
