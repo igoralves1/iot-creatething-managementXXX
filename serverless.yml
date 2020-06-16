@@ -222,12 +222,12 @@ functions:
 
   certificateinfo:
     name: ${self:provider.stage}-${self:custom.fnCertificateInfo}
-    handler: certificateInfofs.fncertificateInfo
+    handler: fnCertificateInfo.fnCertificateInfo
     events:
       - http:
           path: certificateInfo
           method: get
-          private: false
+          private: true
           request:
             parameters:
               querystrings:
@@ -241,8 +241,8 @@ functions:
     - http:
         path: ${file(env.yml):CEFLA_COMPANY_NAME}/token
         method: GET  
+        private: true
     memorySize: 256
-    private: true
     request:
       parameters:
         querystrings:
@@ -309,7 +309,7 @@ functions:
     handler: fnTokenInsertMQTT.fnTokenInsertMQTT
     events:
     - iot:
-        name: ${self:custom.fnTokenInsertMQTT}
+        name: ${self:provider.stage}_${self:custom.fnTokenInsertMQTT}
         sql: "SELECT *, topic() AS topic FROM 'scican/sys/cmd/fnCreateThing/#' "  
     memorySize: 256
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnTokenInsertMQTT}-iamRoleStatementLambdaRDSMySQL

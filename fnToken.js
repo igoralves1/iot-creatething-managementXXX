@@ -3,17 +3,17 @@ const mysql = require('mysql2/promise')
 
 async function GetToken(serial_number, scuuid) {
     try {
-      
-      const pool = mysql.createPool({
+
+    const pool = mysql.createPool({
         host     : process.env.rdsMySqlHost,
         user     : process.env.rdsMySqlUsername,
         password : process.env.rdsMySqlPassword,
         database : process.env.rdsMySqlDb
-      })
+    })
 
-      const sql = `SELECT token FROM online_access_tokens WHERE serial_number='${serial_number}' AND uuid='${scuuid}' AND is_active=1`
-      const sqlResult = await pool.query(sql)
-      return sqlResult
+    const sql = `SELECT token FROM online_access_tokens WHERE serial_number='${serial_number}' AND uuid='${scuuid}' AND is_active=1`
+    const sqlResult = await pool.query(sql)
+    return sqlResult
 
     } catch (error) {
         return {

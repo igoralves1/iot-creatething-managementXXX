@@ -8,15 +8,14 @@ const describeCertPromise = (params) =>
   iot.describeCertificate(params, (err, res) => resolve(res)))
 
 
-module.exports.fncertificateInfo = async (event, context, callback) => { 
+module.exports.fnCertificateInfo = async (event, context, callback) => { 
 
-    // const scuuid = event.queryStringParameters.scuuid
-    // const certificateId = //TODO use the scuuid to QUERY the database/REDIS/Dynamo/Bucket and retrieve the certificateId 
-
-    // const certificateId = '8c0891f8aa793488a143cef0d1607a48ec6ca956f32f021d30abf0deeeffc6b6'
+    const str = event.queryStringParameters.scuuid
+    const res = str.split("-")
+    const certificateId = res[1]
 
     var params = {
-        certificateId: event.queryStringParameters.scuuid
+        certificateId: certificateId
     };
 
     const { certificateDescription } = await describeCertPromise(params)  

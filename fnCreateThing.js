@@ -122,18 +122,21 @@ module.exports.fnCreateThing = async (event, context, callback) => {
   }
 
   // Create THING and attach Policy/Crtificate
-  const scuuid = serialNumber  + '-' + awsRequestId
-  const name = stage + '-' + COMPANY_NAME + '-' + scuuid
+  // const scuuid = serialNumber  + '-' + awsRequestId
+  // const name = stage + '-' + COMPANY_NAME + '-' + scuuid
+  const name = stage + '-' + COMPANY_NAME + '-' + serialNumber + '-' + awsRequestId
   await createThing({ thingName: name })
   const { certificateArn, certificateId, certificatePem, keyPair } = await createCertificates({ setAsActive: true })
   const { PublicKey, PrivateKey } = keyPair
   await attachPolicy({ policyName: POLICY_NAME, target: certificateArn })
   await attachCertificates({ principal: certificateArn, thingName: name })
 
+  const scuuid = serialNumber + '-' + certificateId
+  
   const httpsResponse = {
     'certificatePem':certificatePem,
     'privateKey':PrivateKey,
-    'scuuid': scuuid,
+    'scuuid': scuuid
   }
 
   var info = {
