@@ -12,6 +12,7 @@ const publishMqtt = (params) =>
 // https://stackoverflow.com/questions/57624100/how-to-run-cron-in-serverless-for-every-minute
 // https://www.serverless.com/framework/docs/providers/aws/events/schedule/
 // https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html
+// cron(0/1 * * * ? *) Each 1 min
 
 module.exports.fnCron = async (event, context, callback) => {
 
