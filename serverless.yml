@@ -17,6 +17,7 @@ custom:
   fnTokenInsert: 'tokenInsert'
   fnPublishMqtt: 'publishMqtt'
   fnTokenInsertMQTT: 'tokenInsertMQTT'
+  fnCron: 'cron'
 
   BUCKET_NAME: 'iot-things-certificates'
   
@@ -308,9 +309,9 @@ functions:
     name: ${self:provider.stage}-${self:custom.fnTokenInsertMQTT}
     handler: fnTokenInsertMQTT.fnTokenInsertMQTT
     events:
-    - iot:
-        name: ${self:provider.stage}_${self:custom.fnTokenInsertMQTT}
-        sql: "SELECT *, topic() AS topic FROM 'scican/sys/cmd/fnCreateThing/#' "  
+      - iot:
+          name: ${self:provider.stage}_${self:custom.fnTokenInsertMQTT}
+          sql: "SELECT *, topic() AS topic FROM 'scican/sys/cmd/fnCreateThing/#' "  
     memorySize: 256
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnTokenInsertMQTT}-iamRoleStatementLambdaRDSMySQL
     iamRoleStatements:
@@ -356,6 +357,25 @@ functions:
       Action:
         - "iot:*"
       Resource: '*'
+
+  lambdaCron:
+    name: ${self:provider.stage}-${self:custom.fnCron}
+    handler: fnCron.fnCron
+    events:
+      - iot:
+          name: ${self:provider.stage}_${self:custom.fnCron}
+          sql: "SELECT *, topic() AS topic FROM 'testfnCron/#' "
+      # - schedule: cron(0/1 * * * ? *)
+    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnCron}
+    iamRoleStatements:
+      - Effect: "Allow"
+        Action:
+          - "iot:*"
+        Resource: '*' 
+    environment:    
+      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'   
+    memorySize: 256
+    timeout: 600
 
 resources:
   - ${file(resources/scuuid-resources.yml)}
