@@ -21,7 +21,7 @@ custom:
 
   BUCKET_NAME: 'iot-things-certificates'
   
-  
+    
   DYNAMO-ARN: 'arn:aws:dynamodb:${self:provider.region}:*:table'
   SCUUID_TABLE_NAME: '${self:custom.PREFIX.${self:provider.stage}, self:custom.PREFIX.other}${file(env.yml):scuuidTable}'
   
@@ -152,6 +152,9 @@ provider:
 
 functions:
   scicancreatething:
+  #! If the policy is not manually created the lambda will run in a loop
+  # TODO - How to create a POLICY automatically if it doesn't exist in serverless.yml ?
+
     name: ${self:provider.stage}-${file(env.yml):SCICAN_COMPANY_NAME}-${self:custom.fnCreateThing}
     handler: fnCreateThing.fnCreateThing
     events:
@@ -187,6 +190,9 @@ functions:
       Resource: '${self:custom.DYNAMO-ARN}/*'  
 
   ceflacreatething:
+  #! If the policy is not manually created the lambda will run in a loop
+  # TODO - How to create a POLICY automatically if it doesn't exist in serverless.yml ?
+  
     name: ${self:provider.stage}-${file(env.yml):CEFLA_COMPANY_NAME}-${self:custom.fnCreateThing}
     handler: fnCreateThing.fnCreateThing
     events:
@@ -313,6 +319,7 @@ functions:
           name: ${self:provider.stage}_${self:custom.fnTokenInsertMQTT}
           sql: "SELECT *, topic() AS topic FROM 'scican/sys/cmd/fnCreateThing/#' "  
     memorySize: 256
+    # timeout: 6
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnTokenInsertMQTT}-iamRoleStatementLambdaRDSMySQL
     iamRoleStatements:
         - Effect: 'Allow'

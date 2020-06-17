@@ -30,6 +30,8 @@ async function uploadToS3 (keyName, mybody) {
   })
 }
 
+//! If the policy is not manually created the lambda will run in a loop
+// TODO - How to create a POLICY automatically if it doesn't exist in serverless.yml ?
 async function attachPolicy (params) {
   return iot.attachPolicy(params, function (err, data) {
     if (err) console.log(err, err.stack)
@@ -53,7 +55,7 @@ async function saveInDynamo (params) {
       console.log("err-saveInDynamo", err);
     }
     else {
-      // console.log("success-saveInDynamo", data);
+      console.log("success-saveInDynamo", data);
     }
   });
 }
