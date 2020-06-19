@@ -36,9 +36,9 @@ custom:
     production: ''
     other: '-${self:provider.stage}'
   
-  # Append stage name to domainName e.g iot-dev. No suffix if stage is production/prod. 
-  # To CREATE domain run: serverless create_domain --stage stageName. 
-  # To DELETE domain run: serverless delete_domain --stage stageName
+  #! Append stage name to domainName e.g iot-dev. No suffix if stage is production/prod. 
+  #! To CREATE domain run: serverless create_domain --stage stageName. 
+  #! To DELETE domain run: serverless delete_domain --stage stageName
   customDomain:
     domainName: iot${self:custom.SUFFIX.${self:provider.stage}, self:custom.SUFFIX.other}.scicanapi.com
     basePath: 'thing' 
@@ -383,6 +383,45 @@ functions:
       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'   
     memorySize: 256
     timeout: 600
+
+  rdsTestToken:
+      name: ${self:provider.stage}-rdsTestTokens
+      handler: rdsTestTokens.rdsTestTokens
+      events:
+        # - iot:
+        #     name: ${self:provider.stage}_rdsTestToken
+        #     sql: "SELECT *, topic() AS topic FROM 'scican/sys/cmd/fnCreateThing/#' "   
+        - http:
+            path: rdsTestTokens
+            method: POST  
+      memorySize: 256
+      iamRoleStatementsName: ${self:provider.stage}-rdsTestTokens
+      iamRoleStatements:
+          - Effect: "Allow"
+            Action:
+              - "iot:*"
+            Resource: '*'
+          - Effect: 'Allow'
+            Action:
+            - 'rds:*'
+            Resource: 'arn:aws:rds:${self:provider.region}:366229877060:db:${file(env.yml):rdsMySqlCluster-${self:provider.stage}}'
+
+          - Effect: 'Allow'
+            Action:
+            - 'logs:CreateLogGroup'
+            - 'logs:CreateLogStream'
+            - 'logs:PutLogEvents'
+            - 'ec2:CreateNetworkInterface'
+            - 'ec2:DescribeNetworkInterfaces'
+            - 'ec2:DeleteNetworkInterfaces'
+            Resource: "*"
+      vpc: ${file(env.yml):vpc-${self:provider.stage}}
+      environment:
+        rdsMySqlDb: ${file(env.yml):rdsMySqlDb-${self:provider.stage}}
+        rdsMySqlHost: ${file(env.yml):rdsMySqlHost-${self:provider.stage}}
+        rdsMySqlUsername: ${file(env.yml):rdsMySqlUsername-${self:provider.stage}}
+        rdsMySqlPassword: ${file(env.yml):rdsMySqlPassword-${self:provider.stage}}
+        MQTT_ENDPOINT: 'a3oug6yeqsiol5-ats.iot.us-west-2.amazonaws.com'
 
 resources:
   - ${file(resources/scuuid-resources.yml)}

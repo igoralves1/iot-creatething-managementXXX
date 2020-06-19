@@ -85,13 +85,23 @@ async function tokenExists (token) {
     }
 }
 
-module.exports.fnTokenInsertMQTT = async event => {
-    const topic = event.topic
-    const res = topic.split("/")
-    const serialNumber = res[5]
-    const scuuid = res[7]
+module.exports.rdsTestTokens = async event => {
+    // const topic = event.topic
+    // const res = topic.split("/")
+    // const serialNumber = res[5]
+    // const scuuid = res[7]
 
-    const sqlResult = await InsertToken(serialNumber, scuuid)
+    const sqlResult = await InsertToken('AAABBB', 'AAABBB-DOG2')
+
+    const resp = {
+        'onlineAccessCode': sqlResult
+    }
+    return {
+        statusCode: 200,
+        body: JSON.stringify(resp)
+    }
+
+
 
     // const mqttParams = {
     //     topic: `aab`,
