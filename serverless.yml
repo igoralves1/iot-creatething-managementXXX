@@ -18,6 +18,8 @@ custom:
   fnPublishMqtt: 'publishMqtt'
   fnTokenInsertMQTT: 'tokenInsertMQTT'
   fnCron: 'cron'
+  fnBootFwStart: 'bootFwStart'
+  fnBootFwWrite: 'bootFwWrite'
 
   BUCKET_NAME: 'iot-things-certificates'
   
@@ -170,7 +172,7 @@ functions:
       SCUUID_TABLE_NAME: ${self:custom.SCUUID_TABLE_NAME}
       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
     memorySize: 256
-    iamRoleStatementsName: ${self:provider.stage}-${file(env.yml):SCICAN_COMPANY_NAME}-${self:custom.fnCreateThing}-iamRoleStatementLambdaRDSMySQL
+    iamRoleStatementsName: ${self:provider.stage}-${file(env.yml):SCICAN_COMPANY_NAME}-${self:custom.fnCreateThing}
     iamRoleStatements:
     - Effect: "Allow"
       Action:
@@ -208,7 +210,7 @@ functions:
       SCUUID_TABLE_NAME: ${self:custom.SCUUID_TABLE_NAME}
       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
     memorySize: 256
-    iamRoleStatementsName: ${self:provider.stage}-${file(env.yml):CEFLA_COMPANY_NAME}-${self:custom.fnCreateThing}-iamRoleStatementLambdaRDSMySQL
+    iamRoleStatementsName: ${self:provider.stage}-${file(env.yml):CEFLA_COMPANY_NAME}-${self:custom.fnCreateThing}
     iamRoleStatements:
     - Effect: "Allow"
       Action:
@@ -255,7 +257,7 @@ functions:
         querystrings:
           scuuid: true
           serial_number: true
-    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnToken}-iamRoleStatementLambdaRDSMySQL
+    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnToken}
     iamRoleStatements:
         - Effect: 'Allow'
           Action:
@@ -288,7 +290,7 @@ functions:
         method: POST  
     memorySize: 256
     private: true
-    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnTokenInsert}-iamRoleStatementLambdaRDSMySQL
+    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnTokenInsert}
     iamRoleStatements:
         - Effect: 'Allow'
           Action:
@@ -320,7 +322,7 @@ functions:
           sql: "SELECT *, topic() AS topic FROM 'scican/sys/cmd/fnCreateThing/#' "  
     memorySize: 256
     # timeout: 6
-    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnTokenInsertMQTT}-iamRoleStatementLambdaRDSMySQL
+    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnTokenInsertMQTT}
     iamRoleStatements:
         - Effect: 'Allow'
           Action:
@@ -358,7 +360,7 @@ functions:
     environment:    
       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'      
     memorySize: 256
-    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnPublishMqtt}-iamRoleStatementLambdaRDSMySQL
+    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnPublishMqtt}
     iamRoleStatements:
     - Effect: "Allow"
       Action:
@@ -422,6 +424,52 @@ functions:
         rdsMySqlUsername: ${file(env.yml):rdsMySqlUsername-${self:provider.stage}}
         rdsMySqlPassword: ${file(env.yml):rdsMySqlPassword-${self:provider.stage}}
         MQTT_ENDPOINT: 'a3oug6yeqsiol5-ats.iot.us-west-2.amazonaws.com'
+
+  bootFwStart:
+      name: ${self:provider.stage}-${self:custom.fnBootFwStart}
+      handler: fnBootFwStart.fnBootFwStart
+      events:
+        - iot:
+            name: ${self:provider.stage}_${self:custom.fnBootFwStart}
+            sql: "SELECT *, topic() AS topic FROM 'P/MSSTER/+/CAN/RSP/boot_fw_start/#' "  
+      memorySize: 256
+      iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnBootFwStart}
+      iamRoleStatements:
+          - Effect: "Allow"
+            Action:
+              - "iot:*"
+            Resource: '*' 
+            
+          - Effect: 'Allow'
+            Action:
+              - 's3:*'
+            Resource: 'arn:aws:s3:::${file(env.yml):BUCKET_FIRMWARE}${self:provider.stage}/*'  
+      environment:
+        MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
+        BUCKET_FIRMWARE: '${file(env.yml):BUCKET_FIRMWARE}${self:provider.stage}'
+  
+  bootFwWrite:
+      name: ${self:provider.stage}-${self:custom.fnBootFwWrite}
+      handler: fnBootFwWrite.fnBootFwWrite
+      events:
+        - iot:
+            name: ${self:provider.stage}_${self:custom.fnBootFwWrite}
+            sql: "SELECT *, topic() AS topic FROM 'P/MSSTER/+/CAN/RSP/boot_fw_write/#' "  
+      memorySize: 256
+      iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnBootFwWrite}
+      iamRoleStatements:
+          - Effect: "Allow"
+            Action:
+              - "iot:*"
+            Resource: '*' 
+
+          - Effect: 'Allow'
+            Action:
+              - 's3:*'
+            Resource: 'arn:aws:s3:::${file(env.yml):BUCKET_FIRMWARE}${self:provider.stage}/*'  
+      environment:
+        MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
+        BUCKET_FIRMWARE: '${file(env.yml):BUCKET_FIRMWARE}${self:provider.stage}'
 
 resources:
   - ${file(resources/scuuid-resources.yml)}
