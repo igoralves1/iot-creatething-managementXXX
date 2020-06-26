@@ -27,7 +27,8 @@ let getObject = async (bucket, key) => {
 
 module.exports.fnBootFwWrite = async event => {
 
-    //! Forin AWS IoT-Core Broker Tests - P/MSSTER/+/CAN/RSP/boot_fw_write/PROCESS_v1-7/0
+    //! AWS IoT-Core Broker Tests - P/MSSTER/+/CAN/RSP/boot_fw_write/CLOUD_v1-7/0
+    //! AWS IoT-Core Broker Tests - P/MSSTER/+/CAN/RSP/boot_fw_write/PROCESS_v1-7/0
     const topic = event.topic
     const res = topic.split("/")
     const serialNumber = res[2]
@@ -36,28 +37,20 @@ module.exports.fnBootFwWrite = async event => {
     const process = arr_process_version[0]
     const version = arr_process_version[1]
     let chunkNb = res[7]
-    console.log("chunkNb", chunkNb)
-    console.log("typeof chunkNb", typeof chunkNb)
-    console.log("typeof parseInt(nextChunk)", typeof parseInt(chunkNb))
-    console.log("typeof chunkNb", typeof chunkNb)
 
     let nextChunk = parseInt(chunkNb) + 1
-    console.log("nextChunk", nextChunk)
     
-
     const key = version + '/' + process + `/${nextChunk}.json`
     let chunk = await getObject(BUCKET, key)
 
     let publishTopic = `P/MSSTER/${serialNumber}/CAN/CMD/boot_fw_write/${process}_${version}/${nextChunk}`
 
+    // ! Test last chunck CLOUD - P/MSSTER/ASDER/CAN/RSP/boot_fw_write/CLOUD_v1-7/1764   => Should publish "path": "CAN/CMD/boot_fw_stop/CLOUD_v1-7/1764"
+    // ! Test last chunck CLOUD - P/MSSTER/ASDER/CAN/RSP/boot_fw_write/PROCESS_v1-7/3515 => Should publish "path": "CAN/CMD/boot_fw_stop/PROCESS_v1-7/3515"
+
     if (typeof chunk == 'undefined') {
         publishTopic = `P/MSSTER/${serialNumber}/CAN/CMD/boot_fw_stop/${process}_${version}/${chunkNb}`
-        chunk ='{"ddd":"zzz"}'
-        
-        // chunk = '{
-        //     "path": `CAN/CMD/boot_fw_stop/${process}_${version}/${chunkNb}`,
-        //     "data": ""
-        //   }'
+        chunk = JSON.stringify({"path" : `CAN/CMD/boot_fw_stop/${process}_${version}/${chunkNb}`})
     }
 
     var params = {
