@@ -25,14 +25,37 @@ let getObject = async (bucket, key) => {
     }
 }
 
+async function updateFirmwareFail (serialNumber, process, chunkNb, version, pid, retval) {
+    let topic = `P/MSSTER/${serialNumber}/CAN/CMD/return_code_fw_fail/${process}/${chunkNb}_${version}_${pid}`
+
+    let response = {
+        "path" : `CAN/CMD/return_code_fw_fail/${process}/${chunkNb}_${version}_${pid}`,
+        "retval": retval
+    }
+
+    let params = {
+        topic: topic,
+        payload: JSON.stringify(response),
+        qos: '0'
+    };
+    
+    await publishMqtt(params)
+}
+
+
 module.exports.fnBootFwWrite = async event => {
 
     //! AWS IoT-Core Broker Tests - P/MSSTER/APBCDF/CAN/RSP/boot_fw_write/PROCESS/0_v1-7_1593442883
+    //! {"path": "CAN/RSP/boot_fw_write/PROCESS/0_v1-7_1234567890","retval": "0"}
     //! AWS IoT-Core Broker Tests - P/MSSTER/APBCDF/CAN/RSP/boot_fw_write/CLOUD/0_v1-7_1234567890
+    //! {"path": "CAN/RSP/boot_fw_write/CLOUD/0_v1-7_1234567890","retval": "0"}
 
     // ! Test last chunk CLOUD - P/MSSTER/ASDER/CAN/RSP/boot_fw_write/CLOUD/1764_v1-7_1593442883   => Should publish "path": "CAN/CMD/boot_fw_stop/CLOUD/1764_v1-7_1593442883"
+    //! {"path": "CAN/RSP/boot_fw_stop/CLOUD/1764_v1-7_1234567890","retval": "0"}
     // ! Test last chunk PROCESS - P/MSSTER/ASDER/CAN/RSP/boot_fw_write/PROCESS/3515_v1-7_1234567890 => Should publish "path": "CAN/CMD/boot_fw_stop/PROCESS/3515_v1-7_1234567890"
-
+    //! {"path": "CAN/RSP/boot_fw_stop/PROCESS/3515_v1-7_1234567890","retval": "0"}
+    
+    const retval = event.retval
     const topic = event.topic
     const res = topic.split("/")
     const serialNumber = res[2]
@@ -44,30 +67,37 @@ module.exports.fnBootFwWrite = async event => {
     const version = arr_chunkNb_version_pid[1]
     const pid = arr_chunkNb_version_pid[2]
 
-    let nextChunk = parseInt(chunkNb) + 1
-    
-    const key = version + '/' + process + `/${nextChunk}.json`
-    let chunk = await getObject(BUCKET, key)
-    let publishTopic = ''
-    
+    if (retval === "0") {    
+        let nextChunk = parseInt(chunkNb) + 1
+        const key = version + '/' + process + `/${nextChunk}.json`
+        let chunk = await getObject(BUCKET, key)
+        let publishTopic = ''
+        
 
-    if (typeof chunk == 'undefined') {
-        publishTopic = `P/MSSTER/${serialNumber}/CAN/CMD/boot_fw_stop/${process}/${chunkNb}_${version}_${pid}`
-        chunk = JSON.stringify({"path" : `CAN/CMD/boot_fw_stop/${process}/${chunkNb}_${version}_${pid}`})
-    } else {
-        publishTopic = `P/MSSTER/${serialNumber}/CAN/CMD/boot_fw_write/${process}/${nextChunk}_${version}_${pid}`
-        let bodyJson = JSON.parse(chunk)
-        console.log("bodyJson", bodyJson)
-        bodyJson.path = `CAN/CMD/boot_fw_write/${process}/${nextChunk}_${version}_${pid}`
-        chunk = JSON.stringify(bodyJson)
-        console.log("chunk", chunk)
+        if (typeof chunk == 'undefined') {
+            publishTopic = `P/MSSTER/${serialNumber}/CAN/CMD/boot_fw_stop/${process}/${chunkNb}_${version}_${pid}`
+            chunk = JSON.stringify({"path" : `CAN/CMD/boot_fw_stop/${process}/${chunkNb}_${version}_${pid}`})
+        } else {
+            publishTopic = `P/MSSTER/${serialNumber}/CAN/CMD/boot_fw_write/${process}/${nextChunk}_${version}_${pid}`
+            let bodyJson = JSON.parse(chunk)
+            console.log("bodyJson", bodyJson)
+            bodyJson.path = `CAN/CMD/boot_fw_write/${process}/${nextChunk}_${version}_${pid}`
+            chunk = JSON.stringify(bodyJson)
+            console.log("chunk", chunk)
+        }
+
+        var params = {
+            topic: publishTopic,
+            payload: chunk, 
+            qos: '0'
+        };
+
+        await publishMqtt(params)
+
+    }else {
+        //TODO if retval === "16 " => user denied. Save in RDS
+        //TODO if retval === "14 " => user did not see the message.
+        //TODO if any other vals === RETRY.
+        await updateFirmwareFail(serialNumber, process, chunkNb, version, pid, retval)    
     }
-
-    var params = {
-        topic: publishTopic,
-        payload: chunk, 
-        qos: '0'
-    };
-
-    await publishMqtt(params)
 }
