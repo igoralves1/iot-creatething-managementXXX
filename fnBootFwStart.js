@@ -24,10 +24,31 @@ let getObject = async (bucket, key) => {
     }
 }
 
+async function updateFirmwareFail (serialNumber, process, chunkNb, version, pid, retval) {
+    let topic = `P/MSSTER/${serialNumber}/CAN/CMD/return_code_fw_fail/${process}/${chunkNb}_${version}_${pid}`
+
+    let response = {
+        "path" : `CAN/CMD/return_code_fw_fail/${process}/${chunkNb}_${version}_${pid}`,
+        "retval": retval
+    }
+
+    let params = {
+        topic: topic,
+        payload: JSON.stringify(response),
+        qos: '0'
+    };
+    
+    await publishMqtt(params)
+}
+
 module.exports.fnBootFwStart = async event => {
 
     //! AWS IoT-Core Broker Tests - P/MSSTER/APBCDF/CAN/RSP/boot_fw_start/PROCESS/0_v1-7_1593442883
+    //! {"path": "CAN/RSP/boot_fw_start/CLOUD/0_v1-7_1234567890","retval": "0"}
     //! AWS IoT-Core Broker Tests - P/MSSTER/APBCDF/CAN/RSP/boot_fw_start/CLOUD/0_v1-7_1234567890
+    //! {"path": "CAN/RSP/boot_fw_start/PROCESS/0_v1-7_1593442883","retval": "0"}
+
+    const retval = event.retval
     const topic = event.topic
     const res = topic.split("/")
     const serialNumber = res[2]
@@ -38,20 +59,26 @@ module.exports.fnBootFwStart = async event => {
     const version = arr_chunkNb_version_pid[1]
     const pid = arr_chunkNb_version_pid[2]
     
-    let key = version + '/' + process + `/${chunkNb}.json`
-    
-    let chunk = await getObject(BUCKET, key)
-    let bodyJson = JSON.parse(chunk)
+    if (retval === "0") {
+        let key = version + '/' + process + `/${chunkNb}.json`
+        
+        let chunk = await getObject(BUCKET, key)
+        let bodyJson = JSON.parse(chunk)
 
-    bodyJson.path = `CAN/CMD/boot_fw_write/${process}/${chunkNb}_${version}_${pid}`
+        bodyJson.path = `CAN/CMD/boot_fw_write/${process}/${chunkNb}_${version}_${pid}`
 
-    let publishTopic = `P/MSSTER/${serialNumber}/CAN/CMD/boot_fw_write/${process}/${chunkNb}_${version}_${pid}`
+        let publishTopic = `P/MSSTER/${serialNumber}/CAN/CMD/boot_fw_write/${process}/${chunkNb}_${version}_${pid}`
 
-    var params = {
-        topic: publishTopic,
-        payload: JSON.stringify(bodyJson), 
-        qos: '0'
-    };
-
-    await publishMqtt(params)
+        var params = {
+            topic: publishTopic,
+            payload: JSON.stringify(bodyJson), 
+            qos: '0'
+        };
+        await publishMqtt(params)
+    }else {
+        //TODO if retval === "16 " => user denied. Save in RDS
+        //TODO if retval === "14 " => user did not see the message.
+        //TODO if any other vals === RETRY.
+        await updateFirmwareFail(serialNumber, process, chunkNb, version, pid, retval)    
+    }
 }

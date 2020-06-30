@@ -523,6 +523,8 @@ functions:
             Resource: '*'  
       environment:
         MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
+
+
 resources:
   - ${file(resources/scuuid-resources.yml)}
   - Outputs:
