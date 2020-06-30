@@ -44,7 +44,7 @@ module.exports.fnBootFwStopPROCESS = async event => {
     const pid = arr_chunkNb_version_pid[2]
     
     if (retval === "0") {
-        await sleep(5000)
+        await sleep(600000)
 
         let response = {
             "path":`CAN/CMD/boot_fw_start/CLOUD/0_${version}_${pid}`,
