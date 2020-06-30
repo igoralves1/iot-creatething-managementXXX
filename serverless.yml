@@ -20,6 +20,7 @@ custom:
   fnCron: 'cron'
   fnBootFwStart: 'bootFwStart'
   fnBootFwWrite: 'bootFwWrite'
+  fnBootFwStop: 'bootFwStop'
 
   BUCKET_NAME: 'iot-things-certificates'
   
@@ -274,7 +275,6 @@ functions:
           - 'ec2:DeleteNetworkInterfaces'
           Resource: "*"
     vpc: ${file(env.yml):vpc-${self:provider.stage}}
-
     environment:
       rdsMySqlDb: ${file(env.yml):rdsMySqlDb-${self:provider.stage}}
       rdsMySqlHost: ${file(env.yml):rdsMySqlHost-${self:provider.stage}}
@@ -470,6 +470,41 @@ functions:
       environment:
         MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
         BUCKET_FIRMWARE: '${file(env.yml):BUCKET_FIRMWARE}${self:provider.stage}'
+
+  bootFwStop:
+    name: ${self:provider.stage}-${self:custom.fnBootFwStop}
+    handler: fnBootFwStop.fnBootFwStop
+    events:
+      - iot:
+          name: ${self:provider.stage}_${self:custom.fnBootFwStop}
+          sql: "SELECT *, topic() AS topic FROM 'P/MSSTER/+/CAN/RSP/boot_fw_stop/#' "  
+    memorySize: 256
+    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnBootFwStop}
+    iamRoleStatements:
+        - Effect: 'Allow'
+          Action:
+          - 'rds:*'
+          Resource: 'arn:aws:rds:${self:provider.region}:366229877060:db:${file(env.yml):rdsMySqlCluster-${self:provider.stage}}'
+        - Effect: 'Allow'
+          Action:
+          - 'logs:CreateLogGroup'
+          - 'logs:CreateLogStream'
+          - 'logs:PutLogEvents'
+          - 'ec2:CreateNetworkInterface'
+          - 'ec2:DescribeNetworkInterfaces'
+          - 'ec2:DeleteNetworkInterfaces'
+          Resource: "*"
+        - Effect: "Allow"
+          Action:
+          - "iot:*"
+          Resource: '*' 
+    vpc: ${file(env.yml):vpc-${self:provider.stage}}      
+    environment:
+      rdsMySqlDb: ${file(env.yml):rdsMySqlDb-${self:provider.stage}}
+      rdsMySqlHost: ${file(env.yml):rdsMySqlHost-${self:provider.stage}}
+      rdsMySqlUsername: ${file(env.yml):rdsMySqlUsername-${self:provider.stage}}
+      rdsMySqlPassword: ${file(env.yml):rdsMySqlPassword-${self:provider.stage}}
+      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
 
 resources:
   - ${file(resources/scuuid-resources.yml)}
