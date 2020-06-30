@@ -30,8 +30,8 @@ module.exports.fnBootFwWrite = async event => {
     //! AWS IoT-Core Broker Tests - P/MSSTER/APBCDF/CAN/RSP/boot_fw_write/PROCESS/0_v1-7_1593442883
     //! AWS IoT-Core Broker Tests - P/MSSTER/APBCDF/CAN/RSP/boot_fw_write/CLOUD/0_v1-7_1234567890
 
-    // ! Test last chunk CLOUD - P/MSSTER/ASDER/CAN/RSP/boot_fw_write/CLOUD_v1-7/1764   => Should publish "path": "CAN/CMD/boot_fw_stop/CLOUD_v1-7/1764"
-    // ! Test last chunk PROCESS - P/MSSTER/ASDER/CAN/RSP/boot_fw_write/PROCESS_v1-7/3515 => Should publish "path": "CAN/CMD/boot_fw_stop/PROCESS_v1-7/3515"
+    // ! Test last chunk CLOUD - P/MSSTER/ASDER/CAN/RSP/boot_fw_write/CLOUD/1764_v1-7_1593442883   => Should publish "path": "CAN/CMD/boot_fw_stop/CLOUD/1764_v1-7_1593442883"
+    // ! Test last chunk PROCESS - P/MSSTER/ASDER/CAN/RSP/boot_fw_write/PROCESS/3515_v1-7_1234567890 => Should publish "path": "CAN/CMD/boot_fw_stop/PROCESS/3515_v1-7_1234567890"
 
     const topic = event.topic
     const res = topic.split("/")
