@@ -26,23 +26,30 @@ let getObject = async (bucket, key) => {
 
 module.exports.fnBootFwStart = async event => {
 
-    //! Forin AWS IoT-Core Broker Tests - P/MSSTER/APBCDF/CAN/RSP/boot_fw_start/PROCESS_v1-7/0
+    //! AWS IoT-Core Broker Tests - P/MSSTER/APBCDF/CAN/RSP/boot_fw_start/PROCESS/0_v1-7_1593442883
+    //! AWS IoT-Core Broker Tests - P/MSSTER/APBCDF/CAN/RSP/boot_fw_start/CLOUD/0_v1-7_1234567890
     const topic = event.topic
     const res = topic.split("/")
     const serialNumber = res[2]
-    const str_process_version = res[6]
-    const arr_process_version = str_process_version.split("_")
-    const process = arr_process_version[0]
-    const version = arr_process_version[1]
-    const chunkNb = res[7]
+    const process = res[6]
+    const str_chunkNb_version_pid = res[7]
+    const arr_chunkNb_version_pid = str_chunkNb_version_pid.split("_")
+    const chunkNb = arr_chunkNb_version_pid[0]
+    const version = arr_chunkNb_version_pid[1]
+    const pid = arr_chunkNb_version_pid[2]
+    
     let key = version + '/' + process + `/${chunkNb}.json`
     
     let chunk = await getObject(BUCKET, key)
-    let publishTopic = `P/MSSTER/${serialNumber}/CAN/CMD/boot_fw_write/${process}_${version}/${chunkNb}`
+    let bodyJson = JSON.parse(chunk)
+
+    bodyJson.path = `CAN/CMD/boot_fw_write/${process}/${chunkNb}_${version}_${pid}`
+
+    let publishTopic = `P/MSSTER/${serialNumber}/CAN/CMD/boot_fw_write/${process}/${chunkNb}_${version}_${pid}`
 
     var params = {
         topic: publishTopic,
-        payload: chunk, 
+        payload: JSON.stringify(bodyJson), 
         qos: '0'
     };
 
