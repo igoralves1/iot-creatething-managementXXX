@@ -3,6 +3,7 @@ const AWS = require('aws-sdk')
 const S3 = new AWS.S3()
 const iotdata = new AWS.IotData({endpoint: process.env.MQTT_ENDPOINT})
 const BUCKET = process.env.BUCKET_FIRMWARE
+const MQTT_TOPIC_ENV = process.env.mqttTopicEnv
 
 const publishMqtt = (params) =>
   new Promise((resolve, reject) =>
@@ -26,7 +27,7 @@ let getObject = async (bucket, key) => {
 }
 
 async function updateFirmwareFail (serialNumber, process, chunkNb, version, pid, retval) {
-    let topic = `P/MSSTER/${serialNumber}/CAN/CMD/return_code_fw_fail/${process}/${chunkNb}_${version}_${pid}`
+    let topic = `${MQTT_TOPIC_ENV}/MSSTER/${serialNumber}/CAN/CMD/return_code_fw_fail/${process}/${chunkNb}_${version}_${pid}`
 
     let response = {
         "path" : `CAN/CMD/return_code_fw_fail/${process}/${chunkNb}_${version}_${pid}`,
@@ -45,6 +46,18 @@ async function updateFirmwareFail (serialNumber, process, chunkNb, version, pid,
 
 module.exports.fnBootFwWrite = async event => {
 
+    //? MQTT_TOPIC_ENV = D
+    //! AWS IoT-Core Broker Tests - D/MSSTER/APBCDF/CAN/RSP/boot_fw_write/PROCESS/0_v1-7_1593442883
+    //! {"path": "CAN/RSP/boot_fw_write/PROCESS/0_v1-7_1234567890","retval": "0"}
+    //! AWS IoT-Core Broker Tests - D/MSSTER/APBCDF/CAN/RSP/boot_fw_write/CLOUD/0_v1-7_1234567890
+    //! {"path": "CAN/RSP/boot_fw_write/CLOUD/0_v1-7_1234567890","retval": "0"}
+
+    // ! Test last chunk CLOUD - D/MSSTER/ASDER/CAN/RSP/boot_fw_write/CLOUD/1764_v1-7_1593442883   => Should publish "path": "CAN/CMD/boot_fw_stop/CLOUD/1764_v1-7_1593442883"
+    //! {"path": "CAN/RSP/boot_fw_stop/CLOUD/1764_v1-7_1234567890","retval": "0"}
+    // ! Test last chunk PROCESS - D/MSSTER/ASDER/CAN/RSP/boot_fw_write/PROCESS/3515_v1-7_1234567890 => Should publish "path": "CAN/CMD/boot_fw_stop/PROCESS/3515_v1-7_1234567890"
+    //! {"path": "CAN/RSP/boot_fw_stop/PROCESS/3515_v1-7_1234567890","retval": "0"}
+    
+    //? MQTT_TOPIC_ENV = P
     //! AWS IoT-Core Broker Tests - P/MSSTER/APBCDF/CAN/RSP/boot_fw_write/PROCESS/0_v1-7_1593442883
     //! {"path": "CAN/RSP/boot_fw_write/PROCESS/0_v1-7_1234567890","retval": "0"}
     //! AWS IoT-Core Broker Tests - P/MSSTER/APBCDF/CAN/RSP/boot_fw_write/CLOUD/0_v1-7_1234567890
@@ -75,10 +88,10 @@ module.exports.fnBootFwWrite = async event => {
         
 
         if (typeof chunk == 'undefined') {
-            publishTopic = `P/MSSTER/${serialNumber}/CAN/CMD/boot_fw_stop/${process}/${chunkNb}_${version}_${pid}`
+            publishTopic = `${MQTT_TOPIC_ENV}/MSSTER/${serialNumber}/CAN/CMD/boot_fw_stop/${process}/${chunkNb}_${version}_${pid}`
             chunk = JSON.stringify({"path" : `CAN/CMD/boot_fw_stop/${process}/${chunkNb}_${version}_${pid}`})
         } else {
-            publishTopic = `P/MSSTER/${serialNumber}/CAN/CMD/boot_fw_write/${process}/${nextChunk}_${version}_${pid}`
+            publishTopic = `${MQTT_TOPIC_ENV}/MSSTER/${serialNumber}/CAN/CMD/boot_fw_write/${process}/${nextChunk}_${version}_${pid}`
             let bodyJson = JSON.parse(chunk)
             console.log("bodyJson", bodyJson)
             bodyJson.path = `CAN/CMD/boot_fw_write/${process}/${nextChunk}_${version}_${pid}`

@@ -3,6 +3,7 @@ const AWS = require('aws-sdk')
 const S3 = new AWS.S3()
 const iotdata = new AWS.IotData({endpoint: process.env.MQTT_ENDPOINT})
 const BUCKET = process.env.BUCKET_FIRMWARE
+const MQTT_TOPIC_ENV = process.env.mqttTopicEnv
 
 const publishMqtt = (params) =>
   new Promise((resolve, reject) =>
@@ -25,7 +26,7 @@ let getObject = async (bucket, key) => {
 }
 
 async function updateFirmwareFail (serialNumber, process, chunkNb, version, pid, retval) {
-    let topic = `P/MSSTER/${serialNumber}/CAN/CMD/return_code_fw_fail/${process}/${chunkNb}_${version}_${pid}`
+    let topic = `${MQTT_TOPIC_ENV}/MSSTER/${serialNumber}/CAN/CMD/return_code_fw_fail/${process}/${chunkNb}_${version}_${pid}`
 
     let response = {
         "path" : `CAN/CMD/return_code_fw_fail/${process}/${chunkNb}_${version}_${pid}`,
@@ -43,6 +44,15 @@ async function updateFirmwareFail (serialNumber, process, chunkNb, version, pid,
 
 module.exports.fnBootFwStart = async event => {
 
+    //! Check with Leonardo - The front-end and the machine will never trigger MQTT_TOPIC_ENV = D
+
+    //? MQTT_TOPIC_ENV = D
+    //! AWS IoT-Core Broker Tests - D/MSSTER/APBCDF/CAN/RSP/boot_fw_start/PROCESS/0_v1-7_1593442883
+    //! {"path": "CAN/RSP/boot_fw_start/CLOUD/0_v1-7_1234567890","retval": "0"}
+    //! AWS IoT-Core Broker Tests - D/MSSTER/APBCDF/CAN/RSP/boot_fw_start/CLOUD/0_v1-7_1234567890
+    //! {"path": "CAN/RSP/boot_fw_start/PROCESS/0_v1-7_1593442883","retval": "0"}
+    
+    //? MQTT_TOPIC_ENV = P
     //! AWS IoT-Core Broker Tests - P/MSSTER/APBCDF/CAN/RSP/boot_fw_start/PROCESS/0_v1-7_1593442883
     //! {"path": "CAN/RSP/boot_fw_start/CLOUD/0_v1-7_1234567890","retval": "0"}
     //! AWS IoT-Core Broker Tests - P/MSSTER/APBCDF/CAN/RSP/boot_fw_start/CLOUD/0_v1-7_1234567890
@@ -67,7 +77,7 @@ module.exports.fnBootFwStart = async event => {
 
         bodyJson.path = `CAN/CMD/boot_fw_write/${process}/${chunkNb}_${version}_${pid}`
 
-        let publishTopic = `P/MSSTER/${serialNumber}/CAN/CMD/boot_fw_write/${process}/${chunkNb}_${version}_${pid}`
+        let publishTopic = `${MQTT_TOPIC_ENV}/MSSTER/${serialNumber}/CAN/CMD/boot_fw_write/${process}/${chunkNb}_${version}_${pid}`
 
         var params = {
             topic: publishTopic,

@@ -4,6 +4,7 @@ const mysql = require('mysql2/promise')
 const sleep = require('util').promisify(setTimeout)
 const S3 = new AWS.S3()
 const iotdata = new AWS.IotData({endpoint: process.env.MQTT_ENDPOINT})
+const MQTT_TOPIC_ENV = process.env.mqttTopicEnv
 
 const publishMqtt = (params) =>
   new Promise((resolve, reject) =>
@@ -11,7 +12,7 @@ const publishMqtt = (params) =>
 
 
 async function updateFirmwareFail (serialNumber, process, chunkNb, version, pid, retval) {
-    let topic = `P/MSSTER/${serialNumber}/CAN/CMD/return_code_fw_fail/${process}/${chunkNb}_${version}_${pid}`
+    let topic = `${MQTT_TOPIC_ENV}/MSSTER/${serialNumber}/CAN/CMD/return_code_fw_fail/${process}/${chunkNb}_${version}_${pid}`
 
     let response = {
         "path" : `CAN/CMD/return_code_fw_fail/${process}/${chunkNb}_${version}_${pid}`,
@@ -30,8 +31,15 @@ async function updateFirmwareFail (serialNumber, process, chunkNb, version, pid,
 
 module.exports.fnBootFwStopPROCESS = async event => {
 
+    //? MQTT_TOPIC_ENV = D
+    //! Test in MQTT - D/MSSTER/AAABBB/CAN/RSP/boot_fw_stop/PROCESS/3515_v1-7_1234567890
+    //! {"path": "CAN/RSP/boot_fw_stop/PROCESS/3515_v1-7_1234567890","retval": "0"}
+    
+    //? MQTT_TOPIC_ENV = P
     //! Test in MQTT - P/MSSTER/AAABBB/CAN/RSP/boot_fw_stop/PROCESS/3515_v1-7_1234567890
     //! {"path": "CAN/RSP/boot_fw_stop/PROCESS/3515_v1-7_1234567890","retval": "0"}
+    
+    
     const retval = event.retval
     const topic = event.topic
     const res = topic.split("/")
@@ -54,7 +62,7 @@ module.exports.fnBootFwStopPROCESS = async event => {
         }
 
         let params = {
-        topic: `P/MSSTER/${serialNumber}/CAN/CMD/boot_fw_start/CLOUD/0_${version}_${pid}`,
+        topic: `${MQTT_TOPIC_ENV}/MSSTER/${serialNumber}/CAN/CMD/boot_fw_start/CLOUD/0_${version}_${pid}`,
         payload: JSON.stringify(response),
         qos: '0'
         };

@@ -3,6 +3,7 @@ const AWS = require('aws-sdk')
 const mysql = require('mysql2/promise')
 const S3 = new AWS.S3()
 const iotdata = new AWS.IotData({endpoint: process.env.MQTT_ENDPOINT})
+const MQTT_TOPIC_ENV = process.env.mqttTopicEnv
 
 const publishMqtt = (params) =>
   new Promise((resolve, reject) =>

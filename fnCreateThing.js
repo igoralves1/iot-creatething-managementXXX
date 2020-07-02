@@ -6,6 +6,7 @@ const DocumentClient = new AWS.DynamoDB.DocumentClient()
 const Joi = require('@hapi/joi')
 const iotdata = new AWS.IotData({endpoint: process.env.MQTT_ENDPOINT});
 let createThingObj = {}
+const MQTT_TOPIC_ENV = process.env.mqttTopicEnv
 
 const publishMqtt = (params) =>
   new Promise((resolve, reject) =>
@@ -172,7 +173,7 @@ module.exports.fnCreateThing = async (event, context, callback) => {
   await saveInDynamo(params)
 
   // Publish MQTT
-  const mqttTopic = `scican/sys/cmd/fnCreateThing/serialNumber/${serialNumber}/scuuid/${scuuid}`
+  const mqttTopic = `${MQTT_TOPIC_ENV}/scican/sys/cmd/fnCreateThing/${serialNumber}/${scuuid}`
   const payLoadJSON = {
     'topic' : mqttTopic,
     'payload' : info

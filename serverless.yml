@@ -173,6 +173,8 @@ functions:
       POLICY_NAME: ${file(env.yml):SCICAN_COMPANY_NAME}-iot-policy-${self:provider.stage}
       SCUUID_TABLE_NAME: ${self:custom.SCUUID_TABLE_NAME}
       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
+      mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
+
     memorySize: 256
     iamRoleStatementsName: ${self:provider.stage}-${file(env.yml):SCICAN_COMPANY_NAME}-${self:custom.fnCreateThing}
     iamRoleStatements:
@@ -211,6 +213,8 @@ functions:
       POLICY_NAME: ${file(env.yml):CEFLA_COMPANY_NAME}-iot-policy-${self:provider.stage}
       SCUUID_TABLE_NAME: ${self:custom.SCUUID_TABLE_NAME}
       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
+      mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
+      
     memorySize: 256
     iamRoleStatementsName: ${self:provider.stage}-${file(env.yml):CEFLA_COMPANY_NAME}-${self:custom.fnCreateThing}
     iamRoleStatements:
@@ -321,7 +325,7 @@ functions:
     events:
       - iot:
           name: ${self:provider.stage}_${self:custom.fnTokenInsertMQTT}
-          sql: "SELECT *, topic() AS topic FROM 'scican/sys/cmd/fnCreateThing/#' "  
+          sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/sys/cmd/fnCreateThing/#' "  
     memorySize: 256
     # timeout: 6
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnTokenInsertMQTT}
@@ -433,7 +437,7 @@ functions:
       events:
         - iot:
             name: ${self:provider.stage}_${self:custom.fnBootFwStart}
-            sql: "SELECT *, topic() AS topic FROM 'P/MSSTER/+/CAN/RSP/boot_fw_start/#' "  
+            sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/MSSTER/+/CAN/RSP/boot_fw_start/#' "  
       memorySize: 256
       iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnBootFwStart}
       iamRoleStatements:
@@ -449,6 +453,7 @@ functions:
       environment:
         MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
         BUCKET_FIRMWARE: '${file(env.yml):BUCKET_FIRMWARE}${self:provider.stage}'
+        mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
   
   bootFwWrite:
       name: ${self:provider.stage}-${self:custom.fnBootFwWrite}
@@ -456,7 +461,7 @@ functions:
       events:
         - iot:
             name: ${self:provider.stage}_${self:custom.fnBootFwWrite}
-            sql: "SELECT *, topic() AS topic FROM 'P/MSSTER/+/CAN/RSP/boot_fw_write/#' "  
+            sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/MSSTER/+/CAN/RSP/boot_fw_write/#' "  
       memorySize: 256
       iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnBootFwWrite}
       iamRoleStatements:
@@ -472,6 +477,7 @@ functions:
       environment:
         MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
         BUCKET_FIRMWARE: '${file(env.yml):BUCKET_FIRMWARE}${self:provider.stage}'
+        mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
 
   bootFwStop:
     name: ${self:provider.stage}-${self:custom.fnBootFwStop}
@@ -479,7 +485,7 @@ functions:
     events:
       - iot:
           name: ${self:provider.stage}_${self:custom.fnBootFwStop}
-          sql: "SELECT *, topic() AS topic FROM 'P/MSSTER/+/CAN/RSP/boot_fw_stop/#' "  
+          sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/MSSTER/+/CAN/RSP/boot_fw_stop/#' "  
     memorySize: 256
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnBootFwStop}
     iamRoleStatements:
@@ -507,6 +513,7 @@ functions:
       rdsMySqlUsername: ${file(env.yml):rdsMySqlUsername-${self:provider.stage}}
       rdsMySqlPassword: ${file(env.yml):rdsMySqlPassword-${self:provider.stage}}
       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
+      mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
 
   bootFwStopPROCESS:
       name: ${self:provider.stage}-${self:custom.fnBootFwStopPROCESS}
@@ -514,7 +521,7 @@ functions:
       events:
         - iot:
             name: ${self:provider.stage}_${self:custom.fnBootFwStopPROCESS}
-            sql: "SELECT *, topic() AS topic FROM 'P/MSSTER/+/CAN/RSP/boot_fw_stop/PROCESS/#' "  
+            sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/MSSTER/+/CAN/RSP/boot_fw_stop/PROCESS/#' "  
       memorySize: 256
       iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnBootFwStopPROCESS}
       iamRoleStatements:
@@ -524,7 +531,7 @@ functions:
             Resource: '*'  
       environment:
         MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
-
+        mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
 
 resources:
   - ${file(resources/scuuid-resources.yml)}

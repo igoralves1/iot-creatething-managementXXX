@@ -86,10 +86,18 @@ async function tokenExists (token) {
 }
 
 module.exports.fnTokenInsertMQTT = async event => {
+
+
+    //? MQTT_TOPIC_ENV = P
+    //! This function is listening P/scican/sys/cmd/fnCreateThing/${serialNumber}/${scuuid} from fnCreateThing
+    
+    //? MQTT_TOPIC_ENV = D
+    //! This function is listening D/scican/sys/cmd/fnCreateThing/${serialNumber}/${scuuid} from fnCreateThing
+    
     const topic = event.topic
     const res = topic.split("/")
     const serialNumber = res[5]
-    const scuuid = res[7]
+    const scuuid = res[6]
 
     const sqlResult = await InsertToken(serialNumber, scuuid)
 

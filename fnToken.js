@@ -18,7 +18,7 @@ async function GetToken(serial_number, scuuid) {
     } catch (error) {
         return {
             success: false,
-            message: "Insert to Mysql Failure",
+            message: "SELECT from Mysql Failure",
             error: error
         }
     }
