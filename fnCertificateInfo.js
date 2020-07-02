@@ -19,7 +19,7 @@ module.exports.fnCertificateInfo = async (event, context, callback) => {
     };
 
     const { certificateDescription } = await describeCertPromise(params)  
-
+    // TODO - handle scenarios where certificate doesn't exists. For now if a provided certificate number doesn't exists we will get an error 'Internal error' as a response. Must handle this scenario.
     certInfo = {
         "status":certificateDescription.status,
         "expiration_date":certificateDescription.validity.notAfter

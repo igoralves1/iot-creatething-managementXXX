@@ -232,6 +232,7 @@ functions:
       Resource: '${self:custom.DYNAMO-ARN}/*'
 
   certificateinfo:
+    # TODO - handle scenarios where certificate doesn't exists. For now if a provided certificate number doesn't exists we will get an error 'Internal error' as a response. Must handle this scenario.
     name: ${self:provider.stage}-${self:custom.fnCertificateInfo}
     handler: fnCertificateInfo.fnCertificateInfo
     events:
