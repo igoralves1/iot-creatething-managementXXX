@@ -36,18 +36,18 @@ async function InsertIntoDB(serialNumber, status, pid) {
 
 module.exports.fnBootFwStop = async event => {
 
-    //! Test in MQTT - P/MSSTER/AAABBB/CAN/RSP/boot_fw_stop/PROCESS/1750_v1-7_1234567890
+    //! Test in MQTT - P/MSSTER/AAABBB/CAN/RSP/boot_fw_stop/PROCESS_1750_v1-7_1234567890
     
     const topic = event.topic
     const res = topic.split("/")
     const serialNumber = res[2]
-    const process = res[6]
 
-    const str_chunkNb_version_pid = res[7]
-    const arr_chunkNb_version_pid = str_chunkNb_version_pid.split("_")
-    const chunkNb = arr_chunkNb_version_pid[0]
-    const version = arr_chunkNb_version_pid[1]
-    const pid = arr_chunkNb_version_pid[2]
+    const str_process_chunkNb_version_pid = res[6]
+    const arr_process_chunkNb_version_pid = str_process_chunkNb_version_pid.split("_")
+    const process = arr_process_chunkNb_version_pid[0]
+    const chunkNb = arr_process_chunkNb_version_pid[1]
+    const version = arr_process_chunkNb_version_pid[2]
+    const pid = arr_process_chunkNb_version_pid[3]
     
     const sqlResult = await InsertIntoDB(serialNumber,1,pid);
     console.log("sqlResult", sqlResult)

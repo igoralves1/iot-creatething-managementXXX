@@ -521,7 +521,7 @@ functions:
       events:
         - iot:
             name: ${self:provider.stage}_${self:custom.fnBootFwStopPROCESS}
-            sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/MSSTER/+/CAN/RSP/boot_fw_stop/PROCESS/#' "  
+            sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/MSSTER/+/CAN/RSP/boot_fw_stop/#' "  
       memorySize: 256
       iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnBootFwStopPROCESS}
       iamRoleStatements:

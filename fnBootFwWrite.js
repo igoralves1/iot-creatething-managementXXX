@@ -27,10 +27,10 @@ let getObject = async (bucket, key) => {
 }
 
 async function updateFirmwareFail (serialNumber, process, chunkNb, version, pid, retval) {
-    let topic = `${MQTT_TOPIC_ENV}/MSSTER/${serialNumber}/CAN/CMD/return_code_fw_fail/${process}/${chunkNb}_${version}_${pid}`
+    let topic = `${MQTT_TOPIC_ENV}/MSSTER/${serialNumber}/CAN/CMD/return_code_fw_fail/${process}_${chunkNb}_${version}_${pid}`
 
     let response = {
-        "path" : `CAN/CMD/return_code_fw_fail/${process}/${chunkNb}_${version}_${pid}`,
+        "path" : `CAN/CMD/return_code_fw_fail/${process}_${chunkNb}_${version}_${pid}`,
         "retval": retval
     }
 
@@ -46,39 +46,48 @@ async function updateFirmwareFail (serialNumber, process, chunkNb, version, pid,
 
 module.exports.fnBootFwWrite = async event => {
 
+    // This function is trigged by the topic boot_fw_write/${process}_${chunkNb}_${version}_${pid}/1234567890 
+    // and replies into the topic boot_fw_write/${process}_${chunkNb+1}_${version}_${pid} 
+    // (NEXT CHUNK) if exists. If not (the chunkNb is the last one) it will reply into the topic
+    // boot_fw_stop/${process}_${chunkNb}_${version}_${pid}
+    
+    //* Current version v1-8-22
     //? MQTT_TOPIC_ENV = D
-    //! AWS IoT-Core Broker Tests - D/MSSTER/APBCDF/CAN/RSP/boot_fw_write/PROCESS/0_v1-7_1593442883
-    //! {"path": "CAN/RSP/boot_fw_write/PROCESS/0_v1-7_1234567890","retval": "0"}
-    //! AWS IoT-Core Broker Tests - D/MSSTER/APBCDF/CAN/RSP/boot_fw_write/CLOUD/0_v1-7_1234567890
-    //! {"path": "CAN/RSP/boot_fw_write/CLOUD/0_v1-7_1234567890","retval": "0"}
+    //! AWS IoT-Core Broker Tests - D/MSSTER/APBCDF/CAN/RSP/boot_fw_write/PROCESS_0_v1-8-22_1593442883
+    //! {"path": "CAN/RSP/boot_fw_write/PROCESS_0_v1-8-22_1234567890","retval": "0"}
+    //! AWS IoT-Core Broker Tests - D/MSSTER/APBCDF/CAN/RSP/boot_fw_write/CLOUD_0_v1-8-22_1234567890
+    //! {"path": "CAN/RSP/boot_fw_write/CLOUD_0_v1-8-22_1234567890","retval": "0"}
 
-    // ! Test last chunk CLOUD - D/MSSTER/ASDER/CAN/RSP/boot_fw_write/CLOUD/1764_v1-7_1593442883   => Should publish "path": "CAN/CMD/boot_fw_stop/CLOUD/1764_v1-7_1593442883"
-    //! {"path": "CAN/RSP/boot_fw_stop/CLOUD/1764_v1-7_1234567890","retval": "0"}
-    // ! Test last chunk PROCESS - D/MSSTER/ASDER/CAN/RSP/boot_fw_write/PROCESS/3515_v1-7_1234567890 => Should publish "path": "CAN/CMD/boot_fw_stop/PROCESS/3515_v1-7_1234567890"
-    //! {"path": "CAN/RSP/boot_fw_stop/PROCESS/3515_v1-7_1234567890","retval": "0"}
+    //* Must check the last chunk for each version
+    //* v1-7 last chunk (CLOUD-1764) and (PROCESS-3515)
+    //* v1-8-22 last chunk (CLOUD-1850) and (PROCESS-3539)
+    // ! Test last chunk CLOUD - D/MSSTER/ASDER/CAN/RSP/boot_fw_write/CLOUD_1850_v1-8-22_1593442883   => Should publish "path": "CAN/CMD/boot_fw_stop/CLOUD_1850_v1-8-22_1593442883"
+    //! {"path": "CAN/RSP/boot_fw_stop/CLOUD_1850_v1-8-22_1234567890","retval": "0"}
+    // ! Test last chunk PROCESS - D/MSSTER/ASDER/CAN/RSP/boot_fw_write/PROCESS_3539_v1-8-22_1234567890 => Should publish "path": "CAN/CMD/boot_fw_stop/PROCESS_3539_v1-8-22_1234567890"
+    //! {"path": "CAN/RSP/boot_fw_stop/PROCESS_3539_v1-8-22_1234567890","retval": "0"}
     
     //? MQTT_TOPIC_ENV = P
-    //! AWS IoT-Core Broker Tests - P/MSSTER/APBCDF/CAN/RSP/boot_fw_write/PROCESS/0_v1-7_1593442883
-    //! {"path": "CAN/RSP/boot_fw_write/PROCESS/0_v1-7_1234567890","retval": "0"}
-    //! AWS IoT-Core Broker Tests - P/MSSTER/APBCDF/CAN/RSP/boot_fw_write/CLOUD/0_v1-7_1234567890
-    //! {"path": "CAN/RSP/boot_fw_write/CLOUD/0_v1-7_1234567890","retval": "0"}
+    //! AWS IoT-Core Broker Tests - P/MSSTER/APBCDF/CAN/RSP/boot_fw_write/PROCESS_0_v1-8-22_1593442883
+    //! {"path": "CAN/RSP/boot_fw_write/PROCESS_0_v1-8-22_1234567890","retval": "0"}
+    //! AWS IoT-Core Broker Tests - P/MSSTER/APBCDF/CAN/RSP/boot_fw_write/CLOUD_0_v1-8-22_1234567890
+    //! {"path": "CAN/RSP/boot_fw_write/CLOUD_0_v1-8-22_1234567890","retval": "0"}
 
-    // ! Test last chunk CLOUD - P/MSSTER/ASDER/CAN/RSP/boot_fw_write/CLOUD/1764_v1-7_1593442883   => Should publish "path": "CAN/CMD/boot_fw_stop/CLOUD/1764_v1-7_1593442883"
-    //! {"path": "CAN/RSP/boot_fw_stop/CLOUD/1764_v1-7_1234567890","retval": "0"}
-    // ! Test last chunk PROCESS - P/MSSTER/ASDER/CAN/RSP/boot_fw_write/PROCESS/3515_v1-7_1234567890 => Should publish "path": "CAN/CMD/boot_fw_stop/PROCESS/3515_v1-7_1234567890"
-    //! {"path": "CAN/RSP/boot_fw_stop/PROCESS/3515_v1-7_1234567890","retval": "0"}
+    // ! Test last chunk CLOUD - P/MSSTER/ASDER/CAN/RSP/boot_fw_write/CLOUD_1850_v1-8-22_1593442883   => Should publish "path": "CAN/CMD/boot_fw_stop/CLOUD_1850_v1-8-22_1593442883"
+    //! {"path": "CAN/RSP/boot_fw_stop/CLOUD_1850_v1-8-22_1234567890","retval": "0"}
+    // ! Test last chunk PROCESS - P/MSSTER/ASDER/CAN/RSP/boot_fw_write/PROCESS_3539_v1-8-22_1234567890 => Should publish "path": "CAN/CMD/boot_fw_stop/PROCESS_3539_v1-8-22_1234567890"
+    //! {"path": "CAN/RSP/boot_fw_stop/PROCESS_3539_v1-8-22_1234567890","retval": "0"}
     
     const retval = event.retval
     const topic = event.topic
     const res = topic.split("/")
     const serialNumber = res[2]
-    const process = res[6]
-
-    const str_chunkNb_version_pid = res[7]
-    const arr_chunkNb_version_pid = str_chunkNb_version_pid.split("_")
-    const chunkNb = arr_chunkNb_version_pid[0]
-    const version = arr_chunkNb_version_pid[1]
-    const pid = arr_chunkNb_version_pid[2]
+    
+    const str_process_chunkNb_version_pid = res[6]
+    const arr_process_chunkNb_version_pid = str_process_chunkNb_version_pid.split("_")
+    const process = arr_process_chunkNb_version_pid[0]
+    const chunkNb = arr_process_chunkNb_version_pid[1]
+    const version = arr_process_chunkNb_version_pid[2]
+    const pid = arr_process_chunkNb_version_pid[3]
 
     if (retval === "0") {    
         let nextChunk = parseInt(chunkNb) + 1
@@ -88,13 +97,13 @@ module.exports.fnBootFwWrite = async event => {
         
 
         if (typeof chunk == 'undefined') {
-            publishTopic = `${MQTT_TOPIC_ENV}/MSSTER/${serialNumber}/CAN/CMD/boot_fw_stop/${process}/${chunkNb}_${version}_${pid}`
-            chunk = JSON.stringify({"path" : `CAN/CMD/boot_fw_stop/${process}/${chunkNb}_${version}_${pid}`})
+            publishTopic = `${MQTT_TOPIC_ENV}/MSSTER/${serialNumber}/CAN/CMD/boot_fw_stop/${process}_${chunkNb}_${version}_${pid}`
+            chunk = JSON.stringify({"path" : `CAN/CMD/boot_fw_stop/${process}_${chunkNb}_${version}_${pid}`})
         } else {
-            publishTopic = `${MQTT_TOPIC_ENV}/MSSTER/${serialNumber}/CAN/CMD/boot_fw_write/${process}/${nextChunk}_${version}_${pid}`
+            publishTopic = `${MQTT_TOPIC_ENV}/MSSTER/${serialNumber}/CAN/CMD/boot_fw_write/${process}_${nextChunk}_${version}_${pid}`
             let bodyJson = JSON.parse(chunk)
             console.log("bodyJson", bodyJson)
-            bodyJson.path = `CAN/CMD/boot_fw_write/${process}/${nextChunk}_${version}_${pid}`
+            bodyJson.path = `CAN/CMD/boot_fw_write/${process}_${nextChunk}_${version}_${pid}`
             chunk = JSON.stringify(bodyJson)
             console.log("chunk", chunk)
         }

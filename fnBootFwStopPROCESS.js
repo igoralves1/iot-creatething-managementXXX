@@ -31,42 +31,77 @@ async function updateFirmwareFail (serialNumber, process, chunkNb, version, pid,
 
 module.exports.fnBootFwStopPROCESS = async event => {
 
+    //* Must check the last chunk for each version
+    //* v1-8-22 last chunk (CLOUD-1850) and (PROCESS-3539)
+
     //? MQTT_TOPIC_ENV = D
-    //! Test in MQTT - D/MSSTER/AAABBB/CAN/RSP/boot_fw_stop/PROCESS/3515_v1-7_1234567890
-    //! {"path": "CAN/RSP/boot_fw_stop/PROCESS/3515_v1-7_1234567890","retval": "0"}
+    //! Test in MQTT - D/MSSTER/AAABBB/CAN/RSP/boot_fw_stop/PROCESS_3539_v1-8-22_1234567890
+    //! {"path": "CAN/RSP/boot_fw_stop/PROCESS_3539_v1-8-22_1234567890","retval": "0"}
     
     //? MQTT_TOPIC_ENV = P
-    //! Test in MQTT - P/MSSTER/AAABBB/CAN/RSP/boot_fw_stop/PROCESS/3515_v1-7_1234567890
-    //! {"path": "CAN/RSP/boot_fw_stop/PROCESS/3515_v1-7_1234567890","retval": "0"}
+    //! Test in MQTT - P/MSSTER/AAABBB/CAN/RSP/boot_fw_stop/PROCESS_3539_v1-8-22_1234567890
+    //! {"path": "CAN/RSP/boot_fw_stop/PROCESS_3539_v1-8-22_1234567890","retval": "0"}
     
     
     const retval = event.retval
     const topic = event.topic
     const res = topic.split("/")
     const serialNumber = res[2]
-    const process = res[6]
-    const str_chunkNb_version_pid = res[7]
-    const arr_chunkNb_version_pid = str_chunkNb_version_pid.split("_")
-    const chunkNb = arr_chunkNb_version_pid[0]
-    const version = arr_chunkNb_version_pid[1]
-    const pid = arr_chunkNb_version_pid[2]
-    
+
+    const str_process_chunkNb_version_pid = res[6]
+    const arr_process_chunkNb_version_pid = str_process_chunkNb_version_pid.split("_")
+    const process = arr_process_chunkNb_version_pid[0]
+    const chunkNb = arr_process_chunkNb_version_pid[1]
+    const version = arr_process_chunkNb_version_pid[2]
+    const pid = arr_process_chunkNb_version_pid[3]
+
     if (retval === "0") {
-        await sleep(600000)
 
-        let response = {
-            "path":`CAN/CMD/boot_fw_start/CLOUD/0_${version}_${pid}`,
-            "data":{
-                "node":"CLOUD"
+        if (process === 'PROCESS') {
+
+            let response = {
+                "path":`CAN/CMD/boot_fw_start/CLOUD_FWUP_START_${version}_${pid}`,
+                "data":{
+                    "node":"CLOUD"
+                }
             }
-        }
 
-        let params = {
-        topic: `${MQTT_TOPIC_ENV}/MSSTER/${serialNumber}/CAN/CMD/boot_fw_start/CLOUD/0_${version}_${pid}`,
-        payload: JSON.stringify(response),
-        qos: '0'
-        };
-        await publishMqtt(params)
+            let params = {
+                topic: `${MQTT_TOPIC_ENV}/SCICANSYS/${serialNumber}/CAN/CMD/boot_fw_start/CLOUD_FWUP_0_${version}_${pid}`,
+                payload: JSON.stringify(response),
+                qos: '0'
+            };
+
+            await publishMqtt(params)
+
+            await sleep(600000)
+
+            response = {
+                "path":`CAN/CMD/boot_fw_start/CLOUD_0_${version}_${pid}`,
+                "data":{
+                    "node":"CLOUD"
+                }
+            }
+
+            params = {
+            topic: `${MQTT_TOPIC_ENV}/MSSTER/${serialNumber}/CAN/CMD/boot_fw_start/CLOUD_0_${version}_${pid}`,
+            payload: JSON.stringify(response),
+            qos: '0'
+            };
+            await publishMqtt(params)
+        }
+        if (process === 'CLOUD') {
+
+            let response = {
+                "info":`${MQTT_TOPIC_ENV}/SCICANSYS/${serialNumber}/CAN/CMD/boot_fw_start/CLOUD_FWUP_FINISHED_${version}_${pid}`
+            }
+
+            let params = {
+                topic: `${MQTT_TOPIC_ENV}/SCICANSYS/${serialNumber}/CAN/CMD/boot_fw_start/CLOUD_FWUP_FINISHED_${version}_${pid}`,
+                payload: JSON.stringify(response),
+                qos: '0'
+            };
+        }    
     }else {
         //TODO if retval === "16 " => user denied. Save in RDS
         //TODO if retval === "14 " => user did not see the message.
