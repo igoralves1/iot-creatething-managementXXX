@@ -74,7 +74,27 @@ module.exports.fnBootFwStopPROCESS = async event => {
 
             await publishMqtt(params)
 
-            await sleep(600000)
+            await sleep(300000)
+
+            //? MQTT_TOPIC_ENV = D
+            //! Test in MQTT - D/P/MSSTER/AJAPA001/CAN/CMD/boot_fw_start/CLOUD_0_v1-8-22_1234567890
+            //! {"path":"CAN/CMD/boot_fw_start/CLOUD_0_v1-8-22_1234567890","data":{"node":"CLOUD"}}
+            
+            //? MQTT_TOPIC_ENV = P
+            //! Test in MQTT - P/MSSTER/AJAPA001/CAN/CMD/boot_fw_start/CLOUD_0_v1-8-22_1234567890
+            //! {"path":"CAN/CMD/boot_fw_start/CLOUD_0_v1-8-22_1234567890","data":{"node":"CLOUD"}}
+            
+            /*
+            Then the machine will publish te follow topic:
+            P/MSSTER/AJAPA001/CAN/RSP/boot_fw_start/CLOUD_0_v1-8-22_1234567890/123456789
+            {
+                "path": "CAN/RSP/boot_fw_start/CLOUD_0_v1-8-22_1234567890/123456789",
+                "sn": "AJAPA001",
+                "retval": "0"
+            }
+
+            This topic will trigger the fnBootFwStart Lambda process for CLOUD FW UPDATE
+            */
 
             response = {
                 "path":`CAN/CMD/boot_fw_start/CLOUD_0_${version}_${pid}`,

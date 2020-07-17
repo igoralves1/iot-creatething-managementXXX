@@ -379,8 +379,8 @@ functions:
     events:
       - iot:
           name: ${self:provider.stage}_${self:custom.fnCron}
-          sql: "SELECT *, topic() AS topic FROM 'testfnCron/#' "
-      # - schedule: cron(0/1 * * * ? *)
+          sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/testfnCron/#' "
+      #- schedule: cron(0/1 * * * ? *)
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnCron}
     iamRoleStatements:
       - Effect: "Allow"
@@ -523,6 +523,7 @@ functions:
             name: ${self:provider.stage}_${self:custom.fnBootFwStopPROCESS}
             sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/MSSTER/+/CAN/RSP/boot_fw_stop/#' "  
       memorySize: 256
+      timeout: 600
       iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnBootFwStopPROCESS}
       iamRoleStatements:
           - Effect: "Allow"
