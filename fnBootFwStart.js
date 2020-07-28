@@ -46,6 +46,18 @@ module.exports.fnBootFwStart = async event => {
 
     /*
 
+    Machine 1: (WiFi)
+    Ref-7A620000
+    S#-AJAPA001
+    
+    Machine 2: (Ethernet)
+    Ref-7A621000
+    S#-AJBPA004
+    
+    Machine 3: (WiFi)
+    Ref-7A622000
+    S#: AJCPA009
+
     Version: 1-8-22
     7A620000;Bravo G4 17;AJA;2;5;1;17;230;1000;2300;50;2000;1700;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;1171201483
     7A620020;Bravo G4 17;AJA;2;5;1;17;230;1000;2300;60;2000;1700;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;1393637756
@@ -55,14 +67,14 @@ module.exports.fnBootFwStart = async event => {
     7A622020;Bravo G4 28;AJC;2;5;1;28;230;1000;2300;60;2000;2300;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;272477946
 
     This is the first topic sent by the front-end
-    P/MSSTER/AJAPA001/CAN/CMD/boot_fw_start/PROCESS_0_v1-8-22_1234567890
-    {
-        "path" : "CAN/CMD/boot_fw_start/PROCESS_0_v1-8-22_1234567890",
-        "data" : {
-            "node" : "PROCESS",
-            "config": "ref=7A620000;Bravo G4 17;AJA;2;5;1;17;230;1000;2300;50;2000;1700;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;1171201483"
-        }
+    P/MSSTER/AJCPA009/CAN/CMD/boot_fw_start/PROCESS_0_v1-8-22_1234567890
+{
+    "path" : "CAN/CMD/boot_fw_start/PROCESS_0_v1-8-22_1234567890",
+    "data" : {
+        "node" : "PROCESS",
+        "config": "ref=7A622000;Bravo G4 28;AJC;2;5;1;28;230;1000;2300;50;2000;2300;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;115575373"
     }
+}
     Then a window will popup in the machine -> press yes ->
 
     Then the machine will publish te follow topic:

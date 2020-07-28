@@ -74,14 +74,14 @@ module.exports.fnBootFwStopPROCESS = async event => {
 
             await publishMqtt(params)
 
-            await sleep(300000)
+            await sleep(300000)//5 min
 
             //? MQTT_TOPIC_ENV = D
-            //! Test in MQTT - D/P/MSSTER/AJAPA001/CAN/CMD/boot_fw_start/CLOUD_0_v1-8-22_1234567890
+            //! Test in MQTT - D/P/MSSTER/AJAPA004/CAN/CMD/boot_fw_start/CLOUD_0_v1-8-22_1234567890
             //! {"path":"CAN/CMD/boot_fw_start/CLOUD_0_v1-8-22_1234567890","data":{"node":"CLOUD"}}
             
             //? MQTT_TOPIC_ENV = P
-            //! Test in MQTT - P/MSSTER/AJAPA001/CAN/CMD/boot_fw_start/CLOUD_0_v1-8-22_1234567890
+            //! Test in MQTT - P/MSSTER/AJAPA004/CAN/CMD/boot_fw_start/CLOUD_0_v1-8-22_1234567890
             //! {"path":"CAN/CMD/boot_fw_start/CLOUD_0_v1-8-22_1234567890","data":{"node":"CLOUD"}}
             
             /*
@@ -94,6 +94,24 @@ module.exports.fnBootFwStopPROCESS = async event => {
             }
 
             This topic will trigger the fnBootFwStart Lambda process for CLOUD FW UPDATE
+            */
+
+
+            /*
+            Forcing a independent process
+
+            P/MSSTER/AJAPA001/CAN/CMD/boot_fw_start/CLOUD_0_v1-8-22_1234567890
+            {"path":"CAN/CMD/boot_fw_start/CLOUD_0_v1-8-22_1234567890","data":{"node":"CLOUD"}}
+            
+
+            P/MSSTER/AJCPA009/CAN/CMD/CONFIG_MACHINE
+{
+    "path" : "CAN/CMD/CONFIG_MACHINE",
+    "data" : {}
+}
+            
+            
+            
             */
 
             response = {
@@ -113,11 +131,11 @@ module.exports.fnBootFwStopPROCESS = async event => {
         if (process === 'CLOUD') {
 
             let response = {
-                "info":`${MQTT_TOPIC_ENV}/SCICANSYS/${serialNumber}/CAN/CMD/boot_fw_start/CLOUD_FWUP_FINISHED_${version}_${pid}`
+                "info":`${MQTT_TOPIC_ENV}/SCICANSYS/${serialNumber}/CAN/CMD/boot_fw_update/CLOUD_FWUP_FINISHED_${version}_${pid}`
             }
 
             let params = {
-                topic: `${MQTT_TOPIC_ENV}/SCICANSYS/${serialNumber}/CAN/CMD/boot_fw_start/CLOUD_FWUP_FINISHED_${version}_${pid}`,
+                topic: `${MQTT_TOPIC_ENV}/SCICANSYS/${serialNumber}/CAN/CMD/boot_fw_update/CLOUD_FWUP_FINISHED_${version}_${pid}`,
                 payload: JSON.stringify(response),
                 qos: '0'
             };
