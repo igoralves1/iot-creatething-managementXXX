@@ -74,7 +74,7 @@ module.exports.fnCron = async event => {
       
       let params = {
           topic: `${MQTT_TOPIC_ENV}/MSSTER/${serialNumber}/CLOUD/CMD/upload_cycles/1234`,
-          payload: JSON.stringify({}),
+          payload: JSON.stringify(response),
           qos: '0'
       };
       await publishMqtt(params)
