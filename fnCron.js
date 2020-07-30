@@ -26,7 +26,7 @@ async function missingCycles (array) {
   }
 }
 
-module.exports.fnCron = async (event, context, callback) => {
+module.exports.fnCron = async event => {
   try {
     /*
       This lambda will run every day at 00:00:00.
@@ -55,15 +55,25 @@ module.exports.fnCron = async (event, context, callback) => {
       //For each serialNumber
       serialNumber = i ....
 
+      //If you need 1 cicle, Cycle summary #1
       let response = {
-        "path":`CAN/EVN/CYCLE_SUMMARY/`,
+        "path":`CLOUD/CMD/upload_cycles`,
         "data":{
-            "":""
+          "start": "1"
         }
       }
-    
+
+      //If you need more than 1 cicle, Cycle summary #1,#2,#3
+      let response = {
+        "path":`CLOUD/CMD/upload_cycles`,
+        "data":{
+          "start": "1", 
+          "count": "2"
+        }
+      }
+      
       let params = {
-          topic: `${MQTT_TOPIC_ENV}/MSSTER/${serialNumber}/CAN/EVN/CYCLE_SUMMARY/`,
+          topic: `${MQTT_TOPIC_ENV}/MSSTER/${serialNumber}/CLOUD/CMD/upload_cycles/1234`,
           payload: JSON.stringify({}),
           qos: '0'
       };
