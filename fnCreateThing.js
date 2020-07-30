@@ -83,6 +83,23 @@ async function to2Digits (jsDt) {
   else return "0" + jsDt
 }
 
+/*
+How to test this lambda process:
+1 - Go to POSTMAN and run the API endpoint iot-devig1.scicanapi.com/thing/cefla/ OR iot-devig1.scicanapi.com/thing/scican/ OR 
+    1.1 - Use x-api-key = S5FADNS4yb1epFEThjO19fzywX6X3jy2NlFN6PCg (devig1-Cefla)
+    1.2 - Use the follow JSON in the POST body
+    {  
+      "serialNumber":"ALXB08",
+      "privateKey":"cf@6zZDNjY27C^zn91zci#7xRlslxw7Pt!hnOTHS*HzUBVaAETzD7"(devig1-Cefla),
+      "macAddress":"zzz"
+    }
+2 - On success we should receive back the certificatePem, privateKey, scuuid.
+3 - On success we should have in DynamoDB (devig1-iot-scUUID) / (iot-scUUID) PROD the serialNumber-certificateId of the created thing
+4 - On success we should have in RDS (SELECT * FROM scican.online_access_tokens order by idonline_access_tokens desc;) the unique created TOKEN for the created thing 
+*/
+
+
+
 module.exports.fnCreateThing = async (event, context, callback) => {
   const dt = new Date()
   const YYYY = dt.getFullYear()

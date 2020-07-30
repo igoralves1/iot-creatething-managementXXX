@@ -27,7 +27,7 @@ let getObject = async (bucket, key) => {
 }
 
 async function updateFirmwareFail (serialNumber, process, chunkNb, version, pid, retval) {
-    let topic = `${MQTT_TOPIC_ENV}/MSSTER/${serialNumber}/CAN/CMD/return_code_fw_fail/${process}_${chunkNb}_${version}_${pid}`
+    let topic = `${MQTT_TOPIC_ENV}/SCICANSYS/${serialNumber}/CAN/CMD/return_code_fw_fail/${process}_${chunkNb}_${version}_${pid}`
 
     let response = {
         "path" : `CAN/CMD/return_code_fw_fail/${process}_${chunkNb}_${version}_${pid}`,
