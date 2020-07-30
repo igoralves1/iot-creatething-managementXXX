@@ -100,7 +100,7 @@ module.exports.fnBootFwStopPROCESS = async event => {
             /*
             Forcing a independent process
 
-            P/MSSTER/AJAPA001/CAN/CMD/boot_fw_start/CLOUD_0_v1-8-22_1234567890
+            P/MSSTER/AJC00067/CAN/CMD/boot_fw_start/CLOUD_0_v1-8-22_1234567890
             {"path":"CAN/CMD/boot_fw_start/CLOUD_0_v1-8-22_1234567890","data":{"node":"CLOUD"}}
             
 
@@ -139,6 +139,8 @@ module.exports.fnBootFwStopPROCESS = async event => {
                 payload: JSON.stringify(response),
                 qos: '0'
             };
+
+            await publishMqtt(params)
         }    
     }else {
         //TODO if retval === "16 " => user denied. Save in RDS
