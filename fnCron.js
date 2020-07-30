@@ -49,9 +49,9 @@ module.exports.fnCron = async event => {
     const sql = `SELECT xxx FROM xxx WHERE xxx='${xxx}' AND xxx='${xxx}' AND is_active=1`
     const sqlResult = await pool.query(sql)
     
-    let serialNumber = 0
+    let serialNumberArr = sqlResult
 
-    array.forEach(element => {
+    array.forEach(serialNumberArr => {
       //For each serialNumber
       serialNumber = i ....
 
