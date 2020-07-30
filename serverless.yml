@@ -376,9 +376,9 @@ functions:
     name: ${self:provider.stage}-${self:custom.fnCron}
     handler: fnCron.fnCron
     events:
-      - iot:
-          name: ${self:provider.stage}_${self:custom.fnCron}
-          sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/testfnCron/#' "
+      # - iot:
+      #     name: ${self:provider.stage}_${self:custom.fnCron}
+      #     sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/testfnCron/#' "
       - schedule: cron(0 0 * * ? *)
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnCron}
     iamRoleStatements:
