@@ -2,6 +2,7 @@
 const mysql = require('mysql2/promise')
 const AWS = require('aws-sdk')
 var iotdata = new AWS.IotData({endpoint: process.env.MQTT_ENDPOINT})
+const MQTT_TOPIC_ENV = process.env.mqttTopicEnv
 
 const publishMqtt = (params) =>
   new Promise((resolve, reject) =>
@@ -14,6 +15,16 @@ const publishMqtt = (params) =>
 // https://www.serverless.com/framework/docs/providers/aws/events/schedule/
 // https://docs.aws.amazon.com/AmazonCloudWatch/latest/events/ScheduledEvents.html
 // cron(0/1 * * * ? *) Each 1 min
+
+
+async function missingCycles (array) {
+  try {
+      //Write your logic
+      return token
+  } catch (error) {
+      return error
+  }
+}
 
 module.exports.fnCron = async (event, context, callback) => {
   try {
@@ -37,14 +48,29 @@ module.exports.fnCron = async (event, context, callback) => {
 
     const sql = `SELECT xxx FROM xxx WHERE xxx='${xxx}' AND xxx='${xxx}' AND is_active=1`
     const sqlResult = await pool.query(sql)
-    return sqlResult
+    
 
-  // let params = {
-  //   topic: `fnLambdaCron/today`,
-  //   payload: JSON.stringify({"attr":"cron"}),
-  //   qos: '0'
-  // };
-  // await publishMqtt(params)
+    let serialNumber = 0
+    
+    array.forEach(element => {
+      //For each serialNumber
+      serialNumber = i ....
+
+      let response = {
+        "path":`CAN/EVN/CYCLE_SUMMARY/`,
+        "data":{
+            "":""
+        }
+      }
+    
+      let params = {
+          topic: `${MQTT_TOPIC_ENV}/MSSTER/${serialNumber}/CAN/EVN/CYCLE_SUMMARY/`,
+          payload: JSON.stringify({}),
+          qos: '0'
+      };
+      await publishMqtt(params)
+    });
+    
 
     } catch (error) {
         return {

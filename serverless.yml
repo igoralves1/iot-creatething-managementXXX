@@ -405,7 +405,8 @@ functions:
       rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
       rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
       rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}  
-      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'   
+      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
+      mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}   
     memorySize: 256
     timeout: 600
 
