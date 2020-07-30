@@ -382,11 +382,29 @@ functions:
       - schedule: cron(0 0 * * ? *)
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnCron}
     iamRoleStatements:
-      - Effect: "Allow"
-        Action:
-          - "iot:*"
-        Resource: '*' 
-    environment:    
+        - Effect: 'Allow'
+          Action:
+          - 'rds:*'
+          Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
+        - Effect: 'Allow'
+          Action:
+          - 'logs:CreateLogGroup'
+          - 'logs:CreateLogStream'
+          - 'logs:PutLogEvents'
+          - 'ec2:CreateNetworkInterface'
+          - 'ec2:DescribeNetworkInterfaces'
+          - 'ec2:DeleteNetworkInterfaces'
+          Resource: "*"
+        - Effect: "Allow"
+          Action:
+            - "iot:*"
+          Resource: '*'
+    vpc: ${file(env.yml):vpc-${self:provider.stage}}
+    environment:  
+      rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
+      rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
+      rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
+      rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}  
       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'   
     memorySize: 256
     timeout: 600
