@@ -20,7 +20,7 @@ const publishMqtt = (params) =>
 async function missingCycles (array) {
   try {
       //Write your logic
-      return token
+      return ""
   } catch (error) {
       return error
   }
@@ -39,46 +39,46 @@ module.exports.fnCron = async event => {
 
       Note: if we have the issue with RDS and MQTT broker, lets use HTTP endpoint in order to publish what we need in the broker.
     */
-    const pool = mysql.createPool({
-        host     : process.env.rdsMySqlHost,
-        user     : process.env.rdsMySqlUsername,
-        password : process.env.rdsMySqlPassword,
-        database : process.env.rdsMySqlDb
-    })
+    // const pool = mysql.createPool({
+    //     host     : process.env.rdsMySqlHost,
+    //     user     : process.env.rdsMySqlUsername,
+    //     password : process.env.rdsMySqlPassword,
+    //     database : process.env.rdsMySqlDb
+    // })
 
-    const sql = `SELECT xxx FROM xxx WHERE xxx='${xxx}' AND xxx='${xxx}' AND is_active=1`
-    const sqlResult = await pool.query(sql)
+    // const sql = `SELECT xxx FROM xxx WHERE xxx='${xxx}' AND xxx='${xxx}' AND is_active=1`
+    // const sqlResult = await pool.query(sql)
     
-    let serialNumberArr = sqlResult
+    // let serialNumberArr = sqlResult
 
-    array.forEach(serialNumberArr => {
+    // array.forEach(serialNumberArr => {
       //For each serialNumber
-      serialNumber = i ....
+      //serialNumber = i ....
 
       //If you need 1 cicle, Cycle summary #1
       let response = {
-        "path":`CLOUD/CMD/upload_cycles`,
+        "path":`upload_cycles/1234`,
         "data":{
           "start": "1"
         }
       }
 
       //If you need more than 1 cicle, Cycle summary #1,#2,#3
-      let response = {
-        "path":`CLOUD/CMD/upload_cycles`,
-        "data":{
-          "start": "1", 
-          "count": "2"
-        }
-      }
+      // let response = {
+      //   "path":`CLOUD/CMD/upload_cycles`,
+      //   "data":{
+      //     "start": "1", 
+      //     "count": "2"
+      //   }
+      // }
       
       let params = {
-          topic: `${MQTT_TOPIC_ENV}/MSSTER/${serialNumber}/CLOUD/CMD/upload_cycles/1234`,
+          topic: `${MQTT_TOPIC_ENV}/SCICANSYS/upload_cycles/1234`,
           payload: JSON.stringify(response),
           qos: '0'
       };
       await publishMqtt(params)
-    });
+    // });
     
 
     } catch (error) {

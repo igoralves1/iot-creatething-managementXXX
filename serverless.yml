@@ -22,6 +22,8 @@ custom:
   fnBootFwWrite: 'bootFwWrite'
   fnBootFwStop: 'bootFwStop'
   fnBootFwStopPROCESS: 'bootFwStopPROCESS'
+  fnBootFwStopBridge: 'bootFwStopBridge'
+  fnBootFwStopCLOUD: 'bootFwStopCLOUD'
   fnRequestMachineInfo: 'requestMachineInfo'
 
   BUCKET_NAME: 'iot-things-certificates'
@@ -379,7 +381,7 @@ functions:
       # - iot:
       #     name: ${self:provider.stage}_${self:custom.fnCron}
       #     sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/testfnCron/#' "
-      - schedule: cron(0 0 * * ? *)
+      # - schedule: cron(0/1 * * * ? *)
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnCron}
     iamRoleStatements:
         - Effect: 'Allow'
@@ -533,16 +535,54 @@ functions:
       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
       mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
 
-  bootFwStopPROCESS:
-      name: ${self:provider.stage}-${self:custom.fnBootFwStopPROCESS}
-      handler: fnBootFwStopPROCESS.fnBootFwStopPROCESS
+  # bootFwStopPROCESS:
+  #     name: ${self:provider.stage}-${self:custom.fnBootFwStopPROCESS}
+  #     handler: fnBootFwStopPROCESS.fnBootFwStopPROCESS
+  #     events:
+  #       - iot:
+  #           name: ${self:provider.stage}_${self:custom.fnBootFwStopPROCESS}
+  #           sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/MSSTER/+/CAN/RSP/boot_fw_stop/#' "  
+  #     memorySize: 256
+  #     timeout: 600
+  #     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnBootFwStopPROCESS}
+  #     iamRoleStatements:
+  #         - Effect: "Allow"
+  #           Action:
+  #             - "iot:*"
+  #           Resource: '*'  
+  #     environment:
+  #       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
+  #       mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
+
+  # bootFwStopCLOUD:
+  #     name: ${self:provider.stage}-${self:custom.fnBootFwStopCLOUD}
+  #     handler: fnBootFwStopCLOUD.fnBootFwStopCLOUD
+  #     events:
+  #       - iot:
+  #           name: ${self:provider.stage}_${self:custom.fnBootFwStopCLOUD}
+  #           # sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/MSSTER/+/CAN/RSP/boot_fw_stop/#' "  
+  #     memorySize: 256
+  #     timeout: 600
+  #     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnBootFwStopCLOUD}
+  #     iamRoleStatements:
+  #         - Effect: "Allow"
+  #           Action:
+  #             - "iot:*"
+  #           Resource: '*'  
+  #     environment:
+  #       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
+  #       mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
+
+  bootFwStopBridge:
+      name: ${self:provider.stage}-${self:custom.fnBootFwStopBridge}
+      handler: fnBootFwStopBridge.fnBootFwStopBridge
       events:
         - iot:
-            name: ${self:provider.stage}_${self:custom.fnBootFwStopPROCESS}
+            name: ${self:provider.stage}_${self:custom.fnBootFwStopBridge}
             sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/MSSTER/+/CAN/RSP/boot_fw_stop/#' "  
       memorySize: 256
       timeout: 600
-      iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnBootFwStopPROCESS}
+      iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnBootFwStopBridge}
       iamRoleStatements:
           - Effect: "Allow"
             Action:

@@ -58,6 +58,21 @@ module.exports.fnBootFwStart = async event => {
     Ref-7A622000
     S#: AJCPA009
 
+    Version: v1-8-32
+    CLOUD   - 1850
+    PROCESS - 3539
+
+    7A620000;Bravo G4 17;AJA;2;5;1;17;230;1000;2300;50;2000;1700;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;1171201483
+    7A620020;Bravo G4 17;AJA;2;5;1;17;230;1000;2300;60;2000;1700;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;1393637756
+    7A621000;Bravo G4 22;AJB;2;5;1;22;230;1000;2300;50;2000;2000;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;3115282210
+    7A621020;Bravo G4 22;AJB;2;5;1;22;230;1000;2300;60;2000;2000;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;2943437717
+    7A622000;Bravo G4 28;AJC;2;5;1;28;230;1000;2300;50;2000;2300;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;115575373
+    7A622020;Bravo G4 28;AJC;2;5;1;28;230;1000;2300;60;2000;2300;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;272477946
+
+
+
+
+    ? PROCESS UPDATE
     Version: 1-8-22
     7A620000;Bravo G4 17;AJA;2;5;1;17;230;1000;2300;50;2000;1700;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;1171201483
     7A620020;Bravo G4 17;AJA;2;5;1;17;230;1000;2300;60;2000;1700;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;1393637756
@@ -66,17 +81,16 @@ module.exports.fnBootFwStart = async event => {
     7A622000;Bravo G4 28;AJC;2;5;1;28;230;1000;2300;50;2000;2300;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;115575373
     7A622020;Bravo G4 28;AJC;2;5;1;28;230;1000;2300;60;2000;2300;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;272477946
 
-    This is the first topic sent by the front-end
-    P/MSSTER/AJCPA009/CAN/CMD/boot_fw_start/PROCESS_0_v1-8-22_1234567890
+    This is the first topic sent by the front-end for the PROCESS update
+    P/MSSTER/AJAPA001/CAN/CMD/boot_fw_start/PROCESS_0_v1-8-32_1234567890
 {
-    "path" : "CAN/CMD/boot_fw_start/PROCESS_0_v1-8-22_1234567890",
+    "path" : "CAN/CMD/boot_fw_start/PROCESS_0_v1-8-32_1234567890",
     "data" : {
         "node" : "PROCESS",
-        "config": "ref=7A622000;Bravo G4 28;AJC;2;5;1;28;230;1000;2300;50;2000;2300;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;115575373"
+        "config": "ref=7A620000;Bravo G4 17;AJA;2;5;1;17;230;1000;2300;50;2000;1700;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;1171201483"
     }
 }
     Then a window will popup in the machine -> press yes ->
-
     Then the machine will publish te follow topic:
     P/MSSTER/AJAPA001/CAN/RSP/boot_fw_start/PROCESS_0_v1-8-22_1234567890/123456789
     {
@@ -84,6 +98,25 @@ module.exports.fnBootFwStart = async event => {
         "sn": "AJAPA001",
         "retval": "0"
     }
+
+    ? CLOUD UPDATE
+    This is the first topic sent by the front-end for the CLOUD update
+    P/MSSTER/AJAPA001/CAN/CMD/boot_fw_start/CLOUD_0_v1-8-32_1234567890
+{
+    "path" : "CAN/CMD/boot_fw_start/CLOUD_0_v1-8-32_1234567890",
+    "data" : {
+        "node" : "CLOUD"
+    }
+}
+
+    Then the machine will publish te follow topic:
+    P/MSSTER/AJAPA001/CAN/RSP/boot_fw_start/PROCESS_0_v1-8-22_1234567890/123456789
+{
+    "path": "CAN/RSP/boot_fw_start/CLOUD_0_v1-8-22_1234567890/123456789",
+    "sn": "AJAPA001",
+    "retval": "0"
+}
+
     */
 
     //! Check with Leonardo - The front-end and the machine will never trigger MQTT_TOPIC_ENV = D

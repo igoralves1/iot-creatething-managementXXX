@@ -83,6 +83,44 @@ async function to2Digits (jsDt) {
   else return "0" + jsDt
 }
 
+async function publishSCICANSYSMachineConfig (serialNumber) {
+  try {
+    let response = {
+      "path":"CAN/CMD/get_config_machine",
+      "data":{}
+    }
+    
+    let params = {
+      topic: `${MQTT_TOPIC_ENV}/MSSTER/${serialNumber}/CAN/CMD/get_config_machine/SCICANSYS/1234`,
+      payload: JSON.stringify(response),
+      qos: '0'
+    };
+    console.log('params', params)
+    await publishMqtt(params)
+  } catch (e) {
+    throw new Error(`publishSCICANSYSMachineConfig -> Could not publish in MQTT: ${e.message}`)
+  }
+}
+
+async function publishSCICANSYSfnCreateThing (MQTT_TOPIC_ENV, serialNumber, scuuid, info) {
+  try {
+    // Publish MQTT
+    const mqttTopic = `${MQTT_TOPIC_ENV}/scican/sys/cmd/fnCreateThing/${serialNumber}/${scuuid}`
+    const payLoadJSON = {
+      'topic' : mqttTopic,
+      'payload' : info
+    }
+    const mqttParams = {
+      topic: mqttTopic,
+      payload: JSON.stringify(payLoadJSON),
+      qos: '0'
+    };
+    await publishMqtt(mqttParams)
+  } catch (e) {
+    throw new Error(`publishSCICANSYSfnCreateThing -> Could not publish in MQTT: ${e.message}`)
+  }
+}
+
 /*
 How to test this lambda process:
 1 - Go to POSTMAN and run the API endpoint iot-devig1.scicanapi.com/thing/cefla/ OR iot-devig1.scicanapi.com/thing/scican/ OR 
@@ -159,7 +197,7 @@ module.exports.fnCreateThing = async (event, context, callback) => {
     'scuuid': scuuid
   }
 
-  var info = {
+  const info = {
     'serialNumber':serialNumber,
     'creationDate':dtTime,
     'thingName':createThingObj.thingName,
@@ -189,19 +227,9 @@ module.exports.fnCreateThing = async (event, context, callback) => {
   }
   await saveInDynamo(params)
 
-  // Publish MQTT
-  const mqttTopic = `${MQTT_TOPIC_ENV}/scican/sys/cmd/fnCreateThing/${serialNumber}/${scuuid}`
-  const payLoadJSON = {
-    'topic' : mqttTopic,
-    'payload' : info
-  }
-  
-  const mqttParams = {
-    topic: mqttTopic,
-    payload: JSON.stringify(payLoadJSON),
-    qos: '0'
-  };
-  await publishMqtt(mqttParams)
+  await publishSCICANSYSfnCreateThing(MQTT_TOPIC_ENV,serialNumber,scuuid, info)
+
+  await publishSCICANSYSMachineConfig(serialNumber)
 
   // End function
   return {

@@ -29,7 +29,7 @@ async function updateFirmwareFail (serialNumber, process, chunkNb, version, pid,
 }
 
 
-module.exports.fnBootFwStopPROCESS = async event => {
+module.exports.fnBootFwStopCLOUD = async event => {
 
     //* Must check the last chunk for each version
     //* v1-8-22 last chunk (CLOUD-1850) and (PROCESS-3539)
@@ -56,23 +56,23 @@ module.exports.fnBootFwStopPROCESS = async event => {
     const pid = arr_process_chunkNb_version_pid[3]
 
     if (retval === "0") {
-        if (process === 'PROCESS') {
+        if (process === 'CLOUD') {
 
-            //TODO publish a TOPIC to update the database -> PROCESS UPDATE is COMPLETE
+            //TODO publish a TOPIC to update the database -> CLOUD UPDATE is COMPLETE
             //TODO must create this function to update the database - VPC issues.
 
             let response = {
-                "info":`${MQTT_TOPIC_ENV}/SCICANSYS/${serialNumber}/CAN/CMD/boot_fw_update/PROCESS_FWUP_FINISHED_${version}_${pid}`
+                "info":`${MQTT_TOPIC_ENV}/SCICANSYS/${serialNumber}/CAN/CMD/boot_fw_update/CLOUD_FWUP_FINISHED_${version}_${pid}`
             }
 
             let params = {
-                topic: `${MQTT_TOPIC_ENV}/SCICANSYS/${serialNumber}/CAN/CMD/boot_fw_update/PROCESS_FWUP_FINISHED_${version}_${pid}`,
+                topic: `${MQTT_TOPIC_ENV}/SCICANSYS/${serialNumber}/CAN/CMD/boot_fw_update/CLOUD_FWUP_FINISHED_${version}_${pid}`,
                 payload: JSON.stringify(response),
                 qos: '0'
             };
 
             await publishMqtt(params)
-        }
+        }    
     }else {
         //TODO if retval === "16 " => user denied. Save in RDS
         //TODO if retval === "14 " => user did not see the message.
