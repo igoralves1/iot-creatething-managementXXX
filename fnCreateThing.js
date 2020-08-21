@@ -83,24 +83,24 @@ async function to2Digits (jsDt) {
   else return "0" + jsDt
 }
 
-async function publishSCICANSYSMachineConfig (serialNumber) {
-  try {
-    let response = {
-      "path":"CAN/CMD/get_config_machine",
-      "data":{}
-    }
+// async function publishSCICANSYSMachineConfig (serialNumber, pid) {
+//   try {
+//     let response = {
+//       "path":`CAN/CMD/get_config_machine/SCICANSYS`,
+//       "data":{}
+//     }
     
-    let params = {
-      topic: `${MQTT_TOPIC_ENV}/MSSTER/${serialNumber}/CAN/CMD/get_config_machine/SCICANSYS/1234`,
-      payload: JSON.stringify(response),
-      qos: '0'
-    };
-    console.log('params', params)
-    await publishMqtt(params)
-  } catch (e) {
-    throw new Error(`publishSCICANSYSMachineConfig -> Could not publish in MQTT: ${e.message}`)
-  }
-}
+//     let params = {
+//       topic: `${MQTT_TOPIC_ENV}/MSSTER/${serialNumber}/CAN/CMD/get_config_machine/SCICANSYS`,
+//       payload: JSON.stringify(response),
+//       qos: '0'
+//     };
+//     console.log('params', params)
+//     await publishMqtt(params)
+//   } catch (e) {
+//     throw new Error(`publishSCICANSYSMachineConfig -> Could not publish in MQTT: ${e.message}`)
+//   }
+// }
 
 async function publishSCICANSYSfnCreateThing (MQTT_TOPIC_ENV, serialNumber, scuuid, info) {
   try {
@@ -118,6 +118,33 @@ async function publishSCICANSYSfnCreateThing (MQTT_TOPIC_ENV, serialNumber, scuu
     await publishMqtt(mqttParams)
   } catch (e) {
     throw new Error(`publishSCICANSYSfnCreateThing -> Could not publish in MQTT: ${e.message}`)
+  }
+}
+
+async function publishSCICANSYSSetShadow (thingName ) {
+  try {
+    // Publish MQTT
+    const mqttTopic = `$aws/things/${thingName}/shadow/update`
+    const payLoadJSON = { // ! Maximum size of a SHADOW JSON state document - 8KB -> https://docs.aws.amazon.com/general/latest/gr/iot-core.html#device-shadow-limits
+      'state': {
+        'reported': {
+          'cycles-nb-success': 0, 
+          'cycles-nb-fault': 0,
+          'cycles-missing': [],
+          'PROCESS':'v1-8-32',
+          'CLOUD':'v1-8-32',
+          'ref':'7A620000',
+        }
+      }
+    }
+    const mqttParams = {
+      topic: mqttTopic,
+      payload: JSON.stringify(payLoadJSON),
+      qos: '0'
+    };
+    await publishMqtt(mqttParams)
+  } catch (e) {
+    throw new Error(`publishSCICANSYSSetShadow -> Could not publish in MQTT: ${e.message}`)
   }
 }
 
@@ -229,7 +256,9 @@ module.exports.fnCreateThing = async (event, context, callback) => {
 
   await publishSCICANSYSfnCreateThing(MQTT_TOPIC_ENV,serialNumber,scuuid, info)
 
-  await publishSCICANSYSMachineConfig(serialNumber)
+  await publishSCICANSYSSetShadow(createThingObj.thingName)
+
+  // await publishSCICANSYSMachineConfig(serialNumber, awsRequestId)
 
   // End function
   return {
