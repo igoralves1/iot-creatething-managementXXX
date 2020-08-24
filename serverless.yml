@@ -642,10 +642,10 @@ functions:
           Resource: "*"
     vpc: ${file(env.yml):vpc-${self:provider.stage}}
     environment:
-      # rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
-      # rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
-      # rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
-      # rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
+      rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
+      rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
+      rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
+      rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
       mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
 
