@@ -35,7 +35,7 @@ const publishMqtt = (params) =>
 module.exports.fnVpcTest = async event => {
 
 
-  const sqlResult = await GetToken('TESTSHADOW', 'TESTSHADOW-f23c1e7dfb7c02e81aba5326a82cace29c376a6a513a41ffa0d3e5bf3f9fc74c')
+  const sqlResult = await GetToken('AJB00002', 'AJB00002-8dd56a3a8193e35ea73b8fc2f8c2e9ea1b7baed7a21fd05254f1b4edad61feed')
   const token = sqlResult[0]
   let onlineAccessCode = 'ZZZ-ZZZ';
 
