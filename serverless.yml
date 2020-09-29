@@ -26,6 +26,7 @@ custom:
   fnBootFwStopCLOUD: 'bootFwStopCLOUD'
   fnRequestMachineInfo: 'requestMachineInfo'
   fnVpcTest: 'vpcTest'
+  fnPublishMqttNginxLog: 'publishmqttnginxlog'
 
   BUCKET_NAME: 'iot-things-certificates'
   DYNAMO-ARN: 'arn:aws:dynamodb:${self:provider.region}:*:table'
@@ -649,6 +650,24 @@ functions:
       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
       mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
 
+
+  publishmqttnginxlog:
+    name: ${self:provider.stage}-${self:custom.fnPublishMqttNginxLog}
+    handler: fnPublishMqttNginxLog.fnPublishMqttNginxLog
+    events:
+      - http:
+          path: fnPublishMqttNginxLog
+          method: post
+          private: false
+    environment:    
+      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'      
+    memorySize: 256
+    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnPublishMqttNginxLog}
+    iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "iot:*"
+      Resource: '*'
 
 
 resources:
