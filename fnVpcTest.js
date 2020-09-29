@@ -4,6 +4,10 @@ const iotdata = new AWS.IotData({endpoint: process.env.MQTT_ENDPOINT})
 const MQTT_TOPIC_ENV = process.env.mqttTopicEnv
 const mysql = require('mysql2/promise')
 
+console.log("process.env.mqtt_endpoint ==== ", process.env.MQTT_ENDPOINT)
+console.log("MQTT_TOPIC_ENV  ==== ", MQTT_TOPIC_ENV)
+console.log("IOT data === ", iotdata)
+
 const publishMqtt = (params) =>
   new Promise((resolve, reject) =>
   iotdata.publish(params, (err, res) => resolve(res)))
