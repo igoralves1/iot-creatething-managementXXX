@@ -1,0 +1,27 @@
+@startuml
+participant MQTT
+
+MQTT -> "fnSciCanRnDlogs": Publish JSON (topic)
+activate "fnSciCanRnDlogs"
+
+"fnSciCanRnDlogs" -> Internal: Save JSON in S3
+activate Internal
+Internal --> "fnSciCanRnDlogs": Done
+deactivate Internal
+
+"fnSciCanRnDlogs" -> Internal: Save JSON in MongoDb-ATLAS
+activate Internal
+
+Internal --> "fnSciCanRnDlogs": Done
+deactivate Internal
+
+"fnSciCanRnDlogs" -> Internal: Save JSON in MongoDb-EC2
+activate Internal
+
+Internal --> "fnSciCanRnDlogs": Done
+deactivate Internal
+
+"fnSciCanRnDlogs" -> MQTT: Done (JSON is available in S3 and MongoDb)
+deactivate "fnSciCanRnDlogs"
+
+@enduml

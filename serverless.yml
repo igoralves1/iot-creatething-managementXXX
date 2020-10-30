@@ -27,6 +27,8 @@ custom:
   fnRequestMachineInfo: 'requestMachineInfo'
   fnVpcTest: 'vpcTest'
   fnPublishMqttNginxLog: 'publishmqttnginxlog'
+  fnPostgreTest: 'postgreTest'
+  fnSciCanRnDlogs: 'sciCanRnDlogs'
 
   BUCKET_NAME: 'iot-things-certificates'
   DYNAMO-ARN: 'arn:aws:dynamodb:${self:provider.region}:*:table'
@@ -78,7 +80,8 @@ provider:
   runtime: nodejs12.x
   stage: ${opt:stage, 'dev'}
   region: ${file(env.yml):${self:provider.stage}.region}
-
+  versionFunctions: false
+  
   iamManagedPolicies:
     - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
   # resourcePolicy:
@@ -650,7 +653,6 @@ functions:
       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
       mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
 
-
   publishmqttnginxlog:
     name: ${self:provider.stage}-${self:custom.fnPublishMqttNginxLog}
     handler: fnPublishMqttNginxLog.fnPublishMqttNginxLog
@@ -668,7 +670,69 @@ functions:
       Action:
         - "iot:*"
       Resource: '*'
+  
+  SciCanRnDlogs:
+    name: ${self:provider.stage}-${self:custom.fnSciCanRnDlogs}
+    handler: fnSciCanRnDlogs.fnSciCanRnDlogs
+    events:
+      - iot:
+          name: ${self:provider.stage}_${self:custom.fnSciCanRnDlogs}
+          sql: "SELECT * AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/SCICANSYS/fnSciCanRnDlogs' "
+    memorySize: 256
+    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnSciCanRnDlogs}
+    iamRoleStatements:
+      - Effect: "Allow"
+        Action:
+          - "iot:*"
+        Resource: '*'
+      - Effect: 'Allow'
+        Action:
+          - 's3:*'
+        Resource: 'arn:aws:s3:::${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}/*'  
+    environment:    
+      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'  
+      mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
+      BUCKET_SCICAN_RND_LOGS: '${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}'
 
+  postgreTest:
+      name: ${self:provider.stage}-${self:custom.fnPostgreTest}
+      handler: fnPostgreTest.fnPostgreTest
+      events:
+        - iot:
+            name: ${self:provider.stage}_fnPostgreTest
+            sql: "SELECT *, topic() AS topic FROM 'scican/sys/cmd/fnCreateThing/#' "   
+        - http:
+            path: fnPostgreTest
+            method: POST  
+      memorySize: 256
+      iamRoleStatementsName: ${self:provider.stage}-fnPostgreTest
+      iamRoleStatements:
+          - Effect: "Allow"
+            Action:
+              - "iot:*"
+            Resource: '*'
+          - Effect: 'Allow'
+            Action:
+            - 'rds:*'
+            Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
+
+          - Effect: 'Allow'
+            Action:
+            - 'logs:CreateLogGroup'
+            - 'logs:CreateLogStream'
+            - 'logs:PutLogEvents'
+            - 'ec2:CreateNetworkInterface'
+            - 'ec2:DescribeNetworkInterfaces'
+            - 'ec2:DeleteNetworkInterfaces'
+            Resource: "*"
+      vpc: ${file(env.yml):vpc-${self:provider.stage}}
+      environment:
+        rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
+        rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
+        rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
+        rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
+        MQTT_ENDPOINT: 'a3oug6yeqsiol5-ats.iot.us-west-2.amazonaws.com'
+  
 
 resources:
   - ${file(resources/scuuid-resources.yml)}
