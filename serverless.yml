@@ -29,6 +29,9 @@ custom:
   fnPublishMqttNginxLog: 'publishmqttnginxlog'
   fnPostgreTest: 'postgreTest'
   fnSciCanRnDlogs: 'sciCanRnDlogs'
+  fnScicanRndCreatething: 'scicanRndCreatething'
+  fnBootFwUpdateStartProcess: 'bootFwUpdateStartProcess'
+  fnBootFwUpdateStartCloud: 'bootFwUpdateStartCloud'
 
   BUCKET_NAME: 'iot-things-certificates'
   DYNAMO-ARN: 'arn:aws:dynamodb:${self:provider.region}:*:table'
@@ -54,6 +57,16 @@ custom:
     stage: ${self:provider.stage}
     createRoute53Record: true
   apiKeys:    
+    - name: ${file(env.yml):SCICAN_RND_KEY_NAME_${self:provider.stage}} 
+      value: ${file(env.yml):SCICAN_RND_KEY_VALUE_${self:provider.stage}}
+      usagePlan:
+        name: "usageplan-${file(env.yml):SCICAN_RND_KEY_NAME_${self:provider.stage}}"
+        quota:
+          limit: 1000
+          period: DAY
+        throttle:
+          burstLimit: 100
+          rateLimit: 20
     - name: ${file(env.yml):SCICAN_KEY_NAME_${self:provider.stage}} 
       value: ${file(env.yml):SCICAN_KEY_VALUE_${self:provider.stage}}
       usagePlan:
@@ -597,6 +610,54 @@ functions:
         MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
         mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
 
+  bootFwUpdateStartProcess:
+      name: ${self:provider.stage}-${self:custom.fnBootFwUpdateStartProcess}
+      handler: fnBootFwUpdateStartProcess.fnBootFwUpdateStartProcess
+      events:
+        - iot:
+            name: ${self:provider.stage}_${self:custom.fnBootFwUpdateStartProcess}
+            sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/MSSTER/+/CAN/RSP/boot_fw_start/#' "  
+      memorySize: 256
+      iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnBootFwUpdateStartProcess}
+      iamRoleStatements:
+          - Effect: "Allow"
+            Action:
+              - "iot:*"
+            Resource: '*' 
+            
+          - Effect: 'Allow'
+            Action:
+              - 's3:*'
+            Resource: 'arn:aws:s3:::${file(env.yml):BUCKET_FIRMWARE}${self:provider.stage}/*'  
+      environment:
+        MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
+        BUCKET_FIRMWARE: '${file(env.yml):BUCKET_FIRMWARE}${self:provider.stage}'
+        mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
+
+  bootFwUpdateStartCloud:
+      name: ${self:provider.stage}-${self:custom.fnBootFwUpdateStartCloud}
+      handler: fnBootFwUpdateStartCloud.fnBootFwUpdateStartCloud
+      events:
+        - iot:
+            name: ${self:provider.stage}_${self:custom.fnBootFwUpdateStartCloud}
+            sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/MSSTER/+/CAN/EVN/FW_UPDATE_DONE/#' "  
+      memorySize: 256
+      iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnBootFwUpdateStartCloud}
+      iamRoleStatements:
+          - Effect: "Allow"
+            Action:
+              - "iot:*"
+            Resource: '*' 
+            
+          - Effect: 'Allow'
+            Action:
+              - 's3:*'
+            Resource: 'arn:aws:s3:::${file(env.yml):BUCKET_FIRMWARE}${self:provider.stage}/*'  
+      environment:
+        MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
+        BUCKET_FIRMWARE: '${file(env.yml):BUCKET_FIRMWARE}${self:provider.stage}'
+        mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
+
   requestMachineInfo:
     name: ${self:provider.stage}-${self:custom.fnRequestMachineInfo}
     handler: fnRequestMachineInfo.fnRequestMachineInfo
@@ -733,6 +794,46 @@ functions:
         rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
         MQTT_ENDPOINT: 'a3oug6yeqsiol5-ats.iot.us-west-2.amazonaws.com'
   
+  scicanrndcreatething:
+    #! If the policy is not manually created the lambda will run in a loop
+    # TODO - How to create a POLICY automatically if it doesn't exist in serverless.yml ?
+
+      name: ${self:provider.stage}-${file(env.yml):SCICAN_COMPANY_NAME}-${self:custom.fnScicanRndCreatething}
+      handler: fnScicanRndCreatething.fnScicanRndCreatething
+      events:
+        - http:
+            path: ${file(env.yml):SCICAN_COMPANY_NAME}/rnd
+            method: post
+            private: true
+      environment:
+        COMPANY_NAME: ${file(env.yml):SCICAN_COMPANY_NAME}
+        PRIVATE_KEY: ${file(env.yml):${self:provider.stage}.SCICAN_RND_PRIVATE_KEY}
+        LOG_PROCESS_NAME: ${file(env.yml):SCICAN_COMPANY_NAME}-${self:provider.stage}-${self:custom.fnScicanRndCreatething}
+        POLICY_NAME: ${file(env.yml):SCICAN_COMPANY_NAME}-rnd-iot-policy-${self:provider.stage}
+        SCUUID_TABLE_NAME: ${self:custom.SCUUID_TABLE_NAME}
+        MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
+        mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
+
+      memorySize: 256
+      iamRoleStatementsName: ${self:provider.stage}-${file(env.yml):SCICAN_COMPANY_NAME}-${self:custom.fnScicanRndCreatething}
+      iamRoleStatements:
+      - Effect: "Allow"
+        Action:
+          - "iot:*"
+        Resource: '*'
+      - Effect: 'Allow'
+        Action:
+          - 's3:*'
+        Resource: 'arn:aws:s3:::${self:custom.BUCKET_NAME}-${self:provider.stage}/*'
+      - Effect: Allow
+        Action:
+          - dynamodb:DescribeTable
+          - dynamodb:Query
+          - dynamodb:Scan
+          - dynamodb:GetItem
+          - dynamodb:PutItem
+        Resource: '${self:custom.DYNAMO-ARN}/*'
+
 
 resources:
   - ${file(resources/scuuid-resources.yml)}

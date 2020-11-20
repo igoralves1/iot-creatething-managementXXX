@@ -6,6 +6,7 @@ var iotdata = new AWS.IotData({endpoint: process.env.MQTT_ENDPOINT});
 const MongoClient = require('mongodb').MongoClient
 const https = require('https')
 const { v4: uuidv4 } = require('uuid');
+const { table } = require('console');
 
 
 

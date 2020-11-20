@@ -1,0 +1,25 @@
+@startuml
+participant Machines
+participant fnScicanRndCreatething
+participant "IoT-Core"
+participant S3
+participant DynamoDb
+participant Internal
+participant MQTT
+participant fnTokenInsertMQTT
+
+Machines -> fnScicanRndCreatething: Resquest Certificate (HTTPS)
+activate fnScicanRndCreatething
+fnScicanRndCreatething -> "IoT-Core": Create Thing
+fnScicanRndCreatething -> "IoT-Core": Create Keys and Certificate
+fnScicanRndCreatething -> "IoT-Core": Attach Policy
+fnScicanRndCreatething -> S3: Save Info.json in S3
+fnScicanRndCreatething -> DynamoDb: Save scuuid in DynamoDB
+fnScicanRndCreatething -> MQTT: Publish MQTT topic (fnCreateThing)
+MQTT -> fnTokenInsertMQTT: Create Token
+fnTokenInsertMQTT -> DynamoDb: Save token in DynamoDB
+fnScicanRndCreatething -> MQTT: Publish MQTT topic (SetShadow)
+MQTT -> "IoT-Core": Publish MQTT topic (SetShadow)
+fnScicanRndCreatething -> Machines: HTTPS Response (JSON)
+deactivate fnScicanRndCreatething
+@enduml

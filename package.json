@@ -20,7 +20,7 @@
     "mysql": "^2.18.1",
     "mysql2": "^2.1.0",
     "pg": "^8.4.1",
-    "serverless": "^2.9.0",
+    "serverless": "^2.10.0",
     "uuid": "^7.0.3"
   },
   "devDependencies": {
