@@ -20,10 +20,11 @@ async function insertMongo (params) {
         // const mc     = await MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true })
         // const db     = await mc.db('sicanphplogs');
         // const coll   = await db.collection('accesslogsrnd')
-        const url = `mongodb://lambdaSciCanRnDlogs:SO3Tbada$1ads3434FhYhx8ypJ@172.31.34.205:27017`
+        const url = `mongodb://lambdaSciCanRnDlogs:SO3Tbada$1ads3434FhYhx8ypJ@172.31.34.205:27017/mqtt`
+        // const url = `mongodb://root:pay23*3TM0r34Nothin%24@172.31.34.205:27017/mqtt`
         const mc     = await MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true })
         const db     = await mc.db('mqtt');
-        const coll   = await db.collection('rndLogs')
+        const coll   = await db.collection('topics_data')
         const q      = await coll.insertOne(params);
         mc.close();
         return q
@@ -64,9 +65,10 @@ module.exports.fnSciCanRnDlogs = async (event) => {
         const log = event.topic
         const awsRequestId = uuidv4()
         await uploadToS3(`${awsRequestId}.json`, JSON.stringify(log))
-        // await insertMongo(log)
+        let test = await insertMongo(log)
         await insertMongoAtlas(log)
         
+        console.log('test=>',test)
         // let info = {
         //     'ipz':'test',
         //     'dtz':'test',
@@ -83,10 +85,8 @@ module.exports.fnSciCanRnDlogs = async (event) => {
         // };
         // await publishMqtt(params)
 
-    } catch (error) {
-        return {
-            statusCode: 400,
-            body: JSON.stringify(error)
-        }
+    } catch (err) {
+        console.log('Error on fnSciCanRnDlogs')
+        console.error(err, err.stack)
     }
 }

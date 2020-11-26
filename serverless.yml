@@ -750,6 +750,17 @@ functions:
         Action:
           - 's3:*'
         Resource: 'arn:aws:s3:::${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}/*'  
+      
+      - Effect: 'Allow'
+        Action:
+          - 'logs:CreateLogGroup'
+          - 'logs:CreateLogStream'
+          - 'logs:PutLogEvents'
+          - 'ec2:CreateNetworkInterface'
+          - 'ec2:DescribeNetworkInterfaces'
+          - 'ec2:DeleteNetworkInterfaces'
+        Resource: "*"
+    vpc: ${file(env.yml):vpc-${self:provider.stage}}  
     environment:    
       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'  
       mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
