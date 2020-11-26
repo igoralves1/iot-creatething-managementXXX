@@ -20,7 +20,7 @@ async function insertMongo (params) {
         // const mc     = await MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true })
         // const db     = await mc.db('sicanphplogs');
         // const coll   = await db.collection('accesslogsrnd')
-        const url = `mongodb://lambdaSciCanRnDlogs:SO3Tbada$1ads3434FhYhx8ypJ@172.31.34.205:27017`
+        const url = `mongodb://lambdaSciCanRnDlogs:SO3Tbada$1ads3434FhYhx8ypJ@172.31.34.205:27017/mqtt`
         const mc     = await MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true })
         const db     = await mc.db('mqtt');
         const coll   = await db.collection('rndLogs')
