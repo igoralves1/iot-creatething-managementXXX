@@ -62,11 +62,11 @@ custom:
       usagePlan:
         name: "usageplan-${file(env.yml):SCICAN_RND_KEY_NAME_${self:provider.stage}}"
         quota:
-          limit: 1000
+          limit: 100
           period: DAY
         throttle:
-          burstLimit: 100
-          rateLimit: 20
+          burstLimit: 120
+          rateLimit: 2
     - name: ${file(env.yml):SCICAN_KEY_NAME_${self:provider.stage}} 
       value: ${file(env.yml):SCICAN_KEY_VALUE_${self:provider.stage}}
       usagePlan:

@@ -42,7 +42,7 @@ async function updateFirmwareFail (serialNumber, process, chunkNb, version, pid,
     await publishMqtt(params)
 }
 
-module.exports.fnBootFwStart = async event => {
+module.exports.fnBootFwUpdateStartCloud = async event => {
 
     /*
 
@@ -96,7 +96,7 @@ module.exports.fnBootFwStart = async event => {
     "path" : "CAN/CMD/boot_fw_start/PROCESS_0_v1-8-32_1234567890",
     "data" : {
         "node" : "PROCESS",
-        "config": "ref_table=7A620000;Bravo G4 17;AJA;2;5;1;17;230;1000;2300;50;2000;1700;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;1171201483\n
+        "config": "7A620000;Bravo G4 17;AJA;2;5;1;17;230;1000;2300;50;2000;1700;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;1171201483\n
         7A620020;Bravo G4 17;AJA;2;5;1;17;230;1000;2300;60;2000;1700;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;1393637756\n
         7A621000;Bravo G4 22;AJB;2;5;1;22;230;1000;2300;50;2000;2000;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;3115282210\n
         7A621020;Bravo G4 22;AJB;2;5;1;22;230;1000;2300;60;2000;2000;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;2943437717\n

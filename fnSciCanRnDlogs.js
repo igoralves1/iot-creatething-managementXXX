@@ -16,10 +16,14 @@ const publishMqtt = (params) =>
 
 async function insertMongo (params) {
     try {
-        const url = `mongodb://igoralves3:aBc14012007@34.222.226.195:27017`
+        // const url = `mongodb://igoralves3:aBc14012007@34.222.226.195:27017`
+        // const mc     = await MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true })
+        // const db     = await mc.db('sicanphplogs');
+        // const coll   = await db.collection('accesslogsrnd')
+        const url = `mongodb://lambdaSciCanRnDlogs:SO3Tbada$1ads3434FhYhx8ypJ@172.31.34.205:27017`
         const mc     = await MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true })
-        const db     = await mc.db('sicanphplogs');
-        const coll   = await db.collection('accesslogsrnd')
+        const db     = await mc.db('mqtt');
+        const coll   = await db.collection('rndLogs')
         const q      = await coll.insertOne(params);
         mc.close();
         return q
@@ -56,14 +60,11 @@ async function uploadToS3 (keyName, mybody) {
 }
 
 module.exports.fnSciCanRnDlogs = async (event) => {
-
     try {
-
         const log = event.topic
         const awsRequestId = uuidv4()
-
         await uploadToS3(`${awsRequestId}.json`, JSON.stringify(log))
-        await insertMongo(log)
+        // await insertMongo(log)
         await insertMongoAtlas(log)
         
         // let info = {
