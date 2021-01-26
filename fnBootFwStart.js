@@ -46,139 +46,103 @@ module.exports.fnBootFwStart = async event => {
 
     /*
 
-    Machine 1: (WiFi)
-    Ref-7A620000
-    S#-AJAPA001
-    
-    Machine 2: (Ethernet)
-    Ref-7A621000
-    S#-AJBPA004
-    
-    Machine 3: (WiFi)
-    Ref-7A622000
-    S#: AJCPA009
-
-    Version: v1-8-32
-    CLOUD   - 1850
-    PROCESS - 3539
-
-    7A620000;Bravo G4 17;AJA;2;5;1;17;230;1000;2300;50;2000;1700;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;1171201483
-    7A620020;Bravo G4 17;AJA;2;5;1;17;230;1000;2300;60;2000;1700;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;1393637756
-    7A621000;Bravo G4 22;AJB;2;5;1;22;230;1000;2300;50;2000;2000;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;3115282210
-    7A621020;Bravo G4 22;AJB;2;5;1;22;230;1000;2300;60;2000;2000;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;2943437717
-    7A622000;Bravo G4 28;AJC;2;5;1;28;230;1000;2300;50;2000;2300;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;115575373
-    7A622020;Bravo G4 28;AJC;2;5;1;28;230;1000;2300;60;2000;2300;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;272477946
-
-
-
-
-    ? PROCESS UPDATE
-    Version: 1-8-22
-    7A620000;Bravo G4 17;AJA;2;5;1;17;230;1000;2300;50;2000;1700;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;1171201483
-    7A620020;Bravo G4 17;AJA;2;5;1;17;230;1000;2300;60;2000;1700;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;1393637756
-    7A621000;Bravo G4 22;AJB;2;5;1;22;230;1000;2300;50;2000;2000;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;3115282210
-    7A621020;Bravo G4 22;AJB;2;5;1;22;230;1000;2300;60;2000;2000;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;2943437717
-    7A622000;Bravo G4 28;AJC;2;5;1;28;230;1000;2300;50;2000;2300;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;115575373
-    7A622020;Bravo G4 28;AJC;2;5;1;28;230;1000;2300;60;2000;2300;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;272477946
-
-    This is the first topic sent by the front-end for the PROCESS update
-    P/MSSTER/AJAPA001/CAN/CMD/boot_fw_start/PROCESS_0_v1-8-32_1234567890
-{
-    "path" : "CAN/CMD/boot_fw_start/PROCESS_0_v1-8-32_1234567890",
-    "data" : {
-        "node" : "PROCESS",
-        "config": "ref=7A620000;Bravo G4 17;AJA;2;5;1;17;230;1000;2300;50;2000;1700;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;1171201483"
-    }
-}
-    ! Changes after Nov 13. New structure. "config": "ref= <all content>""
-    P/MSSTER/AJAPA001/CAN/CMD/boot_fw_start/PROCESS_0_v1-8-32_1234567890
-{
-    "path" : "CAN/CMD/boot_fw_start/PROCESS_0_v1-8-32_1234567890",
-    "data" : {
-        "node" : "PROCESS",
-        "config": "ref_table=7A620000;Bravo G4 17;AJA;2;5;1;17;230;1000;2300;50;2000;1700;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;1171201483\n
-        7A620020;Bravo G4 17;AJA;2;5;1;17;230;1000;2300;60;2000;1700;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;1393637756\n
-        7A621000;Bravo G4 22;AJB;2;5;1;22;230;1000;2300;50;2000;2000;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;3115282210\n
-        7A621020;Bravo G4 22;AJB;2;5;1;22;230;1000;2300;60;2000;2000;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;2943437717\n
-        7A622000;Bravo G4 28;AJC;2;5;1;28;230;1000;2300;50;2000;2300;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;115575373\n
-        7A622020;Bravo G4 28;AJC;2;5;1;28;230;1000;2300;60;2000;2300;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;272477946"
-    }
-}
     Then a window will popup in the machine -> press yes ->
     Then the machine will publish te follow topic:
-    P/MSSTER/AJAPA001/CAN/RSP/boot_fw_start/PROCESS_0_v1-8-22_1234567890/123456789
+
+    P/MSSTER/AJCPA009/CAN/RSP/boot_fw_start/PROCESS_0_v1-8-60_1234567890
     {
-        "path": "CAN/RSP/boot_fw_start/PROCESS_0_v1-8-22_1234567890/123456789",
-        "sn": "AJAPA001",
-        "retval": "0"
+        "path" : "CAN/RSP/boot_fw_start/PROCESS_0_v1-8-60_1234567890",
+        "retval" : 0
     }
 
-    ? CLOUD UPDATE
-    This is the first topic sent by the front-end for the CLOUD update
-    P/MSSTER/AJAPA001/CAN/CMD/boot_fw_start/CLOUD_0_v1-8-32_1234567890
-{
-    "path" : "CAN/CMD/boot_fw_start/CLOUD_0_v1-8-32_1234567890",
-    "data" : {
-        "node" : "CLOUD"
+    AND 
+
+    P/MSSTER/AJCPA009/CAN/RSP/boot_fw_start/CLOUD_0_v1-8-60_1234567890
+    {
+        "path" : "CAN/RSP/boot_fw_start/CLOUD_0_v1-8-60_1234567890",
+        "retval" : 0
     }
-}
 
-    Then the machine will publish te follow topic:
-    P/MSSTER/AJAPA001/CAN/RSP/boot_fw_start/PROCESS_0_v1-8-22_1234567890/123456789
-{
-    "path": "CAN/RSP/boot_fw_start/CLOUD_0_v1-8-22_1234567890/123456789",
-    "sn": "AJAPA001",
-    "retval": "0"
-}
+    This function also is trigged by  the following topic:
+    
+    This function should publish the following topic:
 
+    P/MSSTER/AJAPA001/CAN/CMD/boot_fw_write/PROCESS_0_v1-8-60_1234567890
+    {
+        "path":"CAN/CMD/boot_fw_write/PROCESS_0_vx-x-xx_1234567890",
+        "data":{
+            "raw":"02550...",
+            "addr":0
+        }
+    }
+
+    AND
+
+    P/MSSTER/AJAPA001/CAN/CMD/boot_fw_write/CLOUD_0_v1-8-60_1234567890
+    {
+        "path":"CAN/CMD/boot_fw_write/PCLOUD_0_vx-x-xx_1234567890",
+        "data":{
+            "raw":"02550...",
+            "addr":0
+        }
+    }
     */
 
-    //! Check with Leonardo - The front-end and the machine will never trigger MQTT_TOPIC_ENV = D
+    try {
+        console.log("🚀 1 - event:", event)
+        const retval = event.retval
+        console.log("🚀 2 - retval:", retval)
+        const topic = event.topic
+        console.log("🚀 3 - topic:", topic)
+        const res = topic.split("/")
+        console.log("🚀 4 - res:", res)
+        const serialNumber = res[2]
+        console.log("🚀 5 - serialNumber:", serialNumber)
 
-    //? MQTT_TOPIC_ENV = D
-    //! AWS IoT-Core Broker Tests - D/MSSTER/APBCDF/CAN/RSP/boot_fw_start/PROCESS_0_v1-8-22_1234567890/1234567890
-    //! {"path": "CAN/RSP/boot_fw_start/PROCESS_0_v1-8-22_1234567890/1234567890","retval": "0"}
-    //! AWS IoT-Core Broker Tests - D/MSSTER/APBCDF/CAN/RSP/boot_fw_start/CLOUD_0_v1-8-22_1234567890/1234567890
-    //! {"path": "CAN/RSP/boot_fw_start/CLOUD_0_v1-8-22_1234567890/1234567890","retval": "0"}
+        const str_process_chunkNb_version_pid = res[6]
+        console.log("🚀 6 - str_process_chunkNb_version_pid:", str_process_chunkNb_version_pid)
+        const arr_process_chunkNb_version_pid = str_process_chunkNb_version_pid.split("_")
+        console.log("🚀 7 - arr_process_chunkNb_version_pid:", arr_process_chunkNb_version_pid)
+        const process = arr_process_chunkNb_version_pid[0]
+        console.log("🚀 8 - process:", process)
+        const chunkNb = arr_process_chunkNb_version_pid[1]
+        console.log("🚀 9 - chunkNb:", chunkNb)
+        const version = arr_process_chunkNb_version_pid[2]
+        console.log("🚀 10 - version:", version)
+        const pid = arr_process_chunkNb_version_pid[3]
+        console.log("🚀 11 - pid:", pid)
+
+        if (retval === "0") {
+            console.log("🚀 12 - IF retval == 0:", retval)
+
+            let key = version + '/' + process + `/${chunkNb}.json`
+            console.log("🚀 13 - key:", key)
+            let chunk = await getObject(BUCKET, key)
+            console.log("🚀 14 - chunk:", chunk)
+            let bodyJson = JSON.parse(chunk)
+            console.log("🚀 15 - bodyJson:", bodyJson)
     
-    //? MQTT_TOPIC_ENV = P
-    //! AWS IoT-Core Broker Tests - P/MSSTER/APBCDF/CAN/RSP/boot_fw_start/PROCESS_0_v1-8-22_1234567890/1234567890
-    //! {"path": "CAN/RSP/boot_fw_start/PROCESS_0_v1-8-22_1234567890/1234567890","retval": "0"}
-    //! AWS IoT-Core Broker Tests - P/MSSTER/APBCDF/CAN/RSP/boot_fw_start/CLOUD_0_v1-8-22_1234567890/1234567890
-    //! {"path": "CAN/RSP/boot_fw_start/CLOUD_0_v1-8-22_1234567890/1234567890","retval": "0"}
-
-    const retval = event.retval
-    const topic = event.topic
-    const res = topic.split("/")
-    const serialNumber = res[2]
-
-    const str_process_chunkNb_version_pid = res[6]
-    const arr_process_chunkNb_version_pid = str_process_chunkNb_version_pid.split("_")
-    const process = arr_process_chunkNb_version_pid[0]
-    const chunkNb = arr_process_chunkNb_version_pid[1]
-    const version = arr_process_chunkNb_version_pid[2]
-    const pid = arr_process_chunkNb_version_pid[3]
-
+            bodyJson.path = `CAN/CMD/boot_fw_write/${process}_${chunkNb}_${version}_${pid}`
+            console.log("🚀 16 - bodyJson:", bodyJson)
+            let publishTopic = `${MQTT_TOPIC_ENV}/MSSTER/${serialNumber}/CAN/CMD/boot_fw_write/${process}_${chunkNb}_${version}_${pid}`
+            console.log("🚀 17 - publishTopic:", publishTopic)
     
-    if (retval === "0") {
-        let key = version + '/' + process + `/${chunkNb}.json`
-        let chunk = await getObject(BUCKET, key)
-        let bodyJson = JSON.parse(chunk)
-
-        bodyJson.path = `CAN/CMD/boot_fw_write/${process}_${chunkNb}_${version}_${pid}`
-
-        let publishTopic = `${MQTT_TOPIC_ENV}/MSSTER/${serialNumber}/CAN/CMD/boot_fw_write/${process}_${chunkNb}_${version}_${pid}`
-
-        var params = {
-            topic: publishTopic,
-            payload: JSON.stringify(bodyJson), 
-            qos: '0'
-        };
-        await publishMqtt(params)
-    }else {
-        //TODO if retval === "16 " => user denied. Save in RDS
-        //TODO if retval === "14 " => user did not see the message.
-        //TODO if any other vals === RETRY.
-        await updateFirmwareFail(serialNumber, process, chunkNb, version, pid, retval)    
+            var params = {
+                topic: publishTopic,
+                payload: JSON.stringify(bodyJson), 
+                qos: '0'
+            };
+            console.log("🚀 18 - params:", params)
+            const respPublishMqtt = await publishMqtt(params)
+            console.log("🚀 19 - respPublishMqtt:", respPublishMqtt)
+        }else {
+            //TODO if retval === "16 " => user denied. Save in RDS
+            //TODO if retval === "14 " => user did not see the message.
+            //TODO if any other vals === RETRY.
+            let updateFirmwareFail = await updateFirmwareFail(serialNumber, process, chunkNb, version, pid, retval)    
+            console.log("🚀 20 - updateFirmwareFail:", updateFirmwareFail)
+        }
+    } catch (error) {
+        console.log("🚀 0 - error:", error)
     }
 }

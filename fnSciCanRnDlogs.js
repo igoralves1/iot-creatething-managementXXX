@@ -65,19 +65,16 @@ module.exports.fnSciCanRnDlogs = async (event) => {
         const log = event.topic
         const awsRequestId = uuidv4()
         await uploadToS3(`${awsRequestId}.json`, JSON.stringify(log))
-        let test = await insertMongo(log)
-        await insertMongoAtlas(log)
+        await insertMongo(log)
+        // await insertMongoAtlas(log)
         
-        console.log('test=>',test)
         // let info = {
         //     'ipz':'test',
         //     'dtz':'test',
         //     'methodz':'test',
         //     'endpointz':'test'
         // }
-        // await postMongo(info)
-        // await postMongoAtlas(info)
-
+        
         // var params = {
         //     topic: 'fnSciCanRnDlogs',
         //     payload: JSON.stringify(info),
@@ -90,3 +87,5 @@ module.exports.fnSciCanRnDlogs = async (event) => {
         console.error(err, err.stack)
     }
 }
+
+

@@ -77,49 +77,74 @@ module.exports.fnBootFwWrite = async event => {
     // ! Test last chunk PROCESS - P/MSSTER/ASDER/CAN/RSP/boot_fw_write/PROCESS_3539_v1-8-22_1234567890 => Should publish "path": "CAN/CMD/boot_fw_stop/PROCESS_3539_v1-8-22_1234567890"
     //! {"path": "CAN/RSP/boot_fw_stop/PROCESS_3539_v1-8-22_1234567890","retval": "0"}
     
-    const retval = event.retval
-    const topic = event.topic
-    const res = topic.split("/")
-    const serialNumber = res[2]
+    try {
+        console.log("🚀 1 - event:", event)
+        const retval = event.retval
+        console.log("🚀 2 - retval:", retval)
+        const topic = event.topic
+        console.log("🚀 3 - topic:", topic)
+        const res = topic.split("/")
+        console.log("🚀 4 - res:", res)
+        const serialNumber = res[2]
+        console.log("🚀 5 - serialNumber:", serialNumber)
+        const str_process_chunkNb_version_pid = res[6]
+        console.log("🚀 6 - str_process_chunkNb_version_pid:", str_process_chunkNb_version_pid)
+        const arr_process_chunkNb_version_pid = str_process_chunkNb_version_pid.split("_")
+        console.log("🚀 7 - arr_process_chunkNb_version_pid:", arr_process_chunkNb_version_pid)
+        const process = arr_process_chunkNb_version_pid[0]
+        console.log("🚀 8 - process:", process)
+        const chunkNb = arr_process_chunkNb_version_pid[1]
+        console.log("🚀 9 - chunkNb:", chunkNb)
+        const version = arr_process_chunkNb_version_pid[2]
+        console.log("🚀 10 - version:", version)
+        const pid = arr_process_chunkNb_version_pid[3]
+        console.log("🚀 11 - pid:", pid)
+
+        if (retval === "0") {    
+            console.log("🚀 12 - IF retval == 0:", retval)
+            let nextChunk = parseInt(chunkNb) + 1
+            console.log("🚀 13 - nextChunk:", nextChunk)
+            const key = version + '/' + process + `/${nextChunk}.json`
+            console.log("🚀 14 - key:", key)
+            let chunk = await getObject(BUCKET, key)
+            console.log("🚀 15 - chunk:", chunk)
+            let publishTopic = ''
+            
+            if (typeof chunk == 'undefined') {
+                console.log("🚀 16 - IF chunk == undefined:", chunk)
+                publishTopic = `${MQTT_TOPIC_ENV}/MSSTER/${serialNumber}/CAN/CMD/boot_fw_stop/${process}_${chunkNb}_${version}_${pid}`
+                console.log("🚀 17 - publishTopic:", publishTopic)
+                chunk = JSON.stringify({"path" : `CAN/CMD/boot_fw_stop/${process}_${chunkNb}_${version}_${pid}`})
+                console.log("🚀 18 - chunk:", chunk)
+            } else {
+                console.log("🚀 19 - IF chunk <> undefined:", chunk)
+                publishTopic = `${MQTT_TOPIC_ENV}/MSSTER/${serialNumber}/CAN/CMD/boot_fw_write/${process}_${nextChunk}_${version}_${pid}`
+                console.log("🚀 20 - publishTopic:", publishTopic)
+                let bodyJson = JSON.parse(chunk)
+                console.log("🚀 21 - bodyJson:", bodyJson)
+                bodyJson.path = `CAN/CMD/boot_fw_write/${process}_${nextChunk}_${version}_${pid}`
+                console.log("🚀 22 - bodyJson:", bodyJson)
+                chunk = JSON.stringify(bodyJson)
+                console.log("🚀 23 - chunk:", chunk)
+            }
     
-    const str_process_chunkNb_version_pid = res[6]
-    const arr_process_chunkNb_version_pid = str_process_chunkNb_version_pid.split("_")
-    const process = arr_process_chunkNb_version_pid[0]
-    const chunkNb = arr_process_chunkNb_version_pid[1]
-    const version = arr_process_chunkNb_version_pid[2]
-    const pid = arr_process_chunkNb_version_pid[3]
-
-    if (retval === "0") {    
-        let nextChunk = parseInt(chunkNb) + 1
-        const key = version + '/' + process + `/${nextChunk}.json`
-        let chunk = await getObject(BUCKET, key)
-        let publishTopic = ''
-        
-
-        if (typeof chunk == 'undefined') {
-            publishTopic = `${MQTT_TOPIC_ENV}/MSSTER/${serialNumber}/CAN/CMD/boot_fw_stop/${process}_${chunkNb}_${version}_${pid}`
-            chunk = JSON.stringify({"path" : `CAN/CMD/boot_fw_stop/${process}_${chunkNb}_${version}_${pid}`})
-        } else {
-            publishTopic = `${MQTT_TOPIC_ENV}/MSSTER/${serialNumber}/CAN/CMD/boot_fw_write/${process}_${nextChunk}_${version}_${pid}`
-            let bodyJson = JSON.parse(chunk)
-            console.log("bodyJson", bodyJson)
-            bodyJson.path = `CAN/CMD/boot_fw_write/${process}_${nextChunk}_${version}_${pid}`
-            chunk = JSON.stringify(bodyJson)
-            console.log("chunk", chunk)
+            var params = {
+                topic: publishTopic,
+                payload: chunk, 
+                qos: '0'
+            };
+            console.log("🚀 24 - params:", params)
+            const respPublishMqtt = await publishMqtt(params)
+            console.log("🚀 25 - respPublishMqtt:", respPublishMqtt)
+    
+        }else {
+            //TODO if retval === "16 " => user denied. Save in RDS
+            //TODO if retval === "14 " => user did not see the message.
+            //TODO if any other vals === RETRY.
+            await updateFirmwareFail(serialNumber, process, chunkNb, version, pid, retval)    
         }
-
-        var params = {
-            topic: publishTopic,
-            payload: chunk, 
-            qos: '0'
-        };
-
-        await publishMqtt(params)
-
-    }else {
-        //TODO if retval === "16 " => user denied. Save in RDS
-        //TODO if retval === "14 " => user did not see the message.
-        //TODO if any other vals === RETRY.
-        await updateFirmwareFail(serialNumber, process, chunkNb, version, pid, retval)    
+    } catch (error) {
+        console.log("🚀 26 - error:", error)
     }
+
 }

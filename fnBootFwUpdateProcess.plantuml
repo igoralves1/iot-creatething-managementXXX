@@ -1,27 +1,281 @@
 @startuml
+
+participant WebAPP
 participant MQTT
+box "Lambdas" #LightBlue
+participant fnBootFwUpdateRequestStartProcess
+participant fnBootFwStart
+participant fnBootFwWrite
+participant fnBootFwStop
+participant fnBootFwUpdateDone
+end box
+participant Machine
 
-MQTT -> "fnSciCanRnDlogs": Publish JSON (topic)
-activate "fnSciCanRnDlogs"
+WebAPP -> fnBootFwUpdateRequestStartProcess: **1 -** HTTPS Request **PROCESS** FW Update Permission
+activate fnBootFwUpdateRequestStartProcess
+note left
+P/SCICAN/AJCPA009/CAN/CMD/**boot_fw_update_request_start_process**/**PROCESS**_0_v1-8-59_1234567890
+{
+    "path" : "CAN/CMD/**boot_fw_update_request_start_process**/**PROCESS**_0_v1-8-59_1234567890",
+    "data" : {
+        "sn" : "AJCPA009",
+        "node" : "PROCESS",
+    }
+}
+end note
 
-"fnSciCanRnDlogs" -> Internal: Save JSON in S3
-activate Internal
-Internal --> "fnSciCanRnDlogs": Done
-deactivate Internal
 
-"fnSciCanRnDlogs" -> Internal: Save JSON in MongoDb-ATLAS
-activate Internal
+fnBootFwUpdateRequestStartProcess -> Machine: **2 -** PopUp Asks for **PROCESS** FW Update Permission (If yes)
+deactivate fnBootFwUpdateRequestStartProcess
+activate Machine
+note right
+P/MSSTER/AJCPA009/CAN/**CMD**/**boot_fw_start**/**PROCESS**_0_vx-x-xx_1234567890
+{
+    "path" : "CAN/**CMD**/**boot_fw_start**/**PROCESS**_0_vx-x-xx_1234567890",    
+    "data" : {
+        "node" : "**PROCESS**",
+        "config":"**ref_table**=7A620000;Bravo G4 17;AJA;2;5;1;17;230;1000;2300;50;2000;1700;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;1171201483
+7A620020;Bravo G4 17;AJA;2;5;1;17;230;1000;2300;60;2000;1700;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;1393637756
+7A621000;Bravo G4 22;AJB;2;5;1;22;230;1000;2300;50;2000;2000;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;3115282210
+7A621020;Bravo G4 22;AJB;2;5;1;22;230;1000;2300;60;2000;2000;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;2943437717
+7A622000;Bravo G4 28;AJC;2;5;1;28;230;1000;2300;50;2000;2300;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;115575373
+7A622020;Bravo G4 28;AJC;2;5;1;28;230;1000;2300;60;2000;2300;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;272477946",
+            "quiet" : "1"
+    },
+}
 
-Internal --> "fnSciCanRnDlogs": Done
-deactivate Internal
+Works!
+P/MSSTER/AJCPA009/CAN/CMD/boot_fw_start/PROCESS_0_v1-8-60_1234567890
+{
+    "path" : "CAN/CMD/boot_fw_start/PROCESS_0_v1-8-60_1234567890",
+    "data" : {
+        "node" : "PROCESS",
+        "config":"ref_table=7A620000;Bravo G4 17;AJA;2;5;1;17;230;1000;2300;50;2000;1700;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;1171201483
+7A620020;Bravo G4 17;AJA;2;5;1;17;230;1000;2300;60;2000;1700;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;1393637756
+7A621000;Bravo G4 22;AJB;2;5;1;22;230;1000;2300;50;2000;2000;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;3115282210
+7A621020;Bravo G4 22;AJB;2;5;1;22;230;1000;2300;60;2000;2000;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;2943437717
+7A622000;Bravo G4 28;AJC;2;5;1;28;230;1000;2300;50;2000;2300;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;115575373
+7A622020;Bravo G4 28;AJC;2;5;1;28;230;1000;2300;60;2000;2300;1;3;0;0;2;0;0;1;0;0;1;1;0;0;1;1;1;0;1;1;0;0;0;272477946",
+        "quiet" : "1"    
+    }
+}
+end note
 
-"fnSciCanRnDlogs" -> Internal: Save JSON in MongoDb-EC2
-activate Internal
+Machine -> Machine: If "retval" : >0 (User press NO, FAIL, or timeout, or wrong REF, or machine Busy)
+Machine -> MQTT: **3 -** Proccess denied
+note right
+P/MSSTER/AJAPA001/CAN/**RSP**/**boot_fw_start**
+{
+    "path" : "CAN/**RSP**/**boot_fw_start**/**PROCESS**_0_vx-x-xx_1234567890",
+    "retval" : > 0 (biger than 0)
+}
+end note
 
-Internal --> "fnSciCanRnDlogs": Done
-deactivate Internal
+MQTT -> MQTT: **4 -** Internal process
+note left
+Retrieve the reason why the process was denied and do something.
+Save in DB
+Send to browser OR mobile APP
+end note
 
-"fnSciCanRnDlogs" -> MQTT: Done (JSON is available in S3 and MongoDb)
-deactivate "fnSciCanRnDlogs"
+Machine -> Machine: **5 -** If User press **YES**
+
+Machine -> fnBootFwStart: **6 -** The Machine is ready to start the **PROCESS** FW Update process
+activate fnBootFwStart
+note right #FFAAAA
+P/MSSTER/AJCPA009/CAN/**RSP**/**boot_fw_start**
+{
+    "path" : "CAN/**RSP**/**boot_fw_start**/**PROCESS**_0_vx-x-xx_1234567890",
+    "retval" : 0
+}
+end note
+
+
+fnBootFwStart -> Machine: **7 -** Send the 1st bin package (nb 0) of the **PROCESS** FW Update
+note right
+P/MSSTER/AJAPA001/**CAN**/**CMD**/**boot_fw_write**/**PROCESS**_0_vx-x-xx_1234567890
+{
+    "path":"CAN/**CMD**/**boot_fw_write**/**PROCESS**_0_vx-x-xx_1234567890",
+    "data":{
+        "raw":"02550...",
+        "addr":0
+    }
+}
+end note
+deactivate fnBootFwStart
+
+Machine -> fnBootFwWrite: **8 -** Confirm that the 1st bin package (nb 0) is saved
+activate fnBootFwWrite
+note right
+P/MSSTER/AJAPA001/**RSP**/**boot_fw_write**
+{
+    "path":"CAN/**RSP**/**boot_fw_write**/**PROCESS**_0_vx-x-xx_1234567890",
+    "retval" : 0
+}
+end note
+
+
+fnBootFwWrite -> Machine: **9 -** Send the Next N bin packages of the **PROCESS** FW Update
+Machine -> fnBootFwWrite: **10 -** Confirm that the N packages are saved
+
+
+fnBootFwWrite -> Machine: **11 -** Send the last bin package (nb N) of the **PROCESS** FW Update
+note right
+P/MSSTER/AJAPA001/**CAN**/**CMD**/**boot_fw_stop**/**PROCESS**_N_vx-x-xx_1234567890
+{
+    "path":"CAN/**CMD**/**boot_fw_stop**/**PROCESS**_N_vx-x-xx_1234567890",
+    "data":{
+        "raw":"02550...",
+        "addr": N
+    }
+}
+end note
+deactivate fnBootFwWrite
+
+Machine -> fnBootFwStop: **12 -** Conform that the last chunck (stop) package is saved
+activate fnBootFwStop
+note right
+P/MSSTER/AJAPA001/**RSP**/**boot_fw_stop**
+{
+    "path":"CAN/**RSP**/**boot_fw_stop**/**PROCESS**_N_vx-x-xx_1234567890",
+    "retval" : 0
+}
+end note
+
+fnBootFwStop -> MQTT: **13 -** Do something, save Info in DB, Send message to WebApp
+deactivate fnBootFwStop
+
+Machine -> MQTT: **13.1 -** Report that UPDATE FIRMWARE is FINISHED
+note right
+P/MSSTER/AJAPA009/**ENV**/**UPDATE_FIRMWARE_FINISHED**
+{
+  "path": "CAN/EVN/**UPDATE_FIRMWARE_FINISHED**",
+  "sn": "AJCPA009",
+  "data": {
+    "enable": "0"
+  }
+}
+end note
+
+
+Machine -> Machine: **14 -** Machine will reboot
+
+Machine -> fnBootFwUpdateDone: **15 -** Inform that reboot is completed
+activate fnBootFwUpdateDone
+note right #aadaff
+P/MSSTER/AJCPA009/CAN/EVN/FW_UPDATE_DONE/1234
+P/MSSTER/AJCPA009/CAN/**EVN**/**FW_UPDATE_DONE**
+{
+    "path": "CAN/EVN/FW_UPDATE_DONE",
+    "sn": "AJCPA009",
+    "data": {
+        "node": "PROCESS",
+        "version": "1.08.0059 Nov 19 2020 - 1.8.18"
+    }
+}
+end note
+
+fnBootFwUpdateDone -> Machine: **16 -** Requesting to the Machine to start the **CLOUD** FW Update process
+note right
+P/MSSTER/AJAPA001/CAN/**CMD**/**boot_fw_start**/**CLOUD**_0_vx-x-xx_1234567890
+{
+    "path" : "CAN/**CMD**/**boot_fw_start**/**CLOUD**_0_vx-x-x_1234567890",
+    "data" : {
+        "node" : "**CLOUD**",
+        "quiet" : "1"
+    }
+}
+end note
+deactivate fnBootFwUpdateDone
+
+Machine -> fnBootFwStart: **17 -** The Machine is ready to start the **CLOUD** FW Update process
+activate fnBootFwStart
+note right #FFAAAA
+P/MSSTER/AJAPA001/CAN/**RSP**/**boot_fw_start**/**CLOUD**_0_vx-x-xx_1234567890
+{
+    "path" : "CAN/**RSP**/**boot_fw_start**/**CLOUD**_0_vx-x-x_1234567890",
+    "retval" : 0
+}
+end note
+
+fnBootFwStart -> Machine: **18 -** Send the 1st bin package (nb 0) of the **CLOUD** FW Update process
+note right
+P/MSSTER/AJCPA009/CAN/**CMD**/**boot_fw_write**/**CLOUD**_0_vx-x-xx_1234567890
+{
+    "path":"CAN/**CMD**/**boot_fw_write**/**CLOUD**_0_vx-x-xx_1234567890",
+    "data":{
+        "raw":"02550...",
+        "addr":0
+    }
+}
+end note
+deactivate fnBootFwStart
+
+
+
+Machine -> fnBootFwWrite: **19 -** Confirm that the 1st bin package (nb 0) is saved
+activate fnBootFwWrite
+note right
+P/MSSTER/AJAPA001/**RSP**/**CMD**/**boot_fw_write**
+{
+    "path":"CAN/**RSP**/**boot_fw_write**/**CLOUD**_0_vx-x-xx_1234567890",
+    "retval" : 0
+}
+end note
+
+
+fnBootFwWrite -> Machine: **20 -** Send the Next N bin packages of the **CLOUD** FW Update
+Machine -> fnBootFwWrite: **21 -** Confirm that the N packages are saved
+
+
+fnBootFwWrite -> Machine: **22 -** Send the last bin package (nb N) of the **CLOUD** FW Update
+note right
+P/MSSTER/AJAPA001/**CAN**/**CMD**/**boot_fw_stop**/**CLOUD**_N_vx-x-xx_1234567890
+{
+    "path":"CAN/**CMD**/**boot_fw_stop**/**CLOUD**_N_vx-x-xx_1234567890",
+    "data":{
+        "raw":"02550...",
+        "addr": N
+    }
+}
+end note
+deactivate fnBootFwWrite
+
+Machine -> fnBootFwStop: **23 -** Conform that the last chunck (stop) package is saved
+activate fnBootFwStop
+note right
+P/MSSTER/AJAPA001/**RSP**/**boot_fw_stop**
+{
+    "path":"CAN/**RSP**/**boot_fw_stop**/**CLOUD**_N_vx-x-xx_1234567890",
+    "retval" : 0
+}
+end note
+
+fnBootFwStop -> MQTT: **24 -** Do something, save Info in DB, Send message to WebApp
+deactivate fnBootFwStop
+
+Machine -> Machine: **25 -** Machine will reboot
+Machine -> fnBootFwUpdateDone: **26 -** Inform that reboot is completed
+activate fnBootFwUpdateDone
+note right #aadaff
+P/MSSTER/AJCPA009/CAN/EVN/FW_UPDATE_DONE/9699
+P/MSSTER/AJCPA009/CAN/**EVN**/**FW_UPDATE_DONE**/9699
+{
+  "path": "CAN/EVN/**FW_UPDATE_DONE**",
+  "sn": "AJCPA009",
+  "data": {
+    "node": "CLOUD",
+    "version": "1.8.18"
+  }
+}
+end note
+fnBootFwUpdateDone -> MQTT: **27 -** Do something, save Info in DB, Send message to WebApp
+deactivate fnBootFwUpdateDone
+
+MQTT -> WebAPP:  **25 -** Return the message - FW was successfully updated
+deactivate MQTT
 
 @enduml
+
+
+
