@@ -62,11 +62,17 @@ async function uploadToS3 (keyName, mybody) {
 
 module.exports.fnSciCanRnDlogs = async (event) => {
     try {
-        const log = event.topic
+
+        console.log("🚀 1 - event:", event)
+        const topic = event.topic
+        console.log("🚀 2 - topic:", topic)
         const awsRequestId = uuidv4()
-        await uploadToS3(`${awsRequestId}.json`, JSON.stringify(log))
-        await insertMongo(log)
-        // await insertMongoAtlas(log)
+        console.log("🚀 3 - awsRequestId:", awsRequestId)
+        let respUploadToS3 = await uploadToS3(`${awsRequestId}.json`, JSON.stringify(topic))
+        console.log("🚀 4 - respUploadToS3:", respUploadToS3)
+        let repInsertMongo = await insertMongo(topic)
+        console.log("🚀 5 - repInsertMongo:", repInsertMongo)
+        // await insertMongoAtlas(topic)
         
         // let info = {
         //     'ipz':'test',
@@ -82,9 +88,9 @@ module.exports.fnSciCanRnDlogs = async (event) => {
         // };
         // await publishMqtt(params)
 
-    } catch (err) {
-        console.log('Error on fnSciCanRnDlogs')
-        console.error(err, err.stack)
+    } catch (error) {
+        console.log("🚀 0 - error:", error)
+        console.log("🚀 0.1 - error:", error.stack)
     }
 }
 
