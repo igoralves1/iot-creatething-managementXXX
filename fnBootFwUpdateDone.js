@@ -121,9 +121,8 @@ module.exports.fnBootFwUpdateDone = async event => {
             };
             console.log("🚀 11 - params:", params)
         }
-        let publishMqtt = await publishMqtt(params)
-        console.log("🚀 12 - publishMqtt:", publishMqtt)
-        
+        let respPublishMqtt = await publishMqtt(params)
+        console.log("🚀 12 - respPublishMqtt:", respPublishMqtt)
     } catch (error) {
         console.log("🚀 0 - error:", error)
         // await updateFirmwareFail(serialNumber, process, chunkNb, fwVersion, pid, retval)

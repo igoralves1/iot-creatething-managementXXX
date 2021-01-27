@@ -28,11 +28,6 @@ custom:
   fnBootFwStart: 'fnBootFwStart'
   fnBootFwWrite: 'fnBootFwWrite'
   fnBootFwStop: 'fnBootFwStop'
-  # fnBootFwStopPROCESS: 'fnBootFwStopPROCESS'
-  # fnBootFwStopBridge: 'fnBootFwStopBridge'
-  # fnBootFwStopCLOUD: 'fnBootFwStopCLOUD'
-  # fnBootFwUpdateStartProcess: 'fnBootFwUpdateStartProcess'
-  # fnBootFwUpdateStartCloud: 'fnBootFwUpdateStartCloud'
   fnBootFwUpdateDone: 'fnBootFwUpdateDone'
   fnBootFwUpdateRequestStartProcess: 'fnBootFwUpdateRequestStartProcess'
 
@@ -65,11 +60,11 @@ custom:
       usagePlan:
         name: "usageplan-${file(env.yml):SCICAN_RND_KEY_NAME_${self:provider.stage}}"
         quota:
-          limit: 50
+          limit: 100000
           period: DAY
         throttle:
-          burstLimit: 120
-          rateLimit: 2
+          burstLimit: 100
+          rateLimit: 20
     - name: ${file(env.yml):SCICAN_KEY_NAME_${self:provider.stage}} 
       value: ${file(env.yml):SCICAN_KEY_VALUE_${self:provider.stage}}
       usagePlan:
@@ -556,63 +551,6 @@ functions:
       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
       mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
 
-  # fnBootFwStopPROCESS:
-  #     name: ${self:provider.stage}-${self:custom.fnBootFwStopPROCESS}
-  #     handler: fnBootFwStopPROCESS.fnBootFwStopPROCESS
-  #     events:
-  #       - iot:
-  #           name: ${self:provider.stage}_${self:custom.fnBootFwStopPROCESS}
-  #           sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/MSSTER/+/CAN/RSP/boot_fw_stop/#' "  
-  #     memorySize: 256
-  #     timeout: 600
-  #     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnBootFwStopPROCESS}
-  #     iamRoleStatements:
-  #         - Effect: "Allow"
-  #           Action:
-  #             - "iot:*"
-  #           Resource: '*'  
-  #     environment:
-  #       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
-  #       mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
-
-  # fnBootFwStopCLOUD:
-  #     name: ${self:provider.stage}-${self:custom.fnBootFwStopCLOUD}
-  #     handler: fnBootFwStopCLOUD.fnBootFwStopCLOUD
-  #     events:
-  #       - iot:
-  #           name: ${self:provider.stage}_${self:custom.fnBootFwStopCLOUD}
-  #           # sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/MSSTER/+/CAN/RSP/boot_fw_stop/#' "  
-  #     memorySize: 256
-  #     timeout: 600
-  #     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnBootFwStopCLOUD}
-  #     iamRoleStatements:
-  #         - Effect: "Allow"
-  #           Action:
-  #             - "iot:*"
-  #           Resource: '*'  
-  #     environment:
-  #       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
-  #       mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
-
-  # fnBootFwStopBridge:
-  #     name: ${self:provider.stage}-${self:custom.fnBootFwStopBridge}
-  #     handler: fnBootFwStopBridge.fnBootFwStopBridge
-  #     events:
-  #       - iot:
-  #           name: ${self:provider.stage}_${self:custom.fnBootFwStopBridge}
-  #           sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/MSSTER/+/CAN/RSP/boot_fw_stop/#' "  
-  #     memorySize: 256
-  #     timeout: 600
-  #     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnBootFwStopBridge}
-  #     iamRoleStatements:
-  #         - Effect: "Allow"
-  #           Action:
-  #             - "iot:*"
-  #           Resource: '*'  
-  #     environment:
-  #       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
-  #       mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
-
   fnBootFwUpdateRequestStartProcess:
       name: ${self:provider.stage}-${self:custom.fnBootFwUpdateRequestStartProcess}
       handler: fnBootFwUpdateRequestStartProcess.fnBootFwUpdateRequestStartProcess
@@ -636,54 +574,6 @@ functions:
         MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
         BUCKET_FIRMWARE: '${file(env.yml):BUCKET_FIRMWARE}${self:provider.stage}'
         mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
-
-  # fnBootFwUpdateStartProcess:
-  #     name: ${self:provider.stage}-${self:custom.fnBootFwUpdateStartProcess}
-  #     handler: fnBootFwUpdateStartProcess.fnBootFwUpdateStartProcess
-  #     events:
-  #       - iot:
-  #           name: ${self:provider.stage}_${self:custom.fnBootFwUpdateStartProcess}
-  #           sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/MSSTER/+/CAN/RSP/boot_fw_start/#' "  
-  #     memorySize: 256
-  #     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnBootFwUpdateStartProcess}
-  #     iamRoleStatements:
-  #         - Effect: "Allow"
-  #           Action:
-  #             - "iot:*"
-  #           Resource: '*' 
-            
-  #         - Effect: 'Allow'
-  #           Action:
-  #             - 's3:*'
-  #           Resource: 'arn:aws:s3:::${file(env.yml):BUCKET_FIRMWARE}${self:provider.stage}/*'  
-  #     environment:
-  #       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
-  #       BUCKET_FIRMWARE: '${file(env.yml):BUCKET_FIRMWARE}${self:provider.stage}'
-  #       mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
-
-  # bootFwUpdateStartCloud:
-  #     name: ${self:provider.stage}-${self:custom.fnBootFwUpdateStartCloud}
-  #     handler: fnBootFwUpdateStartCloud.fnBootFwUpdateStartCloud
-  #     events:
-  #       - iot:
-  #           name: ${self:provider.stage}_${self:custom.fnBootFwUpdateStartCloud}
-  #           sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/MSSTER/+/CAN/ENV/FW_UPDATE_DONE/#' "  
-  #     memorySize: 256
-  #     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnBootFwUpdateStartCloud}
-  #     iamRoleStatements:
-  #         - Effect: "Allow"
-  #           Action:
-  #             - "iot:*"
-  #           Resource: '*' 
-            
-  #         - Effect: 'Allow'
-  #           Action:
-  #             - 's3:*'
-  #           Resource: 'arn:aws:s3:::${file(env.yml):BUCKET_FIRMWARE}${self:provider.stage}/*'  
-  #     environment:
-  #       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
-  #       BUCKET_FIRMWARE: '${file(env.yml):BUCKET_FIRMWARE}${self:provider.stage}'
-  #       mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
 
   requestMachineInfo:
     name: ${self:provider.stage}-${self:custom.fnRequestMachineInfo}
