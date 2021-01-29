@@ -36,6 +36,7 @@ custom:
   fnRecordsCreateEvent: 'fnRecordsCreateEvent'
   fnCyclesActionRequest: 'fnCyclesActionRequest'
   fnCyclesActionResponse: 'fnCyclesActionResponse'
+  fnRequestAccountPasswordResetEmail: 'fnRequestAccountPasswordResetEmail'
 
 
 
@@ -167,6 +168,17 @@ provider:
         - 's3:*'
       Resource: 'arn:aws:s3:::${self:custom.BUCKET_NAME}-${self:provider.stage}/*'
 
+    - Effect: 'Allow'
+      Action:
+      - 'rds:*'
+      Resource: 'arn:aws:rds:us-east-1:366229877060:db:scican-testing'
+
+
+    - Effect: 'Allow'
+      Action:
+      - 'rds:*'
+      Resource: 'arn:aws:rds:us-east-1:366229877060:db:scican-updates'
+
     - Effect: Allow
       Action:
         - dynamodb:DescribeTable
@@ -291,10 +303,10 @@ functions:
           serial_number: true
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnToken}
     iamRoleStatements:
-        - Effect: 'Allow'
-          Action:
-          - 'rds:*'
-          Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
+#        - Effect: 'Allow'
+#          Action:
+#          - 'rds:*'
+#          Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
 
         - Effect: 'Allow'
           Action:
@@ -307,10 +319,14 @@ functions:
           Resource: "*"
     vpc: ${file(env.yml):vpc-${self:provider.stage}}
     environment:
-      rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
-      rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
-      rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
-      rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
+#      rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
+#      rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
+#      rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
+#      rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
+      rdsMySqlDb: ${file(env.yml):rdsMySqlDb-${self:provider.stage}}
+      rdsMySqlHost: ${file(env.yml):rdsMySqlHost-${self:provider.stage}}
+      rdsMySqlUsername: ${file(env.yml):rdsMySqlUsername-${self:provider.stage}}
+      rdsMySqlPassword: ${file(env.yml):rdsMySqlPassword-${self:provider.stage}}
 
   tokenInsert:
     name: ${self:provider.stage}-${self:custom.fnTokenInsert}
@@ -323,10 +339,10 @@ functions:
     private: true
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnTokenInsert}
     iamRoleStatements:
-        - Effect: 'Allow'
-          Action:
-          - 'rds:*'
-          Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
+#        - Effect: 'Allow'
+#          Action:
+#          - 'rds:*'
+#          Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
 
         - Effect: 'Allow'
           Action:
@@ -339,10 +355,15 @@ functions:
           Resource: "*"
     vpc: ${file(env.yml):vpc-${self:provider.stage}}
     environment:
-      rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
-      rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
-      rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
-      rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
+      rdsMySqlDb: ${file(env.yml):rdsMySqlDb-${self:provider.stage}}
+      rdsMySqlHost: ${file(env.yml):rdsMySqlHost-${self:provider.stage}}
+      rdsMySqlUsername: ${file(env.yml):rdsMySqlUsername-${self:provider.stage}}
+      rdsMySqlPassword: ${file(env.yml):rdsMySqlPassword-${self:provider.stage}}
+#      rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
+#      rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
+#      rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
+#      rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
+
 
   tokenInsertMQTT:
     name: ${self:provider.stage}-${self:custom.fnTokenInsertMQTT}
@@ -355,10 +376,11 @@ functions:
     # timeout: 6
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnTokenInsertMQTT}
     iamRoleStatements:
-        - Effect: 'Allow'
-          Action:
-          - 'rds:*'
-          Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
+#        - Effect: 'Allow'
+#          Action:
+#          - 'rds:*'
+#          Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
+#
         - Effect: 'Allow'
           Action:
           - 'logs:CreateLogGroup'
@@ -374,10 +396,14 @@ functions:
           Resource: '*' 
     vpc: ${file(env.yml):vpc-${self:provider.stage}}
     environment:
-      rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
-      rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
-      rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
-      rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
+#      rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
+#      rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
+#      rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
+#      rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
+      rdsMySqlDb: ${file(env.yml):rdsMySqlDb-${self:provider.stage}}
+      rdsMySqlHost: ${file(env.yml):rdsMySqlHost-${self:provider.stage}}
+      rdsMySqlUsername: ${file(env.yml):rdsMySqlUsername-${self:provider.stage}}
+      rdsMySqlPassword: ${file(env.yml):rdsMySqlPassword-${self:provider.stage}}
       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
 
   publishmqtt:
@@ -408,10 +434,11 @@ functions:
       # - schedule: cron(0/1 * * * ? *)
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnCron}
     iamRoleStatements:
-        - Effect: 'Allow'
-          Action:
-          - 'rds:*'
-          Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
+#        - Effect: 'Allow'
+#          Action:
+#          - 'rds:*'
+#          Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
+#
         - Effect: 'Allow'
           Action:
           - 'logs:CreateLogGroup'
@@ -427,10 +454,14 @@ functions:
           Resource: '*'
     vpc: ${file(env.yml):vpc-${self:provider.stage}}
     environment:  
-      rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
-      rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
-      rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
-      rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}  
+#      rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
+#      rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
+#      rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
+#      rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
+      rdsMySqlDb: ${file(env.yml):rdsMySqlDb-${self:provider.stage}}
+      rdsMySqlHost: ${file(env.yml):rdsMySqlHost-${self:provider.stage}}
+      rdsMySqlUsername: ${file(env.yml):rdsMySqlUsername-${self:provider.stage}}
+      rdsMySqlPassword: ${file(env.yml):rdsMySqlPassword-${self:provider.stage}}
       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
       mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}   
     memorySize: 256
@@ -453,10 +484,10 @@ functions:
             Action:
               - "iot:*"
             Resource: '*'
-          - Effect: 'Allow'
-            Action:
-            - 'rds:*'
-            Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
+#          - Effect: 'Allow'
+#            Action:
+#            - 'rds:*'
+#            Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
 
           - Effect: 'Allow'
             Action:
@@ -469,10 +500,14 @@ functions:
             Resource: "*"
       vpc: ${file(env.yml):vpc-${self:provider.stage}}
       environment:
-        rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
-        rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
-        rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
-        rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
+#        rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
+#        rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
+#        rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
+#        rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
+        rdsMySqlDb: ${file(env.yml):rdsMySqlDb-${self:provider.stage}}
+        rdsMySqlHost: ${file(env.yml):rdsMySqlHost-${self:provider.stage}}
+        rdsMySqlUsername: ${file(env.yml):rdsMySqlUsername-${self:provider.stage}}
+        rdsMySqlPassword: ${file(env.yml):rdsMySqlPassword-${self:provider.stage}}
         MQTT_ENDPOINT: 'a3oug6yeqsiol5-ats.iot.us-west-2.amazonaws.com'
 
   fnBootFwStart:
@@ -533,10 +568,11 @@ functions:
     memorySize: 256
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnBootFwStop}
     iamRoleStatements:
-        - Effect: 'Allow'
-          Action:
-          - 'rds:*'
-          Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
+#        - Effect: 'Allow'
+#          Action:
+#          - 'rds:*'
+#          Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
+#
         - Effect: 'Allow'
           Action:
           - 'logs:CreateLogGroup'
@@ -552,10 +588,14 @@ functions:
           Resource: '*' 
     vpc: ${file(env.yml):vpc-${self:provider.stage}}      
     environment:
-      rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
-      rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
-      rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
-      rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
+#      rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
+#      rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
+#      rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
+#      rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
+      rdsMySqlDb: ${file(env.yml):rdsMySqlDb-${self:provider.stage}}
+      rdsMySqlHost: ${file(env.yml):rdsMySqlHost-${self:provider.stage}}
+      rdsMySqlUsername: ${file(env.yml):rdsMySqlUsername-${self:provider.stage}}
+      rdsMySqlPassword: ${file(env.yml):rdsMySqlPassword-${self:provider.stage}}
       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
       mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
 
@@ -616,10 +656,10 @@ functions:
           Action:
             - "iot:*"
           Resource: '*'
-        - Effect: 'Allow'
-          Action:
-          - 'rds:*'
-          Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
+#        - Effect: 'Allow'
+#          Action:
+#          - 'rds:*'
+#          Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
 
         - Effect: 'Allow'
           Action:
@@ -632,10 +672,14 @@ functions:
           Resource: "*"
     vpc: ${file(env.yml):vpc-${self:provider.stage}}
     environment:
-      rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
-      rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
-      rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
-      rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
+#      rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
+#      rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
+#      rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
+#      rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
+      rdsMySqlDb: ${file(env.yml):rdsMySqlDb-${self:provider.stage}}
+      rdsMySqlHost: ${file(env.yml):rdsMySqlHost-${self:provider.stage}}
+      rdsMySqlUsername: ${file(env.yml):rdsMySqlUsername-${self:provider.stage}}
+      rdsMySqlPassword: ${file(env.yml):rdsMySqlPassword-${self:provider.stage}}
       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
       mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
 
@@ -712,10 +756,10 @@ functions:
             Action:
               - "iot:*"
             Resource: '*'
-          - Effect: 'Allow'
-            Action:
-            - 'rds:*'
-            Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
+#          - Effect: 'Allow'
+#            Action:
+#            - 'rds:*'
+#            Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
 
           - Effect: 'Allow'
             Action:
@@ -728,10 +772,14 @@ functions:
             Resource: "*"
       vpc: ${file(env.yml):vpc-${self:provider.stage}}
       environment:
-        rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
-        rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
-        rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
-        rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
+#        rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
+#        rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
+#        rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
+#        rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
+        rdsMySqlDb: ${file(env.yml):rdsMySqlDb-${self:provider.stage}}
+        rdsMySqlHost: ${file(env.yml):rdsMySqlHost-${self:provider.stage}}
+        rdsMySqlUsername: ${file(env.yml):rdsMySqlUsername-${self:provider.stage}}
+        rdsMySqlPassword: ${file(env.yml):rdsMySqlPassword-${self:provider.stage}}
         MQTT_ENDPOINT: 'a3oug6yeqsiol5-ats.iot.us-west-2.amazonaws.com'
   
   scicanrndcreatething:
@@ -1038,6 +1086,63 @@ functions:
       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'  
       mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
       BUCKET_SCICAN_RND_LOGS: '${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}'
+
+
+  fnRequestAccountPasswordResetEmail:
+    name: ${self:provider.stage}-${self:custom.fnRequestAccountPasswordResetEmail}
+    handler: fnRequestAccountPasswordResetEmail.fnRequestAccountPasswordResetEmail
+    events:
+    - iot:
+        name: ${self:provider.stage}_${self:custom.fnRequestAccountPasswordResetEmail}
+        sql: "SELECT * AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/srv/request/account-password_reset_email' "
+    memorySize: 512
+    timeout: 20
+    maximumEventAge: 7200
+    maximumRetryAttempts: 1
+    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnRequestAccountPasswordResetEmail}
+    iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+      - "iot:*"
+      Resource: '*'
+    - Effect: 'Allow'
+      Action:
+      - 's3:*'
+      Resource: 'arn:aws:s3:::${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}/*'
+
+    - Effect: 'Allow'
+      Action:
+      - 'rds:*'
+      Resource: 'arn:aws:rds:us-east-1:366229877060:db:scican-testing'
+
+
+    - Effect: 'Allow'
+      Action:
+      - 'rds:*'
+      Resource: 'arn:aws:rds:us-east-1:366229877060:db:scican-updates'
+
+    - Effect: 'Allow'
+      Action:
+      - 'logs:CreateLogGroup'
+      - 'logs:CreateLogStream'
+      - 'logs:PutLogEvents'
+      - 'ec2:CreateNetworkInterface'
+      - 'ec2:DescribeNetworkInterfaces'
+      - 'ec2:DeleteNetworkInterfaces'
+      Resource: "*"
+    vpc: ${file(env.yml):vpc-${self:provider.stage}}
+    environment:
+      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
+      mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
+      BUCKET_SCICAN_RND_LOGS: '${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}'
+#      rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
+#      rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
+#      rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
+#      rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
+      rdsMySqlDb: ${file(env.yml):rdsMySqlDb-${self:provider.stage}}
+      rdsMySqlHost: ${file(env.yml):rdsMySqlHost-${self:provider.stage}}
+      rdsMySqlUsername: ${file(env.yml):rdsMySqlUsername-${self:provider.stage}}
+      rdsMySqlPassword: ${file(env.yml):rdsMySqlPassword-${self:provider.stage}}
 
 resources:
   - ${file(resources/scuuid-resources.yml)}

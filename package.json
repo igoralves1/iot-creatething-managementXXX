@@ -16,6 +16,7 @@
   "dependencies": {
     "@hapi/joi": "^17.1.1",
     "aws-sdk": "^2.654.0",
+    "axios": "^0.21.1",
     "mongodb": "^3.6.2",
     "mysql": "^2.18.1",
     "mysql2": "^2.1.0",
