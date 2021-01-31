@@ -6,50 +6,12 @@ var iotdata = new AWS.IotData({endpoint: process.env.MQTT_ENDPOINT});
 const MQTT_TOPIC_ENV = process.env.mqttTopicEnv
 
 
-
-const mysql = require('mysql2/promise')
 const axios = require('axios')
 
 
-const pool = mysql.createPool({
-    host     : process.env.rdsMySqlHost,
-    user     : process.env.rdsMySqlUsername,
-    password : process.env.rdsMySqlPassword,
-    database : process.env.rdsMySqlDb
-})
-
-async function isUserExist(user_email) {
-    try {
-
-        console.log("pool ==== ", pool)
-
-        const sql = `SELECT count(1) AS numbers FROM users WHERE username = '${user_email}'`
-        console.log("sql ==== ", sql)
-
-        const sqlResult = await pool.query(sql)
-        const res = sqlResult[0]
-
-        console.log("sqlRes ==== ", sqlResult)
-        var userexist
-        if (res[0].numbers == 0) {
-            userexist = false
-        } else {
-            userexist = true
-        }
-
-        return userexist
-
-    } catch (error) {
-        console.log("🚀 0.isUserExist - error:", error)
-        console.log("🚀 0.1.isUserExist - error:", error.stack)
-    }
-}
-
-
-
 const publishMqtt = (params) =>
-  new Promise((resolve, reject) =>
-  iotdata.publish(params, (err, res) => resolve(res)))
+    new Promise((resolve, reject) =>
+        iotdata.publish(params, (err, res) => resolve(res)))
 
 
 async function SendEmail(email, userExist, language){
@@ -71,11 +33,12 @@ async function SendEmail(email, userExist, language){
                 body: body
             }
 
-
             var axiosconnect = await axios.create()
             let res = await axiosconnect.post(url, data)
-            console.log("VPC Email ==== ", res)
+
+            console.log("Normal email ===== ", res)
             return res.data.success
+
 
         } else {
             subject = "You are NOT a customer"
@@ -91,8 +54,8 @@ async function SendEmail(email, userExist, language){
 
             var axiosconnect = await axios.create()
             let res = await axiosconnect.post(url, data)
+            console.log("Normal email ===== ", res)
 
-            console.log("VPC Email ==== ", res)
             return res.data.success
         }
 
@@ -102,7 +65,7 @@ async function SendEmail(email, userExist, language){
     }
 }
 
-module.exports.fnRequestAccountPasswordResetEmail = async (event) => {
+module.exports.SendEmailtest = async (event) => {
     try {
 
         console.log("🚀 1 - event:", event)
@@ -121,7 +84,18 @@ module.exports.fnRequestAccountPasswordResetEmail = async (event) => {
         //         language_iso639: 'en',
         //         account_email: '928064091@qq.com',
         //         topic: 'Q/scican/1234AB5678/srv/request/account-password_reset_email'
+        //
         // }
+
+
+        const haha =
+
+            {
+            "account_email": "928064091@qq.com",
+            "language_iso639": "en",
+            "language_iso3166": "US",
+            "userCheck": false
+            }
 
         const account_email = event.account_email
         const language = event.language_iso639
@@ -130,7 +104,7 @@ module.exports.fnRequestAccountPasswordResetEmail = async (event) => {
 
         console.log("account_email === ", account_email)
 
-        const userCheck = await isUserExist(account_email)
+        const userCheck = event.userCheck
 
         console.log("userCheck === ", userCheck)
 
@@ -169,8 +143,17 @@ module.exports.fnRequestAccountPasswordResetEmail = async (event) => {
         const input = {
             "account_email": "928064091@qq.com",
             "language_iso639": "en",
-            "language_iso3166": "US"
+            "language_iso3166": "US",
+            "userCheck": false
         }
+
+        const input1 =
+            {
+                "account_email": "zzheng@scican.com",
+                "language_iso639": "en",
+                "language_iso3166": "US",
+                "userCheck": false
+            }
 
         //Q/scican/1234AB5678/srv/request/account-password_reset_email
         //Q/scican/#

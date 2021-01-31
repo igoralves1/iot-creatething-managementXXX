@@ -5,10 +5,10 @@ service: iot-creatething-management
 # frameworkVersion: "=X.X.X"
 
 plugins:
-  # To install run npm install
-  - serverless-domain-manager
-  - serverless-add-api-key
-  - serverless-iam-roles-per-function
+# To install run npm install
+- serverless-domain-manager
+- serverless-add-api-key
+- serverless-iam-roles-per-function
 
 custom:
   fnCreateThing: 'createThing'
@@ -40,10 +40,11 @@ custom:
 
 
 
+
   BUCKET_NAME: 'iot-things-certificates'
   DYNAMO-ARN: 'arn:aws:dynamodb:${self:provider.region}:*:table'
   SCUUID_TABLE_NAME: '${self:custom.PREFIX.${self:provider.stage}, self:custom.PREFIX.other}${file(env.yml):scuuidTable}'
-  
+
 
   PREFIX:
     prod: ''
@@ -54,46 +55,46 @@ custom:
     prod: ''
     production: ''
     other: '-${self:provider.stage}'
-  
-  #! Append stage name to domainName e.g iot-dev. No suffix if stage is production/prod. 
-  #! To CREATE domain run: serverless create_domain --stage stageName. 
+
+  #! Append stage name to domainName e.g iot-dev. No suffix if stage is production/prod.
+  #! To CREATE domain run: serverless create_domain --stage stageName.
   #! To DELETE domain run: serverless delete_domain --stage stageName
   customDomain:
     domainName: iot${self:custom.SUFFIX.${self:provider.stage}, self:custom.SUFFIX.other}.scicanapi.com
-    basePath: 'thing' 
+    basePath: 'thing'
     stage: ${self:provider.stage}
     createRoute53Record: true
-  apiKeys:    
-    - name: ${file(env.yml):SCICAN_RND_KEY_NAME_${self:provider.stage}} 
-      value: ${file(env.yml):SCICAN_RND_KEY_VALUE_${self:provider.stage}}
-      usagePlan:
-        name: "usageplan-${file(env.yml):SCICAN_RND_KEY_NAME_${self:provider.stage}}"
-        quota:
-          limit: 100000
-          period: DAY
-        throttle:
-          burstLimit: 100
-          rateLimit: 20
-    - name: ${file(env.yml):SCICAN_KEY_NAME_${self:provider.stage}} 
-      value: ${file(env.yml):SCICAN_KEY_VALUE_${self:provider.stage}}
-      usagePlan:
-        name: "usageplan-${file(env.yml):SCICAN_KEY_NAME_${self:provider.stage}}"
-        quota:
-          limit: 1000
-          period: DAY
-        throttle:
-          burstLimit: 100
-          rateLimit: 20
-    - name: ${file(env.yml):CEFLA_KEY_NAME_${self:provider.stage}} 
-      value: ${file(env.yml):CEFLA_KEY_VALUE_${self:provider.stage}}
-      usagePlan:
-        name: "usageplan-${file(env.yml):CEFLA_KEY_NAME_${self:provider.stage}}"
-        quota:
-          limit: 1000
-          period: DAY
-        throttle:
-          burstLimit: 100
-          rateLimit: 20
+  apiKeys:
+  - name: ${file(env.yml):SCICAN_RND_KEY_NAME_${self:provider.stage}}
+    value: ${file(env.yml):SCICAN_RND_KEY_VALUE_${self:provider.stage}}
+    usagePlan:
+      name: "usageplan-${file(env.yml):SCICAN_RND_KEY_NAME_${self:provider.stage}}"
+      quota:
+        limit: 100000
+        period: DAY
+      throttle:
+        burstLimit: 100
+        rateLimit: 20
+  - name: ${file(env.yml):SCICAN_KEY_NAME_${self:provider.stage}}
+    value: ${file(env.yml):SCICAN_KEY_VALUE_${self:provider.stage}}
+    usagePlan:
+      name: "usageplan-${file(env.yml):SCICAN_KEY_NAME_${self:provider.stage}}"
+      quota:
+        limit: 1000
+        period: DAY
+      throttle:
+        burstLimit: 100
+        rateLimit: 20
+  - name: ${file(env.yml):CEFLA_KEY_NAME_${self:provider.stage}}
+    value: ${file(env.yml):CEFLA_KEY_VALUE_${self:provider.stage}}
+    usagePlan:
+      name: "usageplan-${file(env.yml):CEFLA_KEY_NAME_${self:provider.stage}}"
+      quota:
+        limit: 1000
+        period: DAY
+      throttle:
+        burstLimit: 100
+        rateLimit: 20
 
 provider:
   name: aws
@@ -101,28 +102,28 @@ provider:
   stage: ${opt:stage, 'dev'}
   region: ${file(env.yml):${self:provider.stage}.region}
   versionFunctions: false
-  
-  iamManagedPolicies:
-    - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-  # resourcePolicy:
-  #   - Effect: Allow
-  #     Principal: '*'
-  #     Action: execute-api:Invoke
-  #     Resource:
-  #       - "arn:aws:execute-api:${file(env.yml):${self:provider.stage}.region}:${ssm:scican-id~true}:lm3pu9q1ag/${self:provider.stage}/POST/${file(env.yml):SCICAN_COMPANY_NAME}/things"
-  #     Condition:
-  #       IpAddress:
-  #         aws:SourceIp:
-  #           - '69.17.128.238'
-  #           - '54.149.160.209'
-  #           - '74.65.0.83'
-  #           - '99.228.248.94'
 
-  #apiKeys:    
-  #  - name: ${self:service}-${file(env.yml):SCICAN_KEY_NAME_${self:provider.stage}} 
-  #    value: ${self:service}-${file(env.yml):SCICAN_KEY_VALUE_${self:provider.stage}}
-  #  - name: ${self:service}-${file(env.yml):CEFLA_KEY_NAME_${self:provider.stage}} 
-  #    value: ${self:service}-${file(env.yml):CEFLA_KEY_VALUE_${self:provider.stage}}
+  iamManagedPolicies:
+  - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+    # resourcePolicy:
+    #   - Effect: Allow
+    #     Principal: '*'
+    #     Action: execute-api:Invoke
+    #     Resource:
+    #       - "arn:aws:execute-api:${file(env.yml):${self:provider.stage}.region}:${ssm:scican-id~true}:lm3pu9q1ag/${self:provider.stage}/POST/${file(env.yml):SCICAN_COMPANY_NAME}/things"
+    #     Condition:
+    #       IpAddress:
+    #         aws:SourceIp:
+    #           - '69.17.128.238'
+    #           - '54.149.160.209'
+    #           - '74.65.0.83'
+    #           - '99.228.248.94'
+
+    #apiKeys:
+    #  - name: ${self:service}-${file(env.yml):SCICAN_KEY_NAME_${self:provider.stage}}
+    #    value: ${self:service}-${file(env.yml):SCICAN_KEY_VALUE_${self:provider.stage}}
+    #  - name: ${self:service}-${file(env.yml):CEFLA_KEY_NAME_${self:provider.stage}}
+    #    value: ${self:service}-${file(env.yml):CEFLA_KEY_VALUE_${self:provider.stage}}
 
     # - free:
     #   - ${self:provider.stage}-clientOne
@@ -131,7 +132,7 @@ provider:
     #   - ${self:provider.stage}-${file(env.yml):SCICAN_COMPANY_NAME}
     # - paid:
     #   - ${self:provider.stage}-clientFour
-      
+
   # usagePlan:
   #   quota:
   #     limit: 10
@@ -140,69 +141,58 @@ provider:
   #   throttle:
   #     burstLimit: 1
   #     rateLimit: 1
-    # - free:
-    #   quota:
-    #     limit: 10
-    #     offset: 5
-    #     period: DAY
-    #   throttle:
-    #     burstLimit: 1
-    #     rateLimit: 1
-    # - paid:
-    #   quota:
-    #     limit: 5000
-    #     offset: 0
-    #     period: MONTH
-    #   throttle:
-    #     burstLimit: 1
-    #     rateLimit: 1
+  # - free:
+  #   quota:
+  #     limit: 10
+  #     offset: 5
+  #     period: DAY
+  #   throttle:
+  #     burstLimit: 1
+  #     rateLimit: 1
+  # - paid:
+  #   quota:
+  #     limit: 5000
+  #     offset: 0
+  #     period: MONTH
+  #   throttle:
+  #     burstLimit: 1
+  #     rateLimit: 1
 
   iamRoleStatements:
-    - Effect: "Allow"
-      Action:
-        - "iot:*"
-      Resource: '*'
+  - Effect: "Allow"
+    Action:
+    - "iot:*"
+    Resource: '*'
 
-    - Effect: 'Allow'
-      Action:
-        - 's3:*'
-      Resource: 'arn:aws:s3:::${self:custom.BUCKET_NAME}-${self:provider.stage}/*'
+  - Effect: 'Allow'
+    Action:
+    - 's3:*'
+    Resource: 'arn:aws:s3:::${self:custom.BUCKET_NAME}-${self:provider.stage}/*'
 
-    - Effect: 'Allow'
-      Action:
-      - 'rds:*'
-      Resource: 'arn:aws:rds:us-east-1:366229877060:db:scican-testing'
-
-
-    - Effect: 'Allow'
-      Action:
-      - 'rds:*'
-      Resource: 'arn:aws:rds:us-east-1:366229877060:db:scican-updates'
-
-    - Effect: Allow
-      Action:
-        - dynamodb:DescribeTable
-        - dynamodb:Query
-        - dynamodb:Scan
-        - dynamodb:GetItem
-        - dynamodb:PutItem
-      Resource: '${self:custom.DYNAMO-ARN}/*'
+  - Effect: Allow
+    Action:
+    - dynamodb:DescribeTable
+    - dynamodb:Query
+    - dynamodb:Scan
+    - dynamodb:GetItem
+    - dynamodb:PutItem
+    Resource: '${self:custom.DYNAMO-ARN}/*'
 
   environment:
     BUCKET_NAME: ${self:custom.BUCKET_NAME}-${self:provider.stage}
 
 functions:
   scicancreatething:
-  #! If the policy is not manually created the lambda will run in a loop
-  # TODO - How to create a POLICY automatically if it doesn't exist in serverless.yml ?
+    #! If the policy is not manually created the lambda will run in a loop
+    # TODO - How to create a POLICY automatically if it doesn't exist in serverless.yml ?
 
     name: ${self:provider.stage}-${file(env.yml):SCICAN_COMPANY_NAME}-${self:custom.fnCreateThing}
     handler: fnCreateThing.fnCreateThing
     events:
-      - http:
-          path: ${file(env.yml):SCICAN_COMPANY_NAME}
-          method: post
-          private: true
+    - http:
+        path: ${file(env.yml):SCICAN_COMPANY_NAME}
+        method: post
+        private: true
     environment:
       COMPANY_NAME: ${file(env.yml):SCICAN_COMPANY_NAME}
       PRIVATE_KEY: ${file(env.yml):${self:provider.stage}.SCICAN_PRIVATE_KEY}
@@ -217,32 +207,32 @@ functions:
     iamRoleStatements:
     - Effect: "Allow"
       Action:
-        - "iot:*"
+      - "iot:*"
       Resource: '*'
     - Effect: 'Allow'
       Action:
-        - 's3:*'
+      - 's3:*'
       Resource: 'arn:aws:s3:::${self:custom.BUCKET_NAME}-${self:provider.stage}/*'
     - Effect: Allow
       Action:
-        - dynamodb:DescribeTable
-        - dynamodb:Query
-        - dynamodb:Scan
-        - dynamodb:GetItem
-        - dynamodb:PutItem
-      Resource: '${self:custom.DYNAMO-ARN}/*'  
+      - dynamodb:DescribeTable
+      - dynamodb:Query
+      - dynamodb:Scan
+      - dynamodb:GetItem
+      - dynamodb:PutItem
+      Resource: '${self:custom.DYNAMO-ARN}/*'
 
   ceflacreatething:
-  #! If the policy is not manually created the lambda will run in a loop
-  # TODO - How to create a POLICY automatically if it doesn't exist in serverless.yml ?
-  
+    #! If the policy is not manually created the lambda will run in a loop
+    # TODO - How to create a POLICY automatically if it doesn't exist in serverless.yml ?
+
     name: ${self:provider.stage}-${file(env.yml):CEFLA_COMPANY_NAME}-${self:custom.fnCreateThing}
     handler: fnCreateThing.fnCreateThing
     events:
-      - http:
-          path: ${file(env.yml):CEFLA_COMPANY_NAME}
-          method: post
-          private: true
+    - http:
+        path: ${file(env.yml):CEFLA_COMPANY_NAME}
+        method: post
+        private: true
     environment:
       COMPANY_NAME: ${file(env.yml):CEFLA_COMPANY_NAME}
       PRIVATE_KEY: ${file(env.yml):${self:provider.stage}.CEFLA_PRIVATE_KEY}
@@ -251,25 +241,25 @@ functions:
       SCUUID_TABLE_NAME: ${self:custom.SCUUID_TABLE_NAME}
       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
       mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
-      
+
     memorySize: 256
     iamRoleStatementsName: ${self:provider.stage}-${file(env.yml):CEFLA_COMPANY_NAME}-${self:custom.fnCreateThing}
     iamRoleStatements:
     - Effect: "Allow"
       Action:
-        - "iot:*"
+      - "iot:*"
       Resource: '*'
     - Effect: 'Allow'
       Action:
-        - 's3:*'
+      - 's3:*'
       Resource: 'arn:aws:s3:::${self:custom.BUCKET_NAME}-${self:provider.stage}/*'
     - Effect: Allow
       Action:
-        - dynamodb:DescribeTable
-        - dynamodb:Query
-        - dynamodb:Scan
-        - dynamodb:GetItem
-        - dynamodb:PutItem
+      - dynamodb:DescribeTable
+      - dynamodb:Query
+      - dynamodb:Scan
+      - dynamodb:GetItem
+      - dynamodb:PutItem
       Resource: '${self:custom.DYNAMO-ARN}/*'
 
   certificateinfo:
@@ -277,14 +267,14 @@ functions:
     name: ${self:provider.stage}-${self:custom.fnCertificateInfo}
     handler: fnCertificateInfo.fnCertificateInfo
     events:
-      - http:
-          path: certificateInfo
-          method: get
-          private: true
-          request:
-            parameters:
-              querystrings:
-                scuuid: true
+    - http:
+        path: certificateInfo
+        method: get
+        private: true
+        request:
+          parameters:
+            querystrings:
+              scuuid: true
     memorySize: 256
 
   token:
@@ -293,7 +283,7 @@ functions:
     events:
     - http:
         path: ${file(env.yml):CEFLA_COMPANY_NAME}/token
-        method: GET  
+        method: GET
         private: true
     memorySize: 256
     request:
@@ -303,30 +293,26 @@ functions:
           serial_number: true
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnToken}
     iamRoleStatements:
-#        - Effect: 'Allow'
-#          Action:
-#          - 'rds:*'
-#          Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
+    - Effect: 'Allow'
+      Action:
+      - 'rds:*'
+      Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
 
-        - Effect: 'Allow'
-          Action:
-          - 'logs:CreateLogGroup'
-          - 'logs:CreateLogStream'
-          - 'logs:PutLogEvents'
-          - 'ec2:CreateNetworkInterface'
-          - 'ec2:DescribeNetworkInterfaces'
-          - 'ec2:DeleteNetworkInterfaces'
-          Resource: "*"
+    - Effect: 'Allow'
+      Action:
+      - 'logs:CreateLogGroup'
+      - 'logs:CreateLogStream'
+      - 'logs:PutLogEvents'
+      - 'ec2:CreateNetworkInterface'
+      - 'ec2:DescribeNetworkInterfaces'
+      - 'ec2:DeleteNetworkInterfaces'
+      Resource: "*"
     vpc: ${file(env.yml):vpc-${self:provider.stage}}
     environment:
-#      rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
-#      rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
-#      rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
-#      rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
-      rdsMySqlDb: ${file(env.yml):rdsMySqlDb-${self:provider.stage}}
-      rdsMySqlHost: ${file(env.yml):rdsMySqlHost-${self:provider.stage}}
-      rdsMySqlUsername: ${file(env.yml):rdsMySqlUsername-${self:provider.stage}}
-      rdsMySqlPassword: ${file(env.yml):rdsMySqlPassword-${self:provider.stage}}
+      rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
+      rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
+      rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
+      rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
 
   tokenInsert:
     name: ${self:provider.stage}-${self:custom.fnTokenInsert}
@@ -334,310 +320,286 @@ functions:
     events:
     - http:
         path: tokenInsert
-        method: POST  
+        method: POST
     memorySize: 256
     private: true
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnTokenInsert}
     iamRoleStatements:
-#        - Effect: 'Allow'
-#          Action:
-#          - 'rds:*'
-#          Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
+    - Effect: 'Allow'
+      Action:
+      - 'rds:*'
+      Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
 
-        - Effect: 'Allow'
-          Action:
-          - 'logs:CreateLogGroup'
-          - 'logs:CreateLogStream'
-          - 'logs:PutLogEvents'
-          - 'ec2:CreateNetworkInterface'
-          - 'ec2:DescribeNetworkInterfaces'
-          - 'ec2:DeleteNetworkInterfaces'
-          Resource: "*"
+    - Effect: 'Allow'
+      Action:
+      - 'logs:CreateLogGroup'
+      - 'logs:CreateLogStream'
+      - 'logs:PutLogEvents'
+      - 'ec2:CreateNetworkInterface'
+      - 'ec2:DescribeNetworkInterfaces'
+      - 'ec2:DeleteNetworkInterfaces'
+      Resource: "*"
     vpc: ${file(env.yml):vpc-${self:provider.stage}}
     environment:
-      rdsMySqlDb: ${file(env.yml):rdsMySqlDb-${self:provider.stage}}
-      rdsMySqlHost: ${file(env.yml):rdsMySqlHost-${self:provider.stage}}
-      rdsMySqlUsername: ${file(env.yml):rdsMySqlUsername-${self:provider.stage}}
-      rdsMySqlPassword: ${file(env.yml):rdsMySqlPassword-${self:provider.stage}}
-#      rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
-#      rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
-#      rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
-#      rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
-
+      rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
+      rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
+      rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
+      rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
 
   tokenInsertMQTT:
     name: ${self:provider.stage}-${self:custom.fnTokenInsertMQTT}
     handler: fnTokenInsertMQTT.fnTokenInsertMQTT
     events:
-      - iot:
-          name: ${self:provider.stage}_${self:custom.fnTokenInsertMQTT}
-          sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/sys/cmd/fnCreateThing/#' "  
+    - iot:
+        name: ${self:provider.stage}_${self:custom.fnTokenInsertMQTT}
+        sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/sys/cmd/fnCreateThing/#' "
     memorySize: 256
     # timeout: 6
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnTokenInsertMQTT}
     iamRoleStatements:
-#        - Effect: 'Allow'
-#          Action:
-#          - 'rds:*'
-#          Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
-#
-        - Effect: 'Allow'
-          Action:
-          - 'logs:CreateLogGroup'
-          - 'logs:CreateLogStream'
-          - 'logs:PutLogEvents'
-          - 'ec2:CreateNetworkInterface'
-          - 'ec2:DescribeNetworkInterfaces'
-          - 'ec2:DeleteNetworkInterfaces'
-          Resource: "*"
-        - Effect: "Allow"
-          Action:
-            - "iot:*"
-          Resource: '*' 
+    - Effect: 'Allow'
+      Action:
+      - 'rds:*'
+      Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
+    - Effect: 'Allow'
+      Action:
+      - 'logs:CreateLogGroup'
+      - 'logs:CreateLogStream'
+      - 'logs:PutLogEvents'
+      - 'ec2:CreateNetworkInterface'
+      - 'ec2:DescribeNetworkInterfaces'
+      - 'ec2:DeleteNetworkInterfaces'
+      Resource: "*"
+    - Effect: "Allow"
+      Action:
+      - "iot:*"
+      Resource: '*'
     vpc: ${file(env.yml):vpc-${self:provider.stage}}
     environment:
-#      rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
-#      rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
-#      rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
-#      rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
-      rdsMySqlDb: ${file(env.yml):rdsMySqlDb-${self:provider.stage}}
-      rdsMySqlHost: ${file(env.yml):rdsMySqlHost-${self:provider.stage}}
-      rdsMySqlUsername: ${file(env.yml):rdsMySqlUsername-${self:provider.stage}}
-      rdsMySqlPassword: ${file(env.yml):rdsMySqlPassword-${self:provider.stage}}
+      rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
+      rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
+      rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
+      rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
 
   publishmqtt:
     name: ${self:provider.stage}-${self:custom.fnPublishMqtt}
     handler: fnPublishMqtt.fnPublishMqtt
     events:
-      - http:
-          path: publishmqtt
-          method: post
-          private: false
-    environment:    
-      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'      
+    - http:
+        path: publishmqtt
+        method: post
+        private: false
+    environment:
+      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
     memorySize: 256
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnPublishMqtt}
     iamRoleStatements:
     - Effect: "Allow"
       Action:
-        - "iot:*"
+      - "iot:*"
       Resource: '*'
 
   lambdaCron:
     name: ${self:provider.stage}-${self:custom.fnCron}
     handler: fnCron.fnCron
     events:
-      # - iot:
-      #     name: ${self:provider.stage}_${self:custom.fnCron}
-      #     sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/testfnCron/#' "
-      # - schedule: cron(0/1 * * * ? *)
+    # - iot:
+    #     name: ${self:provider.stage}_${self:custom.fnCron}
+    #     sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/testfnCron/#' "
+    # - schedule: cron(0/1 * * * ? *)
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnCron}
     iamRoleStatements:
-#        - Effect: 'Allow'
-#          Action:
-#          - 'rds:*'
-#          Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
-#
-        - Effect: 'Allow'
-          Action:
-          - 'logs:CreateLogGroup'
-          - 'logs:CreateLogStream'
-          - 'logs:PutLogEvents'
-          - 'ec2:CreateNetworkInterface'
-          - 'ec2:DescribeNetworkInterfaces'
-          - 'ec2:DeleteNetworkInterfaces'
-          Resource: "*"
-        - Effect: "Allow"
-          Action:
-            - "iot:*"
-          Resource: '*'
+    - Effect: 'Allow'
+      Action:
+      - 'rds:*'
+      Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
+    - Effect: 'Allow'
+      Action:
+      - 'logs:CreateLogGroup'
+      - 'logs:CreateLogStream'
+      - 'logs:PutLogEvents'
+      - 'ec2:CreateNetworkInterface'
+      - 'ec2:DescribeNetworkInterfaces'
+      - 'ec2:DeleteNetworkInterfaces'
+      Resource: "*"
+    - Effect: "Allow"
+      Action:
+      - "iot:*"
+      Resource: '*'
     vpc: ${file(env.yml):vpc-${self:provider.stage}}
-    environment:  
-#      rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
-#      rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
-#      rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
-#      rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
-      rdsMySqlDb: ${file(env.yml):rdsMySqlDb-${self:provider.stage}}
-      rdsMySqlHost: ${file(env.yml):rdsMySqlHost-${self:provider.stage}}
-      rdsMySqlUsername: ${file(env.yml):rdsMySqlUsername-${self:provider.stage}}
-      rdsMySqlPassword: ${file(env.yml):rdsMySqlPassword-${self:provider.stage}}
+    environment:
+      rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
+      rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
+      rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
+      rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
-      mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}   
+      mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
     memorySize: 256
     timeout: 600
 
   rdsTestToken:
-      name: ${self:provider.stage}-rdsTestTokens
-      handler: rdsTestTokens.rdsTestTokens
-      events:
-        # - iot:
-        #     name: ${self:provider.stage}_rdsTestToken
-        #     sql: "SELECT *, topic() AS topic FROM 'scican/sys/cmd/fnCreateThing/#' "   
-        - http:
-            path: rdsTestTokens
-            method: POST  
-      memorySize: 256
-      iamRoleStatementsName: ${self:provider.stage}-rdsTestTokens
-      iamRoleStatements:
-          - Effect: "Allow"
-            Action:
-              - "iot:*"
-            Resource: '*'
-#          - Effect: 'Allow'
-#            Action:
-#            - 'rds:*'
-#            Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
+    name: ${self:provider.stage}-rdsTestTokens
+    handler: rdsTestTokens.rdsTestTokens
+    events:
+    # - iot:
+    #     name: ${self:provider.stage}_rdsTestToken
+    #     sql: "SELECT *, topic() AS topic FROM 'scican/sys/cmd/fnCreateThing/#' "
+    - http:
+        path: rdsTestTokens
+        method: POST
+    memorySize: 256
+    iamRoleStatementsName: ${self:provider.stage}-rdsTestTokens
+    iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+      - "iot:*"
+      Resource: '*'
+    - Effect: 'Allow'
+      Action:
+      - 'rds:*'
+      Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
 
-          - Effect: 'Allow'
-            Action:
-            - 'logs:CreateLogGroup'
-            - 'logs:CreateLogStream'
-            - 'logs:PutLogEvents'
-            - 'ec2:CreateNetworkInterface'
-            - 'ec2:DescribeNetworkInterfaces'
-            - 'ec2:DeleteNetworkInterfaces'
-            Resource: "*"
-      vpc: ${file(env.yml):vpc-${self:provider.stage}}
-      environment:
-#        rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
-#        rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
-#        rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
-#        rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
-        rdsMySqlDb: ${file(env.yml):rdsMySqlDb-${self:provider.stage}}
-        rdsMySqlHost: ${file(env.yml):rdsMySqlHost-${self:provider.stage}}
-        rdsMySqlUsername: ${file(env.yml):rdsMySqlUsername-${self:provider.stage}}
-        rdsMySqlPassword: ${file(env.yml):rdsMySqlPassword-${self:provider.stage}}
-        MQTT_ENDPOINT: 'a3oug6yeqsiol5-ats.iot.us-west-2.amazonaws.com'
+    - Effect: 'Allow'
+      Action:
+      - 'logs:CreateLogGroup'
+      - 'logs:CreateLogStream'
+      - 'logs:PutLogEvents'
+      - 'ec2:CreateNetworkInterface'
+      - 'ec2:DescribeNetworkInterfaces'
+      - 'ec2:DeleteNetworkInterfaces'
+      Resource: "*"
+    vpc: ${file(env.yml):vpc-${self:provider.stage}}
+    environment:
+      rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
+      rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
+      rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
+      rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
+      MQTT_ENDPOINT: 'a3oug6yeqsiol5-ats.iot.us-west-2.amazonaws.com'
 
   fnBootFwStart:
-      name: ${self:provider.stage}-${self:custom.fnBootFwStart}
-      handler: fnBootFwStart.fnBootFwStart
-      events:
-        - iot:
-            name: ${self:provider.stage}_${self:custom.fnBootFwStart}
-            sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/MSSTER/+/CAN/RSP/boot_fw_start/#' "  
-      memorySize: 256
-      iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnBootFwStart}
-      iamRoleStatements:
-          - Effect: "Allow"
-            Action:
-              - "iot:*"
-            Resource: '*' 
-            
-          - Effect: 'Allow'
-            Action:
-              - 's3:*'
-            Resource: 'arn:aws:s3:::${file(env.yml):BUCKET_FIRMWARE}${self:provider.stage}/*'  
-      environment:
-        MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
-        BUCKET_FIRMWARE: '${file(env.yml):BUCKET_FIRMWARE}${self:provider.stage}'
-        mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
-  
-  fnBootFwWrite:
-      name: ${self:provider.stage}-${self:custom.fnBootFwWrite}
-      handler: fnBootFwWrite.fnBootFwWrite
-      events:
-        - iot:
-            name: ${self:provider.stage}_${self:custom.fnBootFwWrite}
-            sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/MSSTER/+/CAN/RSP/boot_fw_write/#' "  
-      memorySize: 256
-      iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnBootFwWrite}
-      iamRoleStatements:
-          - Effect: "Allow"
-            Action:
-              - "iot:*"
-            Resource: '*' 
+    name: ${self:provider.stage}-${self:custom.fnBootFwStart}
+    handler: fnBootFwStart.fnBootFwStart
+    events:
+    - iot:
+        name: ${self:provider.stage}_${self:custom.fnBootFwStart}
+        sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/MSSTER/+/CAN/RSP/boot_fw_start/#' "
+    memorySize: 256
+    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnBootFwStart}
+    iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+      - "iot:*"
+      Resource: '*'
 
-          - Effect: 'Allow'
-            Action:
-              - 's3:*'
-            Resource: 'arn:aws:s3:::${file(env.yml):BUCKET_FIRMWARE}${self:provider.stage}/*'  
-      environment:
-        MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
-        BUCKET_FIRMWARE: '${file(env.yml):BUCKET_FIRMWARE}${self:provider.stage}'
-        mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
+    - Effect: 'Allow'
+      Action:
+      - 's3:*'
+      Resource: 'arn:aws:s3:::${file(env.yml):BUCKET_FIRMWARE}${self:provider.stage}/*'
+    environment:
+      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
+      BUCKET_FIRMWARE: '${file(env.yml):BUCKET_FIRMWARE}${self:provider.stage}'
+      mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
+
+  fnBootFwWrite:
+    name: ${self:provider.stage}-${self:custom.fnBootFwWrite}
+    handler: fnBootFwWrite.fnBootFwWrite
+    events:
+    - iot:
+        name: ${self:provider.stage}_${self:custom.fnBootFwWrite}
+        sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/MSSTER/+/CAN/RSP/boot_fw_write/#' "
+    memorySize: 256
+    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnBootFwWrite}
+    iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+      - "iot:*"
+      Resource: '*'
+
+    - Effect: 'Allow'
+      Action:
+      - 's3:*'
+      Resource: 'arn:aws:s3:::${file(env.yml):BUCKET_FIRMWARE}${self:provider.stage}/*'
+    environment:
+      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
+      BUCKET_FIRMWARE: '${file(env.yml):BUCKET_FIRMWARE}${self:provider.stage}'
+      mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
 
   fnBootFwStop:
     name: ${self:provider.stage}-${self:custom.fnBootFwStop}
     handler: fnBootFwStop.fnBootFwStop
     events:
-      - iot:
-          name: ${self:provider.stage}_${self:custom.fnBootFwStop}
-          sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/MSSTER/+/CAN/RSP/boot_fw_stop/#' "  
+    - iot:
+        name: ${self:provider.stage}_${self:custom.fnBootFwStop}
+        sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/MSSTER/+/CAN/RSP/boot_fw_stop/#' "
     memorySize: 256
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnBootFwStop}
     iamRoleStatements:
-#        - Effect: 'Allow'
-#          Action:
-#          - 'rds:*'
-#          Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
-#
-        - Effect: 'Allow'
-          Action:
-          - 'logs:CreateLogGroup'
-          - 'logs:CreateLogStream'
-          - 'logs:PutLogEvents'
-          - 'ec2:CreateNetworkInterface'
-          - 'ec2:DescribeNetworkInterfaces'
-          - 'ec2:DeleteNetworkInterfaces'
-          Resource: "*"
-        - Effect: "Allow"
-          Action:
-          - "iot:*"
-          Resource: '*' 
-    vpc: ${file(env.yml):vpc-${self:provider.stage}}      
+    - Effect: 'Allow'
+      Action:
+      - 'rds:*'
+      Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
+    - Effect: 'Allow'
+      Action:
+      - 'logs:CreateLogGroup'
+      - 'logs:CreateLogStream'
+      - 'logs:PutLogEvents'
+      - 'ec2:CreateNetworkInterface'
+      - 'ec2:DescribeNetworkInterfaces'
+      - 'ec2:DeleteNetworkInterfaces'
+      Resource: "*"
+    - Effect: "Allow"
+      Action:
+      - "iot:*"
+      Resource: '*'
+    vpc: ${file(env.yml):vpc-${self:provider.stage}}
     environment:
-#      rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
-#      rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
-#      rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
-#      rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
-      rdsMySqlDb: ${file(env.yml):rdsMySqlDb-${self:provider.stage}}
-      rdsMySqlHost: ${file(env.yml):rdsMySqlHost-${self:provider.stage}}
-      rdsMySqlUsername: ${file(env.yml):rdsMySqlUsername-${self:provider.stage}}
-      rdsMySqlPassword: ${file(env.yml):rdsMySqlPassword-${self:provider.stage}}
+      rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
+      rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
+      rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
+      rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
       mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
 
   fnBootFwUpdateRequestStartProcess:
-      name: ${self:provider.stage}-${self:custom.fnBootFwUpdateRequestStartProcess}
-      handler: fnBootFwUpdateRequestStartProcess.fnBootFwUpdateRequestStartProcess
-      events:
-        - iot:
-            name: ${self:provider.stage}_${self:custom.fnBootFwUpdateRequestStartProcess}
-            sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/SCICAN/+/CAN/CMD/boot_fw_update_request_start_process/#' "  
-      memorySize: 256
-      iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnBootFwUpdateRequestStartProcess}
-      iamRoleStatements:
-          - Effect: "Allow"
-            Action:
-              - "iot:*"
-            Resource: '*' 
-            
-          - Effect: 'Allow'
-            Action:
-              - 's3:*'
-            Resource: 'arn:aws:s3:::${file(env.yml):BUCKET_FIRMWARE}${self:provider.stage}/*'  
-      environment:
-        MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
-        BUCKET_FIRMWARE: '${file(env.yml):BUCKET_FIRMWARE}${self:provider.stage}'
-        mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
+    name: ${self:provider.stage}-${self:custom.fnBootFwUpdateRequestStartProcess}
+    handler: fnBootFwUpdateRequestStartProcess.fnBootFwUpdateRequestStartProcess
+    events:
+    - iot:
+        name: ${self:provider.stage}_${self:custom.fnBootFwUpdateRequestStartProcess}
+        sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/SCICAN/+/CAN/CMD/boot_fw_update_request_start_process/#' "
+    memorySize: 256
+    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnBootFwUpdateRequestStartProcess}
+    iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+      - "iot:*"
+      Resource: '*'
+
+    - Effect: 'Allow'
+      Action:
+      - 's3:*'
+      Resource: 'arn:aws:s3:::${file(env.yml):BUCKET_FIRMWARE}${self:provider.stage}/*'
+    environment:
+      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
+      BUCKET_FIRMWARE: '${file(env.yml):BUCKET_FIRMWARE}${self:provider.stage}'
+      mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
 
   requestMachineInfo:
     name: ${self:provider.stage}-${self:custom.fnRequestMachineInfo}
     handler: fnRequestMachineInfo.fnRequestMachineInfo
     events:
-      - iot:
-          name: ${self:provider.stage}_${self:custom.fnRequestMachineInfo}
-          sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/sys/cmd/fnCreateThing/#' "  
+    - iot:
+        name: ${self:provider.stage}_${self:custom.fnRequestMachineInfo}
+        sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/sys/cmd/fnCreateThing/#' "
     memorySize: 256
     # timeout: 6
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnRequestMachineInfo}
     iamRoleStatements:
-        - Effect: "Allow"
-          Action:
-            - "iot:*"
-          Resource: '*' 
+    - Effect: "Allow"
+      Action:
+      - "iot:*"
+      Resource: '*'
     vpc: ${file(env.yml):vpc-${self:provider.stage}}
     environment:
       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
@@ -646,40 +608,36 @@ functions:
     name: ${self:provider.stage}-${self:custom.fnVpcTest}
     handler: fnVpcTest.fnVpcTest
     events:
-      - iot:
-          name: ${self:provider.stage}_${self:custom.fnVpcTest}
-          sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/SCICANSYS/fnVpcTestTrigger' "  
+    - iot:
+        name: ${self:provider.stage}_${self:custom.fnVpcTest}
+        sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/SCICANSYS/fnVpcTestTrigger' "
     memorySize: 256
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnVpcTest}
     iamRoleStatements:
-        - Effect: "Allow"
-          Action:
-            - "iot:*"
-          Resource: '*'
-#        - Effect: 'Allow'
-#          Action:
-#          - 'rds:*'
-#          Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
+    - Effect: "Allow"
+      Action:
+      - "iot:*"
+      Resource: '*'
+    - Effect: 'Allow'
+      Action:
+      - 'rds:*'
+      Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
 
-        - Effect: 'Allow'
-          Action:
-          - 'logs:CreateLogGroup'
-          - 'logs:CreateLogStream'
-          - 'logs:PutLogEvents'
-          - 'ec2:CreateNetworkInterface'
-          - 'ec2:DescribeNetworkInterfaces'
-          - 'ec2:DeleteNetworkInterfaces'
-          Resource: "*"
+    - Effect: 'Allow'
+      Action:
+      - 'logs:CreateLogGroup'
+      - 'logs:CreateLogStream'
+      - 'logs:PutLogEvents'
+      - 'ec2:CreateNetworkInterface'
+      - 'ec2:DescribeNetworkInterfaces'
+      - 'ec2:DeleteNetworkInterfaces'
+      Resource: "*"
     vpc: ${file(env.yml):vpc-${self:provider.stage}}
     environment:
-#      rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
-#      rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
-#      rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
-#      rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
-      rdsMySqlDb: ${file(env.yml):rdsMySqlDb-${self:provider.stage}}
-      rdsMySqlHost: ${file(env.yml):rdsMySqlHost-${self:provider.stage}}
-      rdsMySqlUsername: ${file(env.yml):rdsMySqlUsername-${self:provider.stage}}
-      rdsMySqlPassword: ${file(env.yml):rdsMySqlPassword-${self:provider.stage}}
+      rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
+      rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
+      rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
+      rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
       mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
 
@@ -687,43 +645,43 @@ functions:
     name: ${self:provider.stage}-${self:custom.fnPublishMqttNginxLog}
     handler: fnPublishMqttNginxLog.fnPublishMqttNginxLog
     events:
-      - http:
-          path: fnPublishMqttNginxLog
-          method: post
-          private: false
-    environment:    
-      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'      
+    - http:
+        path: fnPublishMqttNginxLog
+        method: post
+        private: false
+    environment:
+      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
     memorySize: 256
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnPublishMqttNginxLog}
     iamRoleStatements:
     - Effect: "Allow"
       Action:
-        - "iot:*"
+      - "iot:*"
       Resource: '*'
-  
-  # SciCanRnDlogs:
-  #   name: ${self:provider.stage}-${self:custom.fnSciCanRnDlogs}
-  #   handler: fnSciCanRnDlogs.fnSciCanRnDlogs
-  #   events:
-  #     - iot:
-  #         name: ${self:provider.stage}_${self:custom.fnSciCanRnDlogs}
-  #         # sql: "SELECT * AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/SCICANSYS/fnSciCanRnDlogs' "
-  #         sql: "SELECT * AS topic FROM '+/scican/+/srv/event/dev-machine_control-read' "
-  #   memorySize: 512
-  #   timeout: 20
-  #   maximumEventAge: 7200
-  #   maximumRetryAttempts: 1
-  #   iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnSciCanRnDlogs}
-  #   iamRoleStatements:
-  #     - Effect: "Allow"
-  #       Action:
-  #         - "iot:*"
-  #       Resource: '*'
-  #     - Effect: 'Allow'
-  #       Action:
-  #         - 's3:*'
-  #       Resource: 'arn:aws:s3:::${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}/*'  
-      
+
+      # SciCanRnDlogs:
+      #   name: ${self:provider.stage}-${self:custom.fnSciCanRnDlogs}
+      #   handler: fnSciCanRnDlogs.fnSciCanRnDlogs
+      #   events:
+      #     - iot:
+      #         name: ${self:provider.stage}_${self:custom.fnSciCanRnDlogs}
+      #         # sql: "SELECT * AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/SCICANSYS/fnSciCanRnDlogs' "
+      #         sql: "SELECT * AS topic FROM '+/scican/+/srv/event/dev-machine_control-read' "
+      #   memorySize: 512
+      #   timeout: 20
+      #   maximumEventAge: 7200
+      #   maximumRetryAttempts: 1
+      #   iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnSciCanRnDlogs}
+      #   iamRoleStatements:
+      #     - Effect: "Allow"
+      #       Action:
+      #         - "iot:*"
+      #       Resource: '*'
+      #     - Effect: 'Allow'
+      #       Action:
+      #         - 's3:*'
+      #       Resource: 'arn:aws:s3:::${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}/*'
+
   #     - Effect: 'Allow'
   #       Action:
   #         - 'logs:CreateLogGroup'
@@ -733,373 +691,146 @@ functions:
   #         - 'ec2:DescribeNetworkInterfaces'
   #         - 'ec2:DeleteNetworkInterfaces'
   #       Resource: "*"
-  #   vpc: ${file(env.yml):vpc-${self:provider.stage}}  
-  #   environment:    
-  #     MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'  
+  #   vpc: ${file(env.yml):vpc-${self:provider.stage}}
+  #   environment:
+  #     MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
   #     mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
   #     BUCKET_SCICAN_RND_LOGS: '${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}'
 
   postgreTest:
-      name: ${self:provider.stage}-${self:custom.fnPostgreTest}
-      handler: fnPostgreTest.fnPostgreTest
-      events:
-        - iot:
-            name: ${self:provider.stage}_fnPostgreTest
-            sql: "SELECT *, topic() AS topic FROM 'scican/sys/cmd/fnCreateThing/#' "   
-        - http:
-            path: fnPostgreTest
-            method: POST  
-      memorySize: 256
-      iamRoleStatementsName: ${self:provider.stage}-fnPostgreTest
-      iamRoleStatements:
-          - Effect: "Allow"
-            Action:
-              - "iot:*"
-            Resource: '*'
-#          - Effect: 'Allow'
-#            Action:
-#            - 'rds:*'
-#            Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
+    name: ${self:provider.stage}-${self:custom.fnPostgreTest}
+    handler: fnPostgreTest.fnPostgreTest
+    events:
+    - iot:
+        name: ${self:provider.stage}_fnPostgreTest
+        sql: "SELECT *, topic() AS topic FROM 'scican/sys/cmd/fnCreateThing/#' "
+    - http:
+        path: fnPostgreTest
+        method: POST
+    memorySize: 256
+    iamRoleStatementsName: ${self:provider.stage}-fnPostgreTest
+    iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+      - "iot:*"
+      Resource: '*'
+    - Effect: 'Allow'
+      Action:
+      - 'rds:*'
+      Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
 
-          - Effect: 'Allow'
-            Action:
-            - 'logs:CreateLogGroup'
-            - 'logs:CreateLogStream'
-            - 'logs:PutLogEvents'
-            - 'ec2:CreateNetworkInterface'
-            - 'ec2:DescribeNetworkInterfaces'
-            - 'ec2:DeleteNetworkInterfaces'
-            Resource: "*"
-      vpc: ${file(env.yml):vpc-${self:provider.stage}}
-      environment:
-#        rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
-#        rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
-#        rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
-#        rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
-        rdsMySqlDb: ${file(env.yml):rdsMySqlDb-${self:provider.stage}}
-        rdsMySqlHost: ${file(env.yml):rdsMySqlHost-${self:provider.stage}}
-        rdsMySqlUsername: ${file(env.yml):rdsMySqlUsername-${self:provider.stage}}
-        rdsMySqlPassword: ${file(env.yml):rdsMySqlPassword-${self:provider.stage}}
-        MQTT_ENDPOINT: 'a3oug6yeqsiol5-ats.iot.us-west-2.amazonaws.com'
-  
+    - Effect: 'Allow'
+      Action:
+      - 'logs:CreateLogGroup'
+      - 'logs:CreateLogStream'
+      - 'logs:PutLogEvents'
+      - 'ec2:CreateNetworkInterface'
+      - 'ec2:DescribeNetworkInterfaces'
+      - 'ec2:DeleteNetworkInterfaces'
+      Resource: "*"
+    vpc: ${file(env.yml):vpc-${self:provider.stage}}
+    environment:
+      rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
+      rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
+      rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
+      rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
+      MQTT_ENDPOINT: 'a3oug6yeqsiol5-ats.iot.us-west-2.amazonaws.com'
+
   scicanrndcreatething:
     #! If the policy is not manually created the lambda will run in a loop
     # TODO - How to create a POLICY automatically if it doesn't exist in serverless.yml ?
 
-      name: ${self:provider.stage}-${file(env.yml):SCICAN_COMPANY_NAME}-${self:custom.fnScicanRndCreatething}
-      handler: fnScicanRndCreatething.fnScicanRndCreatething
-      events:
-        - http:
-            path: ${file(env.yml):SCICAN_COMPANY_NAME}/rnd
-            method: post
-            private: true
-      environment:
-        COMPANY_NAME: ${file(env.yml):SCICAN_COMPANY_NAME}
-        PRIVATE_KEY: ${file(env.yml):${self:provider.stage}.SCICAN_RND_PRIVATE_KEY}
-        LOG_PROCESS_NAME: ${file(env.yml):SCICAN_COMPANY_NAME}-${self:provider.stage}-${self:custom.fnScicanRndCreatething}
-        POLICY_NAME: ${file(env.yml):SCICAN_COMPANY_NAME}-rnd-iot-policy-${self:provider.stage}
-        SCUUID_TABLE_NAME: ${self:custom.SCUUID_TABLE_NAME}
-        MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
-        mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
+    name: ${self:provider.stage}-${file(env.yml):SCICAN_COMPANY_NAME}-${self:custom.fnScicanRndCreatething}
+    handler: fnScicanRndCreatething.fnScicanRndCreatething
+    events:
+    - http:
+        path: ${file(env.yml):SCICAN_COMPANY_NAME}/rnd
+        method: post
+        private: true
+    environment:
+      COMPANY_NAME: ${file(env.yml):SCICAN_COMPANY_NAME}
+      PRIVATE_KEY: ${file(env.yml):${self:provider.stage}.SCICAN_RND_PRIVATE_KEY}
+      LOG_PROCESS_NAME: ${file(env.yml):SCICAN_COMPANY_NAME}-${self:provider.stage}-${self:custom.fnScicanRndCreatething}
+      POLICY_NAME: ${file(env.yml):SCICAN_COMPANY_NAME}-rnd-iot-policy-${self:provider.stage}
+      SCUUID_TABLE_NAME: ${self:custom.SCUUID_TABLE_NAME}
+      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
+      mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
 
-      memorySize: 256
-      iamRoleStatementsName: ${self:provider.stage}-${file(env.yml):SCICAN_COMPANY_NAME}-${self:custom.fnScicanRndCreatething}
-      iamRoleStatements:
-      - Effect: "Allow"
-        Action:
-          - "iot:*"
-        Resource: '*'
-      - Effect: 'Allow'
-        Action:
-          - 's3:*'
-        Resource: 'arn:aws:s3:::${self:custom.BUCKET_NAME}-${self:provider.stage}/*'
-      - Effect: Allow
-        Action:
-          - dynamodb:DescribeTable
-          - dynamodb:Query
-          - dynamodb:Scan
-          - dynamodb:GetItem
-          - dynamodb:PutItem
-        Resource: '${self:custom.DYNAMO-ARN}/*'
+    memorySize: 256
+    iamRoleStatementsName: ${self:provider.stage}-${file(env.yml):SCICAN_COMPANY_NAME}-${self:custom.fnScicanRndCreatething}
+    iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+      - "iot:*"
+      Resource: '*'
+    - Effect: 'Allow'
+      Action:
+      - 's3:*'
+      Resource: 'arn:aws:s3:::${self:custom.BUCKET_NAME}-${self:provider.stage}/*'
+    - Effect: Allow
+      Action:
+      - dynamodb:DescribeTable
+      - dynamodb:Query
+      - dynamodb:Scan
+      - dynamodb:GetItem
+      - dynamodb:PutItem
+      Resource: '${self:custom.DYNAMO-ARN}/*'
 
   testZabbixMQTT:
     name: ${self:provider.stage}-${self:custom.fnTestZabbixMQTT}
     handler: fnTestZabbixMQTT.fnTestZabbixMQTT
     events:
-      - iot:
-          name: ${self:provider.stage}_${self:custom.fnTestZabbixMQTT}
-          sql: "SELECT *, topic() AS topic FROM 'fnTestZabbixMQTT/#'"
+    - iot:
+        name: ${self:provider.stage}_${self:custom.fnTestZabbixMQTT}
+        sql: "SELECT *, topic() AS topic FROM 'fnTestZabbixMQTT/#'"
     memorySize: 256
     timeout: 30
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnTestZabbixMQTT}
     iamRoleStatements:
-      - Effect: "Allow"
-        Action:
-          - "iot:*"
-        Resource: '*'
+    - Effect: "Allow"
+      Action:
+      - "iot:*"
+      Resource: '*'
     environment:
-      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'  
+      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
       mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
 
   fnBootFwUpdateDone:
-      name: ${self:provider.stage}-${self:custom.fnBootFwUpdateDone}
-      handler: fnBootFwUpdateDone.fnBootFwUpdateDone
-      events:
-        - iot:
-            name: ${self:provider.stage}_${self:custom.fnBootFwUpdateDone}                            
-            sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/MSSTER/+/CAN/EVN/FW_UPDATE_DONE/#' "  
-      memorySize: 256
-      iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnBootFwUpdateDone}
-      iamRoleStatements:
-          - Effect: "Allow"
-            Action:
-              - "iot:*"
-            Resource: '*' 
-            
-          - Effect: 'Allow'
-            Action:
-              - 's3:*'
-            Resource: 'arn:aws:s3:::${file(env.yml):BUCKET_FIRMWARE}${self:provider.stage}/*'  
-      environment:
-        MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
-        BUCKET_FIRMWARE: '${file(env.yml):BUCKET_FIRMWARE}${self:provider.stage}'
-        mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
+    name: ${self:provider.stage}-${self:custom.fnBootFwUpdateDone}
+    handler: fnBootFwUpdateDone.fnBootFwUpdateDone
+    events:
+    - iot:
+        name: ${self:provider.stage}_${self:custom.fnBootFwUpdateDone}
+        sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/MSSTER/+/CAN/EVN/FW_UPDATE_DONE/#' "
+    memorySize: 256
+    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnBootFwUpdateDone}
+    iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+      - "iot:*"
+      Resource: '*'
+
+    - Effect: 'Allow'
+      Action:
+      - 's3:*'
+      Resource: 'arn:aws:s3:::${file(env.yml):BUCKET_FIRMWARE}${self:provider.stage}/*'
+    environment:
+      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
+      BUCKET_FIRMWARE: '${file(env.yml):BUCKET_FIRMWARE}${self:provider.stage}'
+      mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
 
   fnDevMachineControlRead:
     name: ${self:provider.stage}-${self:custom.fnDevMachineControlRead}
     handler: fnSciCanRnDlogs.fnSciCanRnDlogs
     events:
-      - iot:
-          name: ${self:provider.stage}_${self:custom.fnDevMachineControlRead}
-          sql: "SELECT * AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/srv/event/dev-machine_control-read' "
+    - iot:
+        name: ${self:provider.stage}_${self:custom.fnDevMachineControlRead}
+        sql: "SELECT * AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/srv/event/dev-machine_control-read' "
     memorySize: 512
     timeout: 20
     maximumEventAge: 7200
     maximumRetryAttempts: 1
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnDevMachineControlRead}
-    iamRoleStatements:
-      - Effect: "Allow"
-        Action:
-          - "iot:*"
-        Resource: '*'
-      - Effect: 'Allow'
-        Action:
-          - 's3:*'
-        Resource: 'arn:aws:s3:::${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}/*'  
-      
-      - Effect: 'Allow'
-        Action:
-          - 'logs:CreateLogGroup'
-          - 'logs:CreateLogStream'
-          - 'logs:PutLogEvents'
-          - 'ec2:CreateNetworkInterface'
-          - 'ec2:DescribeNetworkInterfaces'
-          - 'ec2:DeleteNetworkInterfaces'
-        Resource: "*"
-    vpc: ${file(env.yml):vpc-${self:provider.stage}}  
-    environment:    
-      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'  
-      mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
-      BUCKET_SCICAN_RND_LOGS: '${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}'
-
-  fnRecordsFlushEvent:
-    name: ${self:provider.stage}-${self:custom.fnRecordsFlushEvent}
-    handler: fnSciCanRnDlogs.fnSciCanRnDlogs
-    events:
-      - iot:
-          name: ${self:provider.stage}_${self:custom.fnRecordsFlushEvent}
-          sql: "SELECT * AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/srv/event/records-flush' "
-    memorySize: 512
-    timeout: 20
-    maximumEventAge: 7200
-    maximumRetryAttempts: 1
-    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnRecordsFlushEvent}
-    iamRoleStatements:
-      - Effect: "Allow"
-        Action:
-          - "iot:*"
-        Resource: '*'
-      - Effect: 'Allow'
-        Action:
-          - 's3:*'
-        Resource: 'arn:aws:s3:::${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}/*'  
-      
-      - Effect: 'Allow'
-        Action:
-          - 'logs:CreateLogGroup'
-          - 'logs:CreateLogStream'
-          - 'logs:PutLogEvents'
-          - 'ec2:CreateNetworkInterface'
-          - 'ec2:DescribeNetworkInterfaces'
-          - 'ec2:DeleteNetworkInterfaces'
-        Resource: "*"
-    vpc: ${file(env.yml):vpc-${self:provider.stage}}  
-    environment:    
-      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'  
-      mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
-      BUCKET_SCICAN_RND_LOGS: '${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}'
-
-  fnRecordsPrintoutEvent:
-    name: ${self:provider.stage}-${self:custom.fnRecordsPrintoutEvent}
-    handler: fnSciCanRnDlogs.fnSciCanRnDlogs
-    events:
-      - iot:
-          name: ${self:provider.stage}_${self:custom.fnRecordsPrintoutEvent}
-          sql: "SELECT * AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/srv/event/records-printout' "
-    memorySize: 512
-    timeout: 20
-    maximumEventAge: 7200
-    maximumRetryAttempts: 1
-    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnRecordsPrintoutEvent}
-    iamRoleStatements:
-      - Effect: "Allow"
-        Action:
-          - "iot:*"
-        Resource: '*'
-      - Effect: 'Allow'
-        Action:
-          - 's3:*'
-        Resource: 'arn:aws:s3:::${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}/*'  
-      
-      - Effect: 'Allow'
-        Action:
-          - 'logs:CreateLogGroup'
-          - 'logs:CreateLogStream'
-          - 'logs:PutLogEvents'
-          - 'ec2:CreateNetworkInterface'
-          - 'ec2:DescribeNetworkInterfaces'
-          - 'ec2:DeleteNetworkInterfaces'
-        Resource: "*"
-    vpc: ${file(env.yml):vpc-${self:provider.stage}}  
-    environment:    
-      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'  
-      mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
-      BUCKET_SCICAN_RND_LOGS: '${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}'
-
-  fnRecordsCreateEvent:
-    name: ${self:provider.stage}-${self:custom.fnRecordsCreateEvent}
-    handler: fnSciCanRnDlogs.fnSciCanRnDlogs
-    events:
-      - iot:
-          name: ${self:provider.stage}_${self:custom.fnRecordsCreateEvent}
-          sql: "SELECT * AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/srv/event/records-create' "
-    memorySize: 512
-    timeout: 20
-    maximumEventAge: 7200
-    maximumRetryAttempts: 1
-    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnRecordsCreateEvent}
-    iamRoleStatements:
-      - Effect: "Allow"
-        Action:
-          - "iot:*"
-        Resource: '*'
-      - Effect: 'Allow'
-        Action:
-          - 's3:*'
-        Resource: 'arn:aws:s3:::${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}/*'  
-      
-      - Effect: 'Allow'
-        Action:
-          - 'logs:CreateLogGroup'
-          - 'logs:CreateLogStream'
-          - 'logs:PutLogEvents'
-          - 'ec2:CreateNetworkInterface'
-          - 'ec2:DescribeNetworkInterfaces'
-          - 'ec2:DeleteNetworkInterfaces'
-        Resource: "*"
-    vpc: ${file(env.yml):vpc-${self:provider.stage}}  
-    environment:    
-      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'  
-      mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
-      BUCKET_SCICAN_RND_LOGS: '${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}'
-
-  fnCyclesActionRequest:
-    name: ${self:provider.stage}-${self:custom.fnCyclesActionRequest}
-    handler: fnSciCanRnDlogs.fnSciCanRnDlogs
-    events:
-      - iot:
-          name: ${self:provider.stage}_${self:custom.fnCyclesActionRequest}
-          sql: "SELECT * AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/srv/event/cycles-action-request' "
-    memorySize: 512
-    timeout: 20
-    maximumEventAge: 7200
-    maximumRetryAttempts: 1
-    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnCyclesActionRequest}
-    iamRoleStatements:
-      - Effect: "Allow"
-        Action:
-          - "iot:*"
-        Resource: '*'
-      - Effect: 'Allow'
-        Action:
-          - 's3:*'
-        Resource: 'arn:aws:s3:::${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}/*'  
-      
-      - Effect: 'Allow'
-        Action:
-          - 'logs:CreateLogGroup'
-          - 'logs:CreateLogStream'
-          - 'logs:PutLogEvents'
-          - 'ec2:CreateNetworkInterface'
-          - 'ec2:DescribeNetworkInterfaces'
-          - 'ec2:DeleteNetworkInterfaces'
-        Resource: "*"
-    vpc: ${file(env.yml):vpc-${self:provider.stage}}  
-    environment:    
-      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'  
-      mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
-      BUCKET_SCICAN_RND_LOGS: '${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}'
-
-  fnCyclesActionResponse:
-    name: ${self:provider.stage}-${self:custom.fnCyclesActionResponse}
-    handler: fnSciCanRnDlogs.fnSciCanRnDlogs
-    events:
-      - iot:
-          name: ${self:provider.stage}_${self:custom.fnCyclesActionResponse}
-          sql: "SELECT * AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/srv/event/cycles-action-response' "
-    memorySize: 512
-    timeout: 20
-    maximumEventAge: 7200
-    maximumRetryAttempts: 1
-    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnCyclesActionResponse}
-    iamRoleStatements:
-      - Effect: "Allow"
-        Action:
-          - "iot:*"
-        Resource: '*'
-      - Effect: 'Allow'
-        Action:
-          - 's3:*'
-        Resource: 'arn:aws:s3:::${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}/*'  
-      
-      - Effect: 'Allow'
-        Action:
-          - 'logs:CreateLogGroup'
-          - 'logs:CreateLogStream'
-          - 'logs:PutLogEvents'
-          - 'ec2:CreateNetworkInterface'
-          - 'ec2:DescribeNetworkInterfaces'
-          - 'ec2:DeleteNetworkInterfaces'
-        Resource: "*"
-    vpc: ${file(env.yml):vpc-${self:provider.stage}}  
-    environment:    
-      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'  
-      mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
-      BUCKET_SCICAN_RND_LOGS: '${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}'
-
-
-  fnRequestAccountPasswordResetEmail:
-    name: ${self:provider.stage}-${self:custom.fnRequestAccountPasswordResetEmail}
-    handler: fnRequestAccountPasswordResetEmail.fnRequestAccountPasswordResetEmail
-    events:
-    - iot:
-        name: ${self:provider.stage}_${self:custom.fnRequestAccountPasswordResetEmail}
-        sql: "SELECT * AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/srv/request/account-password_reset_email' "
-    memorySize: 512
-    timeout: 20
-    maximumEventAge: 7200
-    maximumRetryAttempts: 1
-    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnRequestAccountPasswordResetEmail}
     iamRoleStatements:
     - Effect: "Allow"
       Action:
@@ -1109,17 +840,6 @@ functions:
       Action:
       - 's3:*'
       Resource: 'arn:aws:s3:::${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}/*'
-
-    - Effect: 'Allow'
-      Action:
-      - 'rds:*'
-      Resource: 'arn:aws:rds:us-east-1:366229877060:db:scican-testing'
-
-
-    - Effect: 'Allow'
-      Action:
-      - 'rds:*'
-      Resource: 'arn:aws:rds:us-east-1:366229877060:db:scican-updates'
 
     - Effect: 'Allow'
       Action:
@@ -1135,22 +855,278 @@ functions:
       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
       mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
       BUCKET_SCICAN_RND_LOGS: '${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}'
-#      rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
-#      rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
-#      rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
-#      rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
-      rdsMySqlDb: ${file(env.yml):rdsMySqlDb-${self:provider.stage}}
-      rdsMySqlHost: ${file(env.yml):rdsMySqlHost-${self:provider.stage}}
-      rdsMySqlUsername: ${file(env.yml):rdsMySqlUsername-${self:provider.stage}}
-      rdsMySqlPassword: ${file(env.yml):rdsMySqlPassword-${self:provider.stage}}
+
+  fnRecordsFlushEvent:
+    name: ${self:provider.stage}-${self:custom.fnRecordsFlushEvent}
+    handler: fnSciCanRnDlogs.fnSciCanRnDlogs
+    events:
+    - iot:
+        name: ${self:provider.stage}_${self:custom.fnRecordsFlushEvent}
+        sql: "SELECT * AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/srv/event/records-flush' "
+    memorySize: 512
+    timeout: 20
+    maximumEventAge: 7200
+    maximumRetryAttempts: 1
+    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnRecordsFlushEvent}
+    iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+      - "iot:*"
+      Resource: '*'
+    - Effect: 'Allow'
+      Action:
+      - 's3:*'
+      Resource: 'arn:aws:s3:::${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}/*'
+
+    - Effect: 'Allow'
+      Action:
+      - 'logs:CreateLogGroup'
+      - 'logs:CreateLogStream'
+      - 'logs:PutLogEvents'
+      - 'ec2:CreateNetworkInterface'
+      - 'ec2:DescribeNetworkInterfaces'
+      - 'ec2:DeleteNetworkInterfaces'
+      Resource: "*"
+    vpc: ${file(env.yml):vpc-${self:provider.stage}}
+    environment:
+      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
+      mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
+      BUCKET_SCICAN_RND_LOGS: '${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}'
+
+  fnRecordsPrintoutEvent:
+    name: ${self:provider.stage}-${self:custom.fnRecordsPrintoutEvent}
+    handler: fnSciCanRnDlogs.fnSciCanRnDlogs
+    events:
+    - iot:
+        name: ${self:provider.stage}_${self:custom.fnRecordsPrintoutEvent}
+        sql: "SELECT * AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/srv/event/records-printout' "
+    memorySize: 512
+    timeout: 20
+    maximumEventAge: 7200
+    maximumRetryAttempts: 1
+    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnRecordsPrintoutEvent}
+    iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+      - "iot:*"
+      Resource: '*'
+    - Effect: 'Allow'
+      Action:
+      - 's3:*'
+      Resource: 'arn:aws:s3:::${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}/*'
+
+    - Effect: 'Allow'
+      Action:
+      - 'logs:CreateLogGroup'
+      - 'logs:CreateLogStream'
+      - 'logs:PutLogEvents'
+      - 'ec2:CreateNetworkInterface'
+      - 'ec2:DescribeNetworkInterfaces'
+      - 'ec2:DeleteNetworkInterfaces'
+      Resource: "*"
+    vpc: ${file(env.yml):vpc-${self:provider.stage}}
+    environment:
+      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
+      mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
+      BUCKET_SCICAN_RND_LOGS: '${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}'
+
+  fnRecordsCreateEvent:
+    name: ${self:provider.stage}-${self:custom.fnRecordsCreateEvent}
+    handler: fnSciCanRnDlogs.fnSciCanRnDlogs
+    events:
+    - iot:
+        name: ${self:provider.stage}_${self:custom.fnRecordsCreateEvent}
+        sql: "SELECT * AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/srv/event/records-create' "
+    memorySize: 512
+    timeout: 20
+    maximumEventAge: 7200
+    maximumRetryAttempts: 1
+    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnRecordsCreateEvent}
+    iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+      - "iot:*"
+      Resource: '*'
+    - Effect: 'Allow'
+      Action:
+      - 's3:*'
+      Resource: 'arn:aws:s3:::${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}/*'
+
+    - Effect: 'Allow'
+      Action:
+      - 'logs:CreateLogGroup'
+      - 'logs:CreateLogStream'
+      - 'logs:PutLogEvents'
+      - 'ec2:CreateNetworkInterface'
+      - 'ec2:DescribeNetworkInterfaces'
+      - 'ec2:DeleteNetworkInterfaces'
+      Resource: "*"
+    vpc: ${file(env.yml):vpc-${self:provider.stage}}
+    environment:
+      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
+      mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
+      BUCKET_SCICAN_RND_LOGS: '${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}'
+
+  fnCyclesActionRequest:
+    name: ${self:provider.stage}-${self:custom.fnCyclesActionRequest}
+    handler: fnSciCanRnDlogs.fnSciCanRnDlogs
+    events:
+    - iot:
+        name: ${self:provider.stage}_${self:custom.fnCyclesActionRequest}
+        sql: "SELECT * AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/srv/event/cycles-action-request' "
+    memorySize: 512
+    timeout: 20
+    maximumEventAge: 7200
+    maximumRetryAttempts: 1
+    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnCyclesActionRequest}
+    iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+      - "iot:*"
+      Resource: '*'
+    - Effect: 'Allow'
+      Action:
+      - 's3:*'
+      Resource: 'arn:aws:s3:::${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}/*'
+
+    - Effect: 'Allow'
+      Action:
+      - 'logs:CreateLogGroup'
+      - 'logs:CreateLogStream'
+      - 'logs:PutLogEvents'
+      - 'ec2:CreateNetworkInterface'
+      - 'ec2:DescribeNetworkInterfaces'
+      - 'ec2:DeleteNetworkInterfaces'
+      Resource: "*"
+    vpc: ${file(env.yml):vpc-${self:provider.stage}}
+    environment:
+      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
+      mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
+      BUCKET_SCICAN_RND_LOGS: '${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}'
+
+  fnCyclesActionResponse:
+    name: ${self:provider.stage}-${self:custom.fnCyclesActionResponse}
+    handler: fnSciCanRnDlogs.fnSciCanRnDlogs
+    events:
+    - iot:
+        name: ${self:provider.stage}_${self:custom.fnCyclesActionResponse}
+        sql: "SELECT * AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/srv/event/cycles-action-response' "
+    memorySize: 512
+    timeout: 20
+    maximumEventAge: 7200
+    maximumRetryAttempts: 1
+    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnCyclesActionResponse}
+    iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+      - "iot:*"
+      Resource: '*'
+    - Effect: 'Allow'
+      Action:
+      - 's3:*'
+      Resource: 'arn:aws:s3:::${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}/*'
+
+    - Effect: 'Allow'
+      Action:
+      - 'logs:CreateLogGroup'
+      - 'logs:CreateLogStream'
+      - 'logs:PutLogEvents'
+      - 'ec2:CreateNetworkInterface'
+      - 'ec2:DescribeNetworkInterfaces'
+      - 'ec2:DeleteNetworkInterfaces'
+      Resource: "*"
+    vpc: ${file(env.yml):vpc-${self:provider.stage}}
+    environment:
+      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
+      mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
+      BUCKET_SCICAN_RND_LOGS: '${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}'
+
+
+
+
+
+  fnRequestAccountPasswordResetEmail:
+    name: ${self:provider.stage}-${self:custom.fnRequestAccountPasswordResetEmail}
+    handler: fnRequestAccountPasswordResetEmail.fnRequestAccountPasswordResetEmail
+    events:
+    - iot:
+        name: ${self:provider.stage}_${self:custom.fnRequestAccountPasswordResetEmail}
+        sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/srv/request/account-password_reset_email' "
+    memorySize: 512
+    timeout: 20
+    maximumEventAge: 7200
+    maximumRetryAttempts: 1
+    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnRequestAccountPasswordResetEmail}
+    iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+      - "iot:*"
+      Resource: '*'
+    - Effect: 'Allow'
+      Action:
+      - 'rds:*'
+      Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
+    - Effect: 'Allow'
+      Action:
+      - 'logs:CreateLogGroup'
+      - 'logs:CreateLogStream'
+      - 'logs:PutLogEvents'
+      - 'ec2:CreateNetworkInterface'
+      - 'ec2:DescribeNetworkInterfaces'
+      - 'ec2:DeleteNetworkInterfaces'
+      Resource: "*"
+    vpc: ${file(env.yml):vpc-${self:provider.stage}}
+    environment:
+      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
+      mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
+      BUCKET_SCICAN_RND_LOGS: '${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}'
+      rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
+      rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
+      rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
+      rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
+
+
+
+  SendEmailtest:
+    name: ${self:provider.stage}-SendEmailtest
+    handler: SendEmailtest.SendEmailtest
+    events:
+    - iot:
+        name: ${self:provider.stage}_SendEmailtest
+        sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/srv/request/account-password_reset_email' "
+    memorySize: 512
+    timeout: 20
+    maximumEventAge: 7200
+    maximumRetryAttempts: 1
+    iamRoleStatementsName: ${self:provider.stage}-SendEmailtest
+    iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+      - "iot:*"
+      Resource: '*'
+    - Effect: 'Allow'
+      Action:
+      - 'logs:CreateLogGroup'
+      - 'logs:CreateLogStream'
+      - 'logs:PutLogEvents'
+      - 'ec2:CreateNetworkInterface'
+      - 'ec2:DescribeNetworkInterfaces'
+      - 'ec2:DeleteNetworkInterfaces'
+      Resource: "*"
+    vpc: ${file(env.yml):vpc-${self:provider.stage}}
+    environment:
+      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
+      mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
+      BUCKET_SCICAN_RND_LOGS: '${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}'
+
 
 resources:
-  - ${file(resources/scuuid-resources.yml)}
-  - Outputs:
-      SCUUIDTableArn:
-        Value:
-            Fn::GetAtt:
-            - SCUUIDTable
-            - Arn
-        Export:
-          Name: ${self:provider.stage}-SCUUIDTableArn
+- ${file(resources/scuuid-resources.yml)}
+- Outputs:
+    SCUUIDTableArn:
+      Value:
+        Fn::GetAtt:
+        - SCUUIDTable
+        - Arn
+      Export:
+        Name: ${self:provider.stage}-SCUUIDTableArn
