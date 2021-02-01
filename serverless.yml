@@ -37,6 +37,9 @@ custom:
   fnCyclesActionRequest: 'fnCyclesActionRequest'
   fnCyclesActionResponse: 'fnCyclesActionResponse'
   fnRequestAccountPasswordResetEmail: 'fnRequestAccountPasswordResetEmail'
+  fnRequestAccountAssocEmail: 'fnRequestAccountAssocEmail'
+  fnAccountSignUpEmail: 'fnAccountSignUpEmail'
+
 
 
 
@@ -1087,23 +1090,29 @@ functions:
 
 
 
-  SendEmailtest:
-    name: ${self:provider.stage}-SendEmailtest
-    handler: SendEmailtest.SendEmailtest
+  fnRequestAccountAssocEmail:
+    name: ${self:provider.stage}-${self:custom.fnRequestAccountAssocEmail}
+    handler: fnRequestAccountAssocEmail.fnRequestAccountAssocEmail
     events:
     - iot:
-        name: ${self:provider.stage}_SendEmailtest
-        sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/srv/request/account-password_reset_email' "
+        name: ${self:provider.stage}_${self:custom.fnRequestAccountAssocEmail}
+        sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/srv/request/account-associate-email' "
+        #sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/srv/request/account-password_reset_email' "
+
     memorySize: 512
     timeout: 20
     maximumEventAge: 7200
     maximumRetryAttempts: 1
-    iamRoleStatementsName: ${self:provider.stage}-SendEmailtest
+    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnRequestAccountAssocEmail}
     iamRoleStatements:
     - Effect: "Allow"
       Action:
       - "iot:*"
       Resource: '*'
+    - Effect: 'Allow'
+      Action:
+      - 'rds:*'
+      Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
     - Effect: 'Allow'
       Action:
       - 'logs:CreateLogGroup'
@@ -1118,6 +1127,19 @@ functions:
       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
       mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
       BUCKET_SCICAN_RND_LOGS: '${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}'
+      rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
+      rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
+      rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
+      rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
+
+
+
+
+
+
+
+
+
 
 
 resources:
