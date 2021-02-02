@@ -95,7 +95,7 @@ const postProcessHandler = async (processedData) => {
 module.exports.fnSendEmail = async function (event) {
     //Preprocess the payload
     try{
-        preProcessPayload(JSON.parse(event.body));
+        preProcessPayload(JSON.parse(event));
         // Create sendEmail params
         let params = {
             Destination: { /* required */
@@ -134,6 +134,6 @@ module.exports.fnSendEmail = async function (event) {
     }catch (err) {
         postProcessHandler();
         console.error(err, err.stack);
-        console.error('Error sending email from payload:' + JSON.stringify(event.data));
+        console.error('Error sending email from payload:' + JSON.stringify(event));
     }
 }

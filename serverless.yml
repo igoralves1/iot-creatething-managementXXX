@@ -1227,3 +1227,4 @@ resources:
         - Arn
       Export:
         Name: ${self:provider.stage}-SCUUIDTableArn
+
