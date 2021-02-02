@@ -61,7 +61,7 @@ async function SendEmail(email, userExist, serial_num, language){
         const weburl = "updates.scican.com"
         var data
         if (userExist == true) {
-            subject = "Account Assoc Email"
+            subject = "Account SignUp Email"
             // body = "Hello, <br><br>" +
             //
             //     "Please, click " + "<a href='https://updates.scican.com'>here</a>" + " to complete Online Access Activation.<br><br>"
@@ -69,11 +69,11 @@ async function SendEmail(email, userExist, serial_num, language){
 
             body = "Hello, <br><br>" +
 
-                "Please, click " + "<a href='https://" + weburl + "/?action=onlineaccess&email=" + email + "&sn=" + serial_num + "'>here</a>" + " to complete Online Access Activation.<br><br>" +
+                "Your Scican account is already exist. Please log in your account.<br><br>" +
 
 
-            "Regards,<br>" +
-            "The <a href='https://updates.scican.com'>updates.scican.com</a> Team."
+                "Regards,<br>" +
+                "The <a href='https://updates.scican.com'>updates.scican.com</a> Team."
 
 
             data = {
@@ -92,10 +92,10 @@ async function SendEmail(email, userExist, serial_num, language){
             return res.data.success
 
         } else {
-            subject = "Account Assoc Email"
-            body = "Hello No Customer, <br><br>" +
+            subject = "Account SignUp Email"
+            body = "Hello, <br><br>" +
 
-                "Please, click " + "<a href='https://updates.scican.com'>here</a>" + " to complete Online Access Activation.<br><br>"
+                "Please, click " + "<a href='https://updates.scican.com'>here</a>" + " to sign up your email.<br><br>"
 
             data = {
                 sendto: email,
@@ -116,12 +116,9 @@ async function SendEmail(email, userExist, serial_num, language){
     }
 }
 
-module.exports.fnRequestAccountAssocEmail = async (event) => {
+module.exports.fnAccountSignUpEmail = async (event) => {
     try {
 
-        console.log("🚀 1 - event:", event)
-        const retval = event.retval
-        console.log("🚀 2 - retval:", retval)
         const topic = event.topic
         console.log("🚀 3 - topic:", topic)
         const res = topic.split("/")
@@ -152,18 +149,18 @@ module.exports.fnRequestAccountAssocEmail = async (event) => {
         if (userCheck == true){
             await SendEmail(account_email, userCheck, serialNumber, language)
             info = {
-                "result": "email_sent"
+                "result": "account_already_exist"
             }
         } else {
             await SendEmail(account_email, userCheck, serialNumber, language)
             info = {
-                "result": "existing_account_not_found"
+                "result": "email_sent"
             }
         }
 
 
         var params = {
-            topic: `${MQTT_TOPIC_ENV}/scican/srv/${serialNumber}/response/account-associate-email`,
+            topic: `${MQTT_TOPIC_ENV}/scican/srv/${serialNumber}/response/account-signup-email`,
             payload: JSON.stringify(info),
             qos: '0'
         };
@@ -188,14 +185,14 @@ module.exports.fnRequestAccountAssocEmail = async (event) => {
 
         const input1111 =
             {
-            "account_email": "zzheng@scican.com",
-            "language_iso639": "en",
-            "language_iso3166": "US"
-        }
+                "account_email": "zzheng@scican.com",
+                "language_iso639": "en",
+                "language_iso3166": "US"
+            }
 
-        //Q/scican/1234AB5678/srv/request/account-associate-email
+        //Q/scican/1234AB5678/srv/request/account-signup-email
         //Q/scican/#
-        //Q/scican/srv/1234AB5678/response/account-associate-email
+        //Q/scican/srv/1234AB5678/response/account-signup-email
 
 
 
