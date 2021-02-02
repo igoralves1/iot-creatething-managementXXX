@@ -39,6 +39,7 @@ custom:
   fnRequestAccountPasswordResetEmail: 'fnRequestAccountPasswordResetEmail'
   fnRequestAccountAssocEmail: 'fnRequestAccountAssocEmail'
   fnAccountSignUpEmail: 'fnAccountSignUpEmail'
+  fnSendEMail: 'fnSendEMail'
 
 
 
@@ -1134,8 +1135,6 @@ functions:
 
 
 
-
-
   fnAccountSignUpEmail:
     name: ${self:provider.stage}-${self:custom.fnAccountSignUpEmail}
     handler: fnAccountSignUpEmail.fnAccountSignUpEmail
@@ -1176,6 +1175,38 @@ functions:
       rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
       rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
 
+
+  fnSendEmail:
+    name: ${self:provider.stage}-${self:custom.fnSendEmail}
+    handler: fnSendEmail.fnSendEmail
+    events:
+      - iot:
+          name: ${self:provider.stage}_${self:custom.fnSendEmail}
+          sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/srv/send_email' "
+    memorySize: 512
+    timeout: 900
+    maximumEventAge: 7200
+    maximumRetryAttempts: 1
+    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnSendEmail}
+    iamRoleStatements:
+      - Effect: "Allow"
+        Action:
+          - "iot:*"
+        Resource: '*'
+      - Effect: 'Allow'
+        Action:
+          - 'logs:CreateLogGroup'
+          - 'logs:CreateLogStream'
+          - 'logs:PutLogEvents'
+          - 'ec2:CreateNetworkInterface'
+          - 'ec2:DescribeNetworkInterfaces'
+          - 'ec2:DeleteNetworkInterfaces'
+        Resource: "*"
+    vpc: ${file(env.yml):vpc-${self:provider.stage}}
+    environment:
+      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
+      AWS_SES_REGION:  ${file(env.yml):${AWS_SES_REGION}.${self:provider.stage}}
+      AWS_SES_EMAIL_SENDER:  ${file(env.yml):${AWS_SES_EMAIL_SENDER}.${self:provider.stage}}
 
 
 
