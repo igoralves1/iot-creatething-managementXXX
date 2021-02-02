@@ -39,7 +39,7 @@ custom:
   fnRequestAccountPasswordResetEmail: 'fnRequestAccountPasswordResetEmail'
   fnRequestAccountAssocEmail: 'fnRequestAccountAssocEmail'
   fnAccountSignUpEmail: 'fnAccountSignUpEmail'
-  fnSendEMail: 'fnSendEMail'
+  fnSendEmail: 'fnSendEmail'
 
 
 
@@ -1202,11 +1202,16 @@ functions:
           - 'ec2:DescribeNetworkInterfaces'
           - 'ec2:DeleteNetworkInterfaces'
         Resource: "*"
+      - Effect: 'Allow'
+        Action:
+          - 'ses:SendEmail'
+          - 'ses:SendRawEmail'
+        Resource: "*"
     vpc: ${file(env.yml):vpc-${self:provider.stage}}
     environment:
       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
-      AWS_SES_REGION:  ${file(env.yml):${AWS_SES_REGION}.${self:provider.stage}}
-      AWS_SES_EMAIL_SENDER:  ${file(env.yml):${AWS_SES_EMAIL_SENDER}.${self:provider.stage}}
+      AWS_SES_REGION:  '${file(env.yml):AWS_SES_REGION'
+      AWS_SES_EMAIL_SENDER:  '${file(env.yml):AWS_SES_EMAIL_SENDER'
 
 
 
