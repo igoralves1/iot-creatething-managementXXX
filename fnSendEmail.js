@@ -23,7 +23,7 @@ var data =  {
     header: '',
     mqtt_response_topic: '',
     mqtt_response_payload: {
-        result: "email_sent",
+        result: "email_not_sent",
         messageId: ''
     },
     mqtt_qos: '0',
@@ -40,7 +40,7 @@ var data =  {
 const preProcessPayload = (receivedData) => {
     payloadIntegrityInc = 0;
     if (!emailIsValid(receivedData.mail)) {
-        payloadIntegrityInc++;
+        throw new error("Invalid email address: " + receivedData.mail);
     }
     data.mail = receivedData.mail;
     data.subject = receivedData.subject;
@@ -48,7 +48,7 @@ const preProcessPayload = (receivedData) => {
     data.body = receivedData.body;
     data.language_iso639 = receivedData.language_iso639;
     data.language_iso3166 = receivedData.language_iso3166;
-    throw new error("Invalid email address");
+
     if (!data.subject) {
         console.warn('Invalid payload field: subject.');
     }
@@ -64,11 +64,6 @@ const preProcessPayload = (receivedData) => {
     if (!data.language_iso3166) {
         console.warn('Invalid payload field: language_iso639.');
     }
-    if(payloadIntegrityInc > 0){
-        console.error('Invalid email payload:' + JSON.stringify());
-        data = null;
-    }
-    return data;
 }
 
 /**
@@ -100,7 +95,7 @@ const postProcessHandler = async (processedData) => {
 module.exports.fnSendEmail = async function (event) {
     //Preprocess the payload
     try{
-        preProcessPayload(event.data);
+        preProcessPayload(JSON.parse(event.body));
         // Create sendEmail params
         let params = {
             Destination: { /* required */
@@ -128,6 +123,7 @@ module.exports.fnSendEmail = async function (event) {
             function(response) {
                 // Add message id to the data.
                 data.mqtt_response_payload.messageId = response.MessageId;
+                data.mqtt_response_payload.result = 'email_sent';
                 console.log("Sent email message id:", response.MessageId);
                 postProcessHandler();
             }).catch(
