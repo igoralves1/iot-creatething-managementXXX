@@ -1182,7 +1182,7 @@ functions:
     events:
       - iot:
           name: ${self:provider.stage}_${self:custom.fnSendEmail}
-          sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/srv/send_email' "
+          sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/cmd/send_email"
     memorySize: 512
     timeout: 900
     maximumEventAge: 7200
