@@ -22,7 +22,6 @@ custom:
   fnVpcTest: 'vpcTest'
   fnPublishMqttNginxLog: 'publishmqttnginxlog'
   fnPostgreTest: 'postgreTest'
-  # fnSciCanRnDlogs: 'sciCanRnDlogs'
   fnScicanRndCreatething: 'scicanRndCreatething'
   fnTestZabbixMQTT: 'testZabbixMQTT'
   fnBootFwStart: 'fnBootFwStart'
@@ -664,44 +663,6 @@ functions:
       Action:
       - "iot:*"
       Resource: '*'
-
-      # SciCanRnDlogs:
-      #   name: ${self:provider.stage}-${self:custom.fnSciCanRnDlogs}
-      #   handler: fnSciCanRnDlogs.fnSciCanRnDlogs
-      #   events:
-      #     - iot:
-      #         name: ${self:provider.stage}_${self:custom.fnSciCanRnDlogs}
-      #         # sql: "SELECT * AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/SCICANSYS/fnSciCanRnDlogs' "
-      #         sql: "SELECT * AS topic FROM '+/scican/+/srv/event/dev-machine_control-read' "
-      #   memorySize: 512
-      #   timeout: 20
-      #   maximumEventAge: 7200
-      #   maximumRetryAttempts: 1
-      #   iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnSciCanRnDlogs}
-      #   iamRoleStatements:
-      #     - Effect: "Allow"
-      #       Action:
-      #         - "iot:*"
-      #       Resource: '*'
-      #     - Effect: 'Allow'
-      #       Action:
-      #         - 's3:*'
-      #       Resource: 'arn:aws:s3:::${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}/*'
-
-  #     - Effect: 'Allow'
-  #       Action:
-  #         - 'logs:CreateLogGroup'
-  #         - 'logs:CreateLogStream'
-  #         - 'logs:PutLogEvents'
-  #         - 'ec2:CreateNetworkInterface'
-  #         - 'ec2:DescribeNetworkInterfaces'
-  #         - 'ec2:DeleteNetworkInterfaces'
-  #       Resource: "*"
-  #   vpc: ${file(env.yml):vpc-${self:provider.stage}}
-  #   environment:
-  #     MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
-  #     mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
-  #     BUCKET_SCICAN_RND_LOGS: '${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}'
 
   postgreTest:
     name: ${self:provider.stage}-${self:custom.fnPostgreTest}
