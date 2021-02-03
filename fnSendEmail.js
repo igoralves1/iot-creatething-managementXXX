@@ -65,6 +65,8 @@ const data = {
     mqtt_qos: '0',
     language_iso639: 'en',
     language_iso3166: 'US',
+    template: 'template_name',
+    variables: '',
     source: process.env.AWS_SES_EMAIL_SENDER ? process.env.AWS_SES_EMAIL_SENDER.trim() : 'no-reply.notification@scican.com'
 };
 /**
