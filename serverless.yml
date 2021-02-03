@@ -1210,8 +1210,8 @@ functions:
     vpc: ${file(env.yml):vpc-${self:provider.stage}}
     environment:
       MQTT_ENDPOINT: ${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com
-      AWS_SES_REGION: ${file(env.yml):AWS_SES_REGION
-      AWS_SES_EMAIL_SENDER: ${file(env.yml):AWS_SES_EMAIL_SENDER
+      AWS_SES_REGION: ${file(env.yml):AWS_SES_REGION}
+      AWS_SES_EMAIL_SENDER: ${file(env.yml):AWS_SES_EMAIL_SENDER}
 
 
 
