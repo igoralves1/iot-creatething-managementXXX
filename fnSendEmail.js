@@ -24,7 +24,7 @@ var data =  {
     mqtt_response_topic: '',
     mqtt_response_payload: {
         result: "email_not_sent",
-        messageId: ''
+        message_id: ''
     },
     mqtt_qos: '0',
     language_iso639: 'en',
@@ -94,8 +94,10 @@ const postProcessHandler = async (processedData) => {
  */
 module.exports.fnSendEmail = async function (event) {
     //Preprocess the payload
+    console.log('Sending email start process handler from payload:' + JSON.stringify(event));
     try{
-        preProcessPayload(JSON.parse(event));
+
+        preProcessPayload(event);
         // Create sendEmail params
         let params = {
             Destination: { /* required */
@@ -118,11 +120,12 @@ module.exports.fnSendEmail = async function (event) {
             },
             Source: data.source, /* required */
         };
+        console.log('Sending email collected SES parameters :' + JSON.stringify(params));
         let sendPromise = new AWS.SES({apiVersion: '2010-12-01'}).sendEmail(params).promise();
         sendPromise.then(
             function(response) {
                 // Add message id to the data.
-                data.mqtt_response_payload.messageId = response.MessageId;
+                data.mqtt_response_payload.message_id = response.MessageId;
                 data.mqtt_response_payload.result = 'email_sent';
                 console.log("Sent email message id:", response.MessageId);
                 postProcessHandler();
