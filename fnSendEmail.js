@@ -71,7 +71,7 @@ const preProcessPayload = (receivedData) => {
  * @param data
  * @returns {Promise<void>}
  */
-const postProcessHandler = async (processedData) => {
+const postProcessHandler = (processedData) => {
     if (processedData && processedData.mqtt_response_topic) {
         var params = {
             topic: processedData.mqtt_response_topic,
@@ -79,7 +79,7 @@ const postProcessHandler = async (processedData) => {
             qos: processedData.mqtt_qos
         };
         try {
-            await publishMqtt(params);
+            publishMqtt(params);
             console.log('Deliver back email notification on mqtt:' + JSON.stringify(data));
         }catch (e) {
             console.error(err, err.stack);
@@ -92,7 +92,7 @@ const postProcessHandler = async (processedData) => {
  * @param event
  * @returns {Promise<void>}
  */
-module.exports.fnSendEmail = async function (event) {
+module.exports.fnSendEmail = function (event) {
     //Preprocess the payload
     console.log('Sending email start process handler from payload:' + JSON.stringify(event));
     try{
@@ -132,6 +132,7 @@ module.exports.fnSendEmail = async function (event) {
             }).catch(
             function(err) {
                 console.error(err, err.stack);
+                console.error('Error sending email from SES:', err);
                 postProcessHandler();
             });
     }catch (err) {
