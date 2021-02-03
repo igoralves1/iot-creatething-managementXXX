@@ -8,10 +8,10 @@
  *   "body": "Body demo <br >",
  *   "mqtt_response_topic": "/de/null/",
  *   "mqtt_response_payload": {},
- *   "language_iso639": "en",
- *   "language_iso3166": "US",
- *   "source": "",
- *   }
+ *   "template": 'template_name',
+ *   "variables": {},
+ *   "source": ""
+ *  }
  *
  * Topic $ENV/scican/cmd/send_email, Q/scican/cmd/send_email
  *
@@ -51,7 +51,7 @@ const publishMqtt = async (params) => {
 }
 /**
  * Default payload
- * @type {{language_iso639: string, mqtt_response_topic: string, mail: string, subject: string, header: string, language_iso3166: string, mqtt_qos: string, source: string, body: string, mqtt_response_payload: {result: string, messageId: string}}}
+ * @type {{language_iso639: string, mqtt_response_topic: string, mail: string, subject: string, header: string,  mqtt_qos: string, source: string, body: string, mqtt_response_payload: {result: string, messageId: string}}}
  */
 const data = {
     mail: '',
@@ -63,10 +63,8 @@ const data = {
         message_id: ''
     },
     mqtt_qos: '0',
-    language_iso639: 'en',
-    language_iso3166: 'US',
     template: 'template_name',
-    variables: '',
+    variables: {},
     source: process.env.AWS_SES_EMAIL_SENDER ? process.env.AWS_SES_EMAIL_SENDER.trim() : 'no-reply.notification@scican.com'
 };
 /**
@@ -86,8 +84,6 @@ const preProcessPayload = (receivedData) => {
     data.subject = receivedData.subject;
     data.header = receivedData.header;
     data.body = receivedData.body;
-    data.language_iso639 = receivedData.language_iso639;
-    data.language_iso3166 = receivedData.language_iso3166;
     data.mqtt_response_topic = receivedData.mqtt_response_topic;
     if (receivedData.source) {
         data.source = receivedData.source;
@@ -100,12 +96,6 @@ const preProcessPayload = (receivedData) => {
     }
     if (!data.body) {
         console.warn('Invalid payload field: body.');
-    }
-    if (!data.language_iso639) {
-        console.warn('Invalid payload field: language_iso639.');
-    }
-    if (!data.language_iso3166) {
-        console.warn('Invalid payload field: language_iso3166.');
     }
 }
 
