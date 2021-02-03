@@ -39,6 +39,8 @@ custom:
   fnRequestAccountPasswordResetEmail: 'fnRequestAccountPasswordResetEmail'
   fnRequestAccountAssocEmail: 'fnRequestAccountAssocEmail'
   fnAccountSignUpEmail: 'fnAccountSignUpEmail'
+  fnAccountDisassociate: 'fnAccountDisassociate'
+  fnAccountAssociateDirect: 'fnAccountAssociateDirect'
 
 
 
@@ -1180,6 +1182,92 @@ functions:
 
 
 
+
+
+  fnAccountDisassociate:
+    name: ${self:provider.stage}-${self:custom.fnAccountDisassociate}
+    handler: fnAccountDisassociate.fnAccountDisassociate
+    events:
+    - iot:
+        name: ${self:provider.stage}_${self:custom.fnAccountDisassociate}
+        sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/srv/request/account-disassociate' "
+
+    memorySize: 512
+    timeout: 900
+    maximumEventAge: 7200
+    maximumRetryAttempts: 1
+    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnAccountDisassociate}
+    iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+      - "iot:*"
+      Resource: '*'
+    - Effect: 'Allow'
+      Action:
+      - 'rds:*'
+      Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
+    - Effect: 'Allow'
+      Action:
+      - 'logs:CreateLogGroup'
+      - 'logs:CreateLogStream'
+      - 'logs:PutLogEvents'
+      - 'ec2:CreateNetworkInterface'
+      - 'ec2:DescribeNetworkInterfaces'
+      - 'ec2:DeleteNetworkInterfaces'
+      Resource: "*"
+    vpc: ${file(env.yml):vpc-${self:provider.stage}}
+    environment:
+      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
+      mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
+      BUCKET_SCICAN_RND_LOGS: '${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}'
+      rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
+      rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
+      rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
+      rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
+
+
+
+
+  fnAccountAssociateDirect:
+    name: ${self:provider.stage}-${self:custom.fnAccountAssociateDirect}
+    handler: fnAccountAssociateDirect.fnAccountAssociateDirect
+    events:
+    - iot:
+        name: ${self:provider.stage}_${self:custom.fnAccountAssociateDirect}
+        sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/srv/request/account-associate-direct' "
+
+    memorySize: 512
+    timeout: 900
+    maximumEventAge: 7200
+    maximumRetryAttempts: 1
+    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnAccountAssociateDirect}
+    iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+      - "iot:*"
+      Resource: '*'
+    - Effect: 'Allow'
+      Action:
+      - 'rds:*'
+      Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
+    - Effect: 'Allow'
+      Action:
+      - 'logs:CreateLogGroup'
+      - 'logs:CreateLogStream'
+      - 'logs:PutLogEvents'
+      - 'ec2:CreateNetworkInterface'
+      - 'ec2:DescribeNetworkInterfaces'
+      - 'ec2:DeleteNetworkInterfaces'
+      Resource: "*"
+    vpc: ${file(env.yml):vpc-${self:provider.stage}}
+    environment:
+      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
+      mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
+      BUCKET_SCICAN_RND_LOGS: '${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}'
+      rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
+      rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
+      rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
+      rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
 
 resources:
 - ${file(resources/scuuid-resources.yml)}
