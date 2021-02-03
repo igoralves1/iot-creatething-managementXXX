@@ -122,7 +122,7 @@ module.exports.fnSendEmail = function (event) {
         };
         console.log('Sending email collected SES parameters :' + JSON.stringify(params));
         let sendPromise = new AWS.SES({apiVersion: '2010-12-01'}).sendEmail(params).promise();
-        return sendPromise.then(
+        sendPromise.then(
             function(response) {
                 // Add message id to the data.
                 data.mqtt_response_payload.message_id = response.MessageId;
