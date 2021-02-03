@@ -39,8 +39,7 @@ custom:
   fnRequestAccountPasswordResetEmail: 'fnRequestAccountPasswordResetEmail'
   fnRequestAccountAssocEmail: 'fnRequestAccountAssocEmail'
   fnAccountSignUpEmail: 'fnAccountSignUpEmail'
-  fnAccountDisassociate: 'fnAccountDisassociate'
-  fnAccountAssociateDirect: 'fnAccountAssociateDirect'
+  fnSendEmail: 'fnSendEmail'
 
 
 
@@ -1136,8 +1135,6 @@ functions:
 
 
 
-
-
   fnAccountSignUpEmail:
     name: ${self:provider.stage}-${self:custom.fnAccountSignUpEmail}
     handler: fnAccountSignUpEmail.fnAccountSignUpEmail
@@ -1179,95 +1176,47 @@ functions:
       rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
 
 
-
-
-
-
-
-  fnAccountDisassociate:
-    name: ${self:provider.stage}-${self:custom.fnAccountDisassociate}
-    handler: fnAccountDisassociate.fnAccountDisassociate
+  fnSendEmail:
+    name: ${self:provider.stage}-${self:custom.fnSendEmail}
+    handler: fnSendEmail.fnSendEmail
     events:
-    - iot:
-        name: ${self:provider.stage}_${self:custom.fnAccountDisassociate}
-        sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/srv/request/account-disassociate' "
-
+      - iot:
+          name: ${self:provider.stage}_${self:custom.fnSendEmail}
+          sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/cmd/send_email' "
     memorySize: 512
     timeout: 900
     maximumEventAge: 7200
     maximumRetryAttempts: 1
-    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnAccountDisassociate}
+    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnSendEmail}
     iamRoleStatements:
-    - Effect: "Allow"
-      Action:
-      - "iot:*"
-      Resource: '*'
-    - Effect: 'Allow'
-      Action:
-      - 'rds:*'
-      Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
-    - Effect: 'Allow'
-      Action:
-      - 'logs:CreateLogGroup'
-      - 'logs:CreateLogStream'
-      - 'logs:PutLogEvents'
-      - 'ec2:CreateNetworkInterface'
-      - 'ec2:DescribeNetworkInterfaces'
-      - 'ec2:DeleteNetworkInterfaces'
-      Resource: "*"
+      - Effect: "Allow"
+        Action:
+          - "iot:*"
+        Resource: '*'
+      - Effect: 'Allow'
+        Action:
+          - 'logs:CreateLogGroup'
+          - 'logs:CreateLogStream'
+          - 'logs:PutLogEvents'
+          - 'ec2:CreateNetworkInterface'
+          - 'ec2:DescribeNetworkInterfaces'
+          - 'ec2:DeleteNetworkInterfaces'
+        Resource: "*"
+      - Effect: 'Allow'
+        Action:
+          - 'ses:SendEmail'
+          - 'ses:SendRawEmail'
+        Resource: "*"
     vpc: ${file(env.yml):vpc-${self:provider.stage}}
     environment:
-      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
-      mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
-      BUCKET_SCICAN_RND_LOGS: '${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}'
-      rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
-      rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
-      rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
-      rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
+      MQTT_ENDPOINT: ${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com
+      MQTT_TOPIC_ENV: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
+      AWS_SES_REGION: ${file(env.yml):AWS_SES_REGION}
+      AWS_SES_EMAIL_SENDER: ${file(env.yml):AWS_SES_EMAIL_SENDER}
 
 
 
 
-  fnAccountAssociateDirect:
-    name: ${self:provider.stage}-${self:custom.fnAccountAssociateDirect}
-    handler: fnAccountAssociateDirect.fnAccountAssociateDirect
-    events:
-    - iot:
-        name: ${self:provider.stage}_${self:custom.fnAccountAssociateDirect}
-        sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/srv/request/account-associate-direct' "
-
-    memorySize: 512
-    timeout: 900
-    maximumEventAge: 7200
-    maximumRetryAttempts: 1
-    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnAccountAssociateDirect}
-    iamRoleStatements:
-    - Effect: "Allow"
-      Action:
-      - "iot:*"
-      Resource: '*'
-    - Effect: 'Allow'
-      Action:
-      - 'rds:*'
-      Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
-    - Effect: 'Allow'
-      Action:
-      - 'logs:CreateLogGroup'
-      - 'logs:CreateLogStream'
-      - 'logs:PutLogEvents'
-      - 'ec2:CreateNetworkInterface'
-      - 'ec2:DescribeNetworkInterfaces'
-      - 'ec2:DeleteNetworkInterfaces'
-      Resource: "*"
-    vpc: ${file(env.yml):vpc-${self:provider.stage}}
-    environment:
-      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
-      mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
-      BUCKET_SCICAN_RND_LOGS: '${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}'
-      rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
-      rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
-      rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
-      rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
 
 resources:
 - ${file(resources/scuuid-resources.yml)}
@@ -1279,3 +1228,4 @@ resources:
         - Arn
       Export:
         Name: ${self:provider.stage}-SCUUIDTableArn
+
