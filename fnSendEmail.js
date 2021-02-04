@@ -59,13 +59,15 @@ const data = {
     body: '',
     mqtt_response_topic: '',
     mqtt_response_payload: {
-        result: "email_not_sent",
-        message_id: ''
+        result: "email_not_sent"
     },
     mqtt_qos: '0',
     template: 'template_name',
     variables: {},
-    source: process.env.AWS_SES_EMAIL_SENDER ? process.env.AWS_SES_EMAIL_SENDER.trim() : 'no-reply.notification@scican.com'
+    source: process.env.AWS_SES_EMAIL_SENDER ? process.env.AWS_SES_EMAIL_SENDER.trim() : 'no-reply.notification@scican.com',
+    result: {
+        message_id: ''
+    }
 };
 /**
  * Preprocess the payload and fill it with default values if there is any need.
@@ -82,7 +84,6 @@ const preProcessPayload = (receivedData) => {
     }
     data.mail = receivedData.mail;
     data.subject = receivedData.subject;
-    data.header = receivedData.header;
     data.body = receivedData.body;
     data.mqtt_response_topic = receivedData.mqtt_response_topic;
     if (receivedData.source) {
@@ -105,7 +106,12 @@ const preProcessPayload = (receivedData) => {
  * @returns {Promise<void>}
  */
 const postProcessHandler = async (processedData) => {
-    console.log('Post process start :' + JSON.stringify(processedData));
+    console.log('Post process start: ' + JSON.stringify(processedData));
+    // Decide to not send result back if the email was not sent.
+    if(processedData.result.message_id === ""){
+        console.warn('Post process ended, the email was not sent: ' + JSON.stringify(processedData));
+        return ;
+    }
     if (processedData && processedData.mqtt_response_topic) {
         const topicPrefix = process.env.MQTT_TOPIC_ENV ? process.env.MQTT_TOPIC_ENV.trim() : 'Q'
         let params = {
@@ -120,12 +126,12 @@ const postProcessHandler = async (processedData) => {
                     console.log("Sent dlr back to for params: " + params.topic);
                 }).catch(
                 function (err) {
-                    console.error(err, err.stack);
                     console.error('Error sending back dlr to error' + err);
+                    console.error(err);
                 });
         } catch (err) {
-            console.error(err, err.stack);
             console.error('Error deliver back the email notification on mqtt:' + JSON.stringify(data));
+            console.error(err);
         }
     }
 }
@@ -138,6 +144,7 @@ module.exports.fnSendEmail = async function (event) {
     //Preprocess the payload
     console.log('Sending email start process handler from payload:' + JSON.stringify(event));
     try {
+
         preProcessPayload(event);
         // Create sendEmail params
         let params = {
@@ -161,15 +168,17 @@ module.exports.fnSendEmail = async function (event) {
             },
             Source: data.source, /* required */
         };
+
         console.log('Sending email collected SES parameters :' + JSON.stringify(params));
         let response = await new AWS.SES({apiVersion: '2010-12-01'}).sendEmail(params).promise();
+        console.log("Sent email message id: " + response.MessageId);
         // Add message id to the data.
-        data.mqtt_response_payload.message_id = response.MessageId;
+        data.result.message_id = response.MessageId;
         data.mqtt_response_payload.result = 'email_sent';
-        console.log("Sent email message id:", response.MessageId);
     } catch (err) {
-        console.error(err, err.stack);
         console.error('Error sending email from payload:' + JSON.stringify(event));
+        console.error(err);
+    }finally {
+       await postProcessHandler(data);
     }
-    return await postProcessHandler(data);
 }
