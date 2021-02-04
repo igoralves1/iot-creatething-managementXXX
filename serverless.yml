@@ -41,6 +41,7 @@ custom:
   fnAccountDisassociate: 'fnAccountDisassociate'
   fnAccountAssociateDirect: 'fnAccountAssociateDirect'
   fnSendEmail: 'fnSendEmail'
+  fnAccountAccountSignUpForm: 'fnAccountAccountSignUpForm'
 
 
 
@@ -136,7 +137,7 @@ provider:
     #   - ${self:provider.stage}-${file(env.yml):CEFLA_COMPANY_NAME}
     #   - ${self:provider.stage}-${file(env.yml):SCICAN_COMPANY_NAME}
     # - paid:
-    #   - ${self:provider.stage}-clientFour
+  #   - ${self:provider.stage}-clientFour
 
   # usagePlan:
   #   quota:
@@ -713,7 +714,7 @@ functions:
     - http:
         path: ${file(env.yml):SCICAN_COMPANY_NAME}/rnd
         method: post
-        private: true
+        private: false
     environment:
       COMPANY_NAME: ${file(env.yml):SCICAN_COMPANY_NAME}
       PRIVATE_KEY: ${file(env.yml):${self:provider.stage}.SCICAN_RND_PRIVATE_KEY}
@@ -1143,9 +1144,9 @@ functions:
     name: ${self:provider.stage}-${self:custom.fnAccountDisassociate}
     handler: fnAccountDisassociate.fnAccountDisassociate
     events:
-      - iot:
-          name: ${self:provider.stage}_${self:custom.fnAccountDisassociate}
-          sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/srv/request/account-disassociate' "
+    - iot:
+        name: ${self:provider.stage}_${self:custom.fnAccountDisassociate}
+        sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/srv/request/account-disassociate' "
 
     memorySize: 512
     timeout: 900
@@ -1153,23 +1154,23 @@ functions:
     maximumRetryAttempts: 1
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnAccountDisassociate}
     iamRoleStatements:
-      - Effect: "Allow"
-        Action:
-          - "iot:*"
-        Resource: '*'
-      - Effect: 'Allow'
-        Action:
-          - 'rds:*'
-        Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
-      - Effect: 'Allow'
-        Action:
-          - 'logs:CreateLogGroup'
-          - 'logs:CreateLogStream'
-          - 'logs:PutLogEvents'
-          - 'ec2:CreateNetworkInterface'
-          - 'ec2:DescribeNetworkInterfaces'
-          - 'ec2:DeleteNetworkInterfaces'
-        Resource: "*"
+    - Effect: "Allow"
+      Action:
+      - "iot:*"
+      Resource: '*'
+    - Effect: 'Allow'
+      Action:
+      - 'rds:*'
+      Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
+    - Effect: 'Allow'
+      Action:
+      - 'logs:CreateLogGroup'
+      - 'logs:CreateLogStream'
+      - 'logs:PutLogEvents'
+      - 'ec2:CreateNetworkInterface'
+      - 'ec2:DescribeNetworkInterfaces'
+      - 'ec2:DeleteNetworkInterfaces'
+      Resource: "*"
     vpc: ${file(env.yml):vpc-${self:provider.stage}}
     environment:
       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
@@ -1186,9 +1187,9 @@ functions:
     name: ${self:provider.stage}-${self:custom.fnAccountAssociateDirect}
     handler: fnAccountAssociateDirect.fnAccountAssociateDirect
     events:
-      - iot:
-          name: ${self:provider.stage}_${self:custom.fnAccountAssociateDirect}
-          sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/srv/request/account-associate-direct' "
+    - iot:
+        name: ${self:provider.stage}_${self:custom.fnAccountAssociateDirect}
+        sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/srv/request/account-associate-direct' "
 
     memorySize: 512
     timeout: 900
@@ -1196,23 +1197,23 @@ functions:
     maximumRetryAttempts: 1
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnAccountAssociateDirect}
     iamRoleStatements:
-      - Effect: "Allow"
-        Action:
-          - "iot:*"
-        Resource: '*'
-      - Effect: 'Allow'
-        Action:
-          - 'rds:*'
-        Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
-      - Effect: 'Allow'
-        Action:
-          - 'logs:CreateLogGroup'
-          - 'logs:CreateLogStream'
-          - 'logs:PutLogEvents'
-          - 'ec2:CreateNetworkInterface'
-          - 'ec2:DescribeNetworkInterfaces'
-          - 'ec2:DeleteNetworkInterfaces'
-        Resource: "*"
+    - Effect: "Allow"
+      Action:
+      - "iot:*"
+      Resource: '*'
+    - Effect: 'Allow'
+      Action:
+      - 'rds:*'
+      Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
+    - Effect: 'Allow'
+      Action:
+      - 'logs:CreateLogGroup'
+      - 'logs:CreateLogStream'
+      - 'logs:PutLogEvents'
+      - 'ec2:CreateNetworkInterface'
+      - 'ec2:DescribeNetworkInterfaces'
+      - 'ec2:DeleteNetworkInterfaces'
+      Resource: "*"
     vpc: ${file(env.yml):vpc-${self:provider.stage}}
     environment:
       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
@@ -1228,39 +1229,82 @@ functions:
     name: ${self:provider.stage}-${self:custom.fnSendEmail}
     handler: fnSendEmail.fnSendEmail
     events:
-      - iot:
-          name: ${self:provider.stage}_${self:custom.fnSendEmail}
-          sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/cmd/send_email' "
+    - iot:
+        name: ${self:provider.stage}_${self:custom.fnSendEmail}
+        sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/cmd/send_email' "
     memorySize: 512
     timeout: 900
     maximumEventAge: 7200
     maximumRetryAttempts: 1
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnSendEmail}
     iamRoleStatements:
-      - Effect: "Allow"
-        Action:
-          - "iot:*"
-        Resource: '*'
-      - Effect: 'Allow'
-        Action:
-          - 'logs:CreateLogGroup'
-          - 'logs:CreateLogStream'
-          - 'logs:PutLogEvents'
-          - 'ec2:CreateNetworkInterface'
-          - 'ec2:DescribeNetworkInterfaces'
-          - 'ec2:DeleteNetworkInterfaces'
-        Resource: "*"
-      - Effect: 'Allow'
-        Action:
-          - 'ses:SendEmail'
-          - 'ses:SendRawEmail'
-        Resource: "*"
+    - Effect: "Allow"
+      Action:
+      - "iot:*"
+      Resource: '*'
+    - Effect: 'Allow'
+      Action:
+      - 'logs:CreateLogGroup'
+      - 'logs:CreateLogStream'
+      - 'logs:PutLogEvents'
+      - 'ec2:CreateNetworkInterface'
+      - 'ec2:DescribeNetworkInterfaces'
+      - 'ec2:DeleteNetworkInterfaces'
+      Resource: "*"
+    - Effect: 'Allow'
+      Action:
+      - 'ses:SendEmail'
+      - 'ses:SendRawEmail'
+      Resource: "*"
     vpc: ${file(env.yml):vpc-${self:provider.stage}}
     environment:
       MQTT_ENDPOINT: ${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com
       MQTT_TOPIC_ENV: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
       AWS_SES_REGION: ${file(env.yml):AWS_SES_REGION}
       AWS_SES_EMAIL_SENDER: ${file(env.yml):AWS_SES_EMAIL_SENDER}
+
+
+
+  fnAccountAccountSignUpForm:
+    name: ${self:provider.stage}-${self:custom.fnAccountAccountSignUpForm}
+    handler: fnAccountAccountSignUpForm.fnAccountAccountSignUpForm
+    events:
+    - iot:
+        name: ${self:provider.stage}_${self:custom.fnAccountAccountSignUpForm}
+        sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/srv/request/account-signup-form' "
+    memorySize: 512
+    timeout: 900
+    maximumEventAge: 7200
+    maximumRetryAttempts: 1
+    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnAccountAccountSignUpForm}
+    iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+      - "iot:*"
+      Resource: '*'
+    - Effect: 'Allow'
+      Action:
+      - 'rds:*'
+      Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
+    - Effect: 'Allow'
+      Action:
+      - 'logs:CreateLogGroup'
+      - 'logs:CreateLogStream'
+      - 'logs:PutLogEvents'
+      - 'ec2:CreateNetworkInterface'
+      - 'ec2:DescribeNetworkInterfaces'
+      - 'ec2:DeleteNetworkInterfaces'
+      Resource: "*"
+    vpc: ${file(env.yml):vpc-${self:provider.stage}}
+    environment:
+      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
+      mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
+      BUCKET_SCICAN_RND_LOGS: '${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}'
+      rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
+      rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
+      rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
+      rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
+
 
 
 
