@@ -123,7 +123,7 @@ const postProcessHandler = async (processedData) => {
             console.log('Start dlr back email notification on mqtt:' + JSON.stringify(data));
             return publishMqtt(params).then(
                 function () {
-                    console.log("Sent dlr back to for params: " + params.topic);
+                    console.log("Sent dlr back to for params: " + JSON.stringify(params));
                 }).catch(
                 function (err) {
                     console.error('Error sending back dlr to error' + err);
