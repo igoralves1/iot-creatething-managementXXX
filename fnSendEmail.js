@@ -12,7 +12,16 @@
  *   "variables": {},
  *   "source": ""
  *  }
- *
+
+ Test:
+ {
+ "mail": "nicolicioiu.liviu@enode.ro",
+ "subject": "Demo Subject",
+ "body": "Body demo <br >",
+ "mqtt_response_topic": "/dev/null"
+ }
+ Topic:  Q/scican/cmd/send_email
+
  * Topic $ENV/scican/cmd/send_email, Q/scican/cmd/send_email
  *
  * The variables: language_iso639, language_iso3166, not in use so are optionally
