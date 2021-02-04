@@ -23,18 +23,22 @@ custom:
   fnPublishMqttNginxLog: 'publishmqttnginxlog'
   fnPostgreTest: 'postgreTest'
   fnScicanRndCreatething: 'scicanRndCreatething'
+  # --------------------
   fnTestZabbixMQTT: 'testZabbixMQTT'
+  # --------------------
   fnBootFwStart: 'fnBootFwStart'
   fnBootFwWrite: 'fnBootFwWrite'
   fnBootFwStop: 'fnBootFwStop'
   fnBootFwUpdateDone: 'fnBootFwUpdateDone'
   fnBootFwUpdateRequestStartProcess: 'fnBootFwUpdateRequestStartProcess'
+  # --------------------
   fnDevMachineControlRead: 'fnDevMachineControlRead'
   fnRecordsFlushEvent: 'fnRecordsFlushEvent'
   fnRecordsPrintoutEvent: 'fnRecordsPrintoutEvent'
   fnRecordsCreateEvent: 'fnRecordsCreateEvent'
   fnCyclesActionRequest: 'fnCyclesActionRequest'
   fnCyclesActionResponse: 'fnCyclesActionResponse'
+  # --------------------
   fnRequestAccountPasswordResetEmail: 'fnRequestAccountPasswordResetEmail'
   fnRequestAccountAssocEmail: 'fnRequestAccountAssocEmail'
   fnAccountSignUpEmail: 'fnAccountSignUpEmail'
@@ -43,8 +47,8 @@ custom:
   fnSendEmail: 'fnSendEmail'
   fnAutomatedTests: 'fnAutomatedTests'
   fnAccountSignUpForm: 'fnAccountSignUpForm'
-
-
+  # --------------------
+  fnTestFwUpdate: 'fnTestFwUpdate'
 
 
 
