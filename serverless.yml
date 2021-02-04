@@ -41,7 +41,7 @@ custom:
   fnAccountDisassociate: 'fnAccountDisassociate'
   fnAccountAssociateDirect: 'fnAccountAssociateDirect'
   fnSendEmail: 'fnSendEmail'
-  fnAccountAccountSignUpForm: 'fnAccountAccountSignUpForm'
+  fnAccountSignUpForm: 'fnAccountSignUpForm'
 
 
 
@@ -1265,18 +1265,18 @@ functions:
 
 
 
-  fnAccountAccountSignUpForm:
-    name: ${self:provider.stage}-${self:custom.fnAccountAccountSignUpForm}
-    handler: fnAccountAccountSignUpForm.fnAccountAccountSignUpForm
+  fnAccountSignUpForm:
+    name: ${self:provider.stage}-${self:custom.fnAccountSignUpForm}
+    handler: fnAccountSignUpForm.fnAccountSignUpForm
     events:
     - iot:
-        name: ${self:provider.stage}_${self:custom.fnAccountAccountSignUpForm}
+        name: ${self:provider.stage}_${self:custom.fnAccountSignUpForm}
         sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/srv/request/account-signup-form' "
     memorySize: 512
     timeout: 900
     maximumEventAge: 7200
     maximumRetryAttempts: 1
-    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnAccountAccountSignUpForm}
+    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnAccountSignUpForm}
     iamRoleStatements:
     - Effect: "Allow"
       Action:
