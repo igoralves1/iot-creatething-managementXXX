@@ -1,4 +1,4 @@
-//Project 12 Need to test
+//Project 13 Need to test
 
 'use strict'
 const AWS = require('aws-sdk')
@@ -193,7 +193,7 @@ async function AssociateEmailSN(useremail, serial_num){
 
 
 
-module.exports.fnAccountAssociateDirect = async (event) => {
+module.exports.fnAccountAccountSignUpForm = async (event) => {
     try {
         const topic = event.topic
         const res = topic.split("/")
