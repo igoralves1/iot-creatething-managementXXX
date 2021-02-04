@@ -41,7 +41,7 @@ custom:
   fnAccountDisassociate: 'fnAccountDisassociate'
   fnAccountAssociateDirect: 'fnAccountAssociateDirect'
   fnSendEmail: 'fnSendEmail'
-
+  fnAutomatedTests: 'fnAutomatedTests'
 
 
 
@@ -185,6 +185,8 @@ provider:
 
   environment:
     BUCKET_NAME: ${self:custom.BUCKET_NAME}-${self:provider.stage}
+
+# ===========================================
 
 functions:
   scicancreatething:
@@ -484,7 +486,7 @@ functions:
 
   fnBootFwStart:
     name: ${self:provider.stage}-${self:custom.fnBootFwStart}
-    handler: fnBootFwStart.fnBootFwStart
+    handler: src/fw_update/fnBootFwStart.fnBootFwStart
     events:
     - iot:
         name: ${self:provider.stage}_${self:custom.fnBootFwStart}
@@ -508,7 +510,7 @@ functions:
 
   fnBootFwWrite:
     name: ${self:provider.stage}-${self:custom.fnBootFwWrite}
-    handler: fnBootFwWrite.fnBootFwWrite
+    handler: src/fw_update/fnBootFwWrite.fnBootFwWrite
     events:
     - iot:
         name: ${self:provider.stage}_${self:custom.fnBootFwWrite}
@@ -532,7 +534,7 @@ functions:
 
   fnBootFwStop:
     name: ${self:provider.stage}-${self:custom.fnBootFwStop}
-    handler: fnBootFwStop.fnBootFwStop
+    handler: src/fw_update/fnBootFwStop.fnBootFwStop
     events:
     - iot:
         name: ${self:provider.stage}_${self:custom.fnBootFwStop}
@@ -568,13 +570,37 @@ functions:
 
   fnBootFwUpdateRequestStartProcess:
     name: ${self:provider.stage}-${self:custom.fnBootFwUpdateRequestStartProcess}
-    handler: fnBootFwUpdateRequestStartProcess.fnBootFwUpdateRequestStartProcess
+    handler: src/fw_update/fnBootFwUpdateRequestStartProcess.fnBootFwUpdateRequestStartProcess
     events:
     - iot:
         name: ${self:provider.stage}_${self:custom.fnBootFwUpdateRequestStartProcess}
         sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/SCICAN/+/CAN/CMD/boot_fw_update_request_start_process/#' "
     memorySize: 256
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnBootFwUpdateRequestStartProcess}
+    iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+      - "iot:*"
+      Resource: '*'
+
+    - Effect: 'Allow'
+      Action:
+      - 's3:*'
+      Resource: 'arn:aws:s3:::${file(env.yml):BUCKET_FIRMWARE}${self:provider.stage}/*'
+    environment:
+      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
+      BUCKET_FIRMWARE: '${file(env.yml):BUCKET_FIRMWARE}${self:provider.stage}'
+      mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
+
+  fnBootFwUpdateDone:
+    name: ${self:provider.stage}-${self:custom.fnBootFwUpdateDone}
+    handler: fnBootFwUpdateDone.fnBootFwUpdateDone
+    events:
+    - iot:
+        name: ${self:provider.stage}_${self:custom.fnBootFwUpdateDone}
+        sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/MSSTER/+/CAN/EVN/FW_UPDATE_DONE/#' "
+    memorySize: 256
+    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnBootFwUpdateDone}
     iamRoleStatements:
     - Effect: "Allow"
       Action:
@@ -762,30 +788,7 @@ functions:
       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
       mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
 
-  fnBootFwUpdateDone:
-    name: ${self:provider.stage}-${self:custom.fnBootFwUpdateDone}
-    handler: fnBootFwUpdateDone.fnBootFwUpdateDone
-    events:
-    - iot:
-        name: ${self:provider.stage}_${self:custom.fnBootFwUpdateDone}
-        sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/MSSTER/+/CAN/EVN/FW_UPDATE_DONE/#' "
-    memorySize: 256
-    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnBootFwUpdateDone}
-    iamRoleStatements:
-    - Effect: "Allow"
-      Action:
-      - "iot:*"
-      Resource: '*'
-
-    - Effect: 'Allow'
-      Action:
-      - 's3:*'
-      Resource: 'arn:aws:s3:::${file(env.yml):BUCKET_FIRMWARE}${self:provider.stage}/*'
-    environment:
-      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
-      BUCKET_FIRMWARE: '${file(env.yml):BUCKET_FIRMWARE}${self:provider.stage}'
-      mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
-
+  
   fnDevMachineControlRead:
     name: ${self:provider.stage}-${self:custom.fnDevMachineControlRead}
     handler: fnSciCanRnDlogs.fnSciCanRnDlogs
@@ -1263,9 +1266,49 @@ functions:
       AWS_SES_EMAIL_SENDER: ${file(env.yml):AWS_SES_EMAIL_SENDER}
 
 
+  fnAutomatedTests:
+    name: ${self:provider.stage}-${self:custom.fnAutomatedTests}
+    handler: fnAutomatedTests.fnAutomatedTests
+    events:
+      - iot:
+          name: ${self:provider.stage}_${self:custom.fnAutomatedTests}
+          sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/evn/automated_tests' "
+
+    memorySize: 2024
+    timeout: 900
+    maximumEventAge: 7200
+    maximumRetryAttempts: 1
+    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnAutomatedTests}
+    iamRoleStatements:
+      - Effect: "Allow"
+        Action:
+          - "iot:*"
+        Resource: '*'
+      - Effect: 'Allow'
+        Action:
+          - 'rds:*'
+        Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
+      - Effect: 'Allow'
+        Action:
+          - 'logs:CreateLogGroup'
+          - 'logs:CreateLogStream'
+          - 'logs:PutLogEvents'
+          - 'ec2:CreateNetworkInterface'
+          - 'ec2:DescribeNetworkInterfaces'
+          - 'ec2:DeleteNetworkInterfaces'
+        Resource: "*"
+    vpc: ${file(env.yml):vpc-${self:provider.stage}}
+    environment:
+      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
+      mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
+      BUCKET_SCICAN_RND_LOGS: '${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}'
+      rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
+      rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
+      rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
+      rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
 
 
-
+# ===========================================
 resources:
 - ${file(resources/scuuid-resources.yml)}
 - Outputs:
