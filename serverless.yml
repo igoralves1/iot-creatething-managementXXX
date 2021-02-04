@@ -194,7 +194,6 @@ functions:
   scicancreatething:
     #! If the policy is not manually created the lambda will run in a loop
     # TODO - How to create a POLICY automatically if it doesn't exist in serverless.yml ?
-
     name: ${self:provider.stage}-${file(env.yml):SCICAN_COMPANY_NAME}-${self:custom.fnCreateThing}
     handler: fnCreateThing.fnCreateThing
     events:
@@ -210,8 +209,8 @@ functions:
       SCUUID_TABLE_NAME: ${self:custom.SCUUID_TABLE_NAME}
       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
       mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
-
     memorySize: 256
+    timeout: 600
     iamRoleStatementsName: ${self:provider.stage}-${file(env.yml):SCICAN_COMPANY_NAME}-${self:custom.fnCreateThing}
     iamRoleStatements:
     - Effect: "Allow"
@@ -234,7 +233,6 @@ functions:
   ceflacreatething:
     #! If the policy is not manually created the lambda will run in a loop
     # TODO - How to create a POLICY automatically if it doesn't exist in serverless.yml ?
-
     name: ${self:provider.stage}-${file(env.yml):CEFLA_COMPANY_NAME}-${self:custom.fnCreateThing}
     handler: fnCreateThing.fnCreateThing
     events:
@@ -360,7 +358,7 @@ functions:
         name: ${self:provider.stage}_${self:custom.fnTokenInsertMQTT}
         sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/sys/cmd/fnCreateThing/#' "
     memorySize: 256
-    timeout: 15
+    timeout: 600
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnTokenInsertMQTT}
     iamRoleStatements:
     - Effect: 'Allow'
@@ -618,7 +616,7 @@ functions:
         name: ${self:provider.stage}_${self:custom.fnRequestMachineInfo}
         sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/sys/cmd/fnCreateThing/#' "
     memorySize: 256
-    # timeout: 6
+    timeout: 60
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnRequestMachineInfo}
     iamRoleStatements:
     - Effect: "Allow"
@@ -768,7 +766,7 @@ functions:
         name: ${self:provider.stage}_${self:custom.fnTestZabbixMQTT}
         sql: "SELECT *, topic() AS topic FROM 'fnTestZabbixMQTT/#'"
     memorySize: 256
-    timeout: 30
+    timeout: 60
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnTestZabbixMQTT}
     iamRoleStatements:
     - Effect: "Allow"
@@ -787,7 +785,7 @@ functions:
         name: ${self:provider.stage}_${self:custom.fnDevMachineControlRead}
         sql: "SELECT * AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/srv/event/dev-machine_control-read' "
     memorySize: 512
-    timeout: 20
+    timeout: 60
     maximumEventAge: 7200
     maximumRetryAttempts: 1
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnDevMachineControlRead}
@@ -823,7 +821,7 @@ functions:
         name: ${self:provider.stage}_${self:custom.fnRecordsFlushEvent}
         sql: "SELECT * AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/srv/event/records-flush' "
     memorySize: 512
-    timeout: 20
+    timeout: 60
     maximumEventAge: 7200
     maximumRetryAttempts: 1
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnRecordsFlushEvent}
@@ -859,7 +857,7 @@ functions:
         name: ${self:provider.stage}_${self:custom.fnRecordsPrintoutEvent}
         sql: "SELECT * AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/srv/event/records-printout' "
     memorySize: 512
-    timeout: 20
+    timeout: 60
     maximumEventAge: 7200
     maximumRetryAttempts: 1
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnRecordsPrintoutEvent}
@@ -895,7 +893,7 @@ functions:
         name: ${self:provider.stage}_${self:custom.fnRecordsCreateEvent}
         sql: "SELECT * AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/srv/event/records-create' "
     memorySize: 512
-    timeout: 20
+    timeout: 60
     maximumEventAge: 7200
     maximumRetryAttempts: 1
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnRecordsCreateEvent}
@@ -931,7 +929,7 @@ functions:
         name: ${self:provider.stage}_${self:custom.fnCyclesActionRequest}
         sql: "SELECT * AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/srv/event/cycles-action-request' "
     memorySize: 512
-    timeout: 20
+    timeout: 60
     maximumEventAge: 7200
     maximumRetryAttempts: 1
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnCyclesActionRequest}
@@ -967,7 +965,7 @@ functions:
         name: ${self:provider.stage}_${self:custom.fnCyclesActionResponse}
         sql: "SELECT * AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/srv/event/cycles-action-response' "
     memorySize: 512
-    timeout: 20
+    timeout: 60
     maximumEventAge: 7200
     maximumRetryAttempts: 1
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnCyclesActionResponse}
@@ -1003,7 +1001,7 @@ functions:
         name: ${self:provider.stage}_${self:custom.fnRequestAccountPasswordResetEmail}
         sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/srv/request/account-password_reset_email' "
     memorySize: 512
-    timeout: 20
+    timeout: 900
     maximumEventAge: 7200
     maximumRetryAttempts: 1
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnRequestAccountPasswordResetEmail}
@@ -1084,7 +1082,7 @@ functions:
         name: ${self:provider.stage}_${self:custom.fnAccountSignUpEmail}
         sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/srv/request/account-signup-email' "
     memorySize: 512
-    timeout: 20
+    timeout: 900
     maximumEventAge: 7200
     maximumRetryAttempts: 1
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnAccountSignUpEmail}
