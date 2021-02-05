@@ -145,8 +145,8 @@ async function AssociateEmailSN(useremail, serial_num){
                 const sql5ID = sql5Data.idusers
                 console.log("SQL5 ID ===== ", sql5ID)
 
-
-                if (useremail in checkData) {
+                //useremail is string, checkData is array
+                if (checkData.includes(useremail)) {
                     console.log("user email is in SQL5 ID.")
 
                     const sql3 = `UPDATE scican.customers_units SET web_conf_confirmed=1,
