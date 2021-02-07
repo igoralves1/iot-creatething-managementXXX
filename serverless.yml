@@ -1230,6 +1230,7 @@ functions:
       Action:
       - 'ses:SendEmail'
       - 'ses:SendRawEmail'
+      - 'ses:SendTemplatedEmail'
       Resource: "*"
     vpc: ${file(env.yml):vpc-${self:provider.stage}}
     environment:
