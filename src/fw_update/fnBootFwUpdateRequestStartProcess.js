@@ -89,6 +89,16 @@ module.exports.fnBootFwUpdateRequestStartProcess = async event => {
         }
     }
 
+    {
+        "path": "test",
+        "data": {
+            "machine_type": "a\
+            b\
+            c",
+            "model": "1"
+        }
+    }
+
     */
 
     try {

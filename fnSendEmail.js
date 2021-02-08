@@ -12,7 +12,30 @@
  *   "variables": {},
  *   "source": ""
  *  }
- *
+
+ Topic:  Q/scican/cmd/send_email
+
+ Test raw email:
+ {
+ "mail": "nicolicioiu.liviu@enode.ro",
+ "subject": "Demo Subject",
+ "body": "Body demo <br >",
+ "mqtt_response_topic": "/dev/null"
+ }
+
+Before use this payload, please check if the template has been created, using the method:
+ https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/ses-examples-creating-template.html
+
+
+ Test template email:
+ {
+ "mail": "nicolicioiu.liviu@enode.ro",
+ "template": "test_welcome_en",
+ "variables": {"name":"John Doe"},
+ "mqtt_response_topic": "/dev/null"
+ }
+
+ Topic:  Q/scican/cmd/send_email
  * Topic $ENV/scican/cmd/send_email, Q/scican/cmd/send_email
  *
  * The variables: language_iso639, language_iso3166, not in use so are optionally
@@ -62,7 +85,7 @@ const data = {
         result: "email_not_sent"
     },
     mqtt_qos: '0',
-    template: 'template_name',
+    template: '',
     variables: {},
     source: process.env.AWS_SES_EMAIL_SENDER ? process.env.AWS_SES_EMAIL_SENDER.trim() : 'no-reply.notification@scican.com',
     result: {
@@ -84,7 +107,15 @@ const preProcessPayload = (receivedData) => {
     }
     data.mail = receivedData.mail;
     data.subject = receivedData.subject;
-    data.body = receivedData.body;
+    if (receivedData.body) {
+        data.body = receivedData.body;
+    }
+    if (receivedData.template) {
+        data.template = receivedData.template;
+    }
+    if (receivedData.variables) {
+        data.variables = receivedData.variables;
+    }
     data.mqtt_response_topic = receivedData.mqtt_response_topic;
     if (receivedData.source) {
         data.source = receivedData.source;
@@ -95,8 +126,11 @@ const preProcessPayload = (receivedData) => {
     if (!data.mqtt_response_topic) {
         console.warn('Invalid payload field: mqtt_response_topic.');
     }
-    if (!data.body) {
-        console.warn('Invalid payload field: body.');
+    if (!data.subject && !data.template) {
+        console.warn('Invalid payload field configuration: subject empty.');
+    }
+    if (!data.body && !data.template) {
+        console.warn('Invalid payload fields configuration: body and template are not defined.');
     }
 }
 
@@ -113,7 +147,7 @@ const postProcessHandler = async (processedData) => {
         return ;
     }
     if (processedData && processedData.mqtt_response_topic) {
-        const topicPrefix = process.env.MQTT_TOPIC_ENV ? process.env.MQTT_TOPIC_ENV.trim() : 'Q'
+        const topicPrefix = process.env.MQTT_TOPIC_ENV ? process.env.MQTT_TOPIC_ENV.trim() : 'Q/'
         let params = {
             topic: (topicPrefix + processedData.mqtt_response_topic).replace('//', '/'),
             payload: JSON.stringify(processedData.mqtt_response_payload),
@@ -123,10 +157,10 @@ const postProcessHandler = async (processedData) => {
             console.log('Start dlr back email notification on mqtt:' + JSON.stringify(data));
             return publishMqtt(params).then(
                 function () {
-                    console.log("Sent dlr back to for params: " + params.topic);
+                    console.log("Sent dlr back to for params: " + JSON.stringify(params));
                 }).catch(
                 function (err) {
-                    console.error('Error sending back dlr to error' + err);
+                    console.error('Error sending back dlr to error: ' + err);
                     console.error(err);
                 });
         } catch (err) {
@@ -144,9 +178,7 @@ module.exports.fnSendEmail = async function (event) {
     //Preprocess the payload
     console.log('Sending email start process handler from payload:' + JSON.stringify(event));
     try {
-
         preProcessPayload(event);
-        // Create sendEmail params
         let params = {
             Destination: { /* required */
                 ToAddresses: [
@@ -154,23 +186,51 @@ module.exports.fnSendEmail = async function (event) {
                     /* more items */
                 ]
             },
-            Message: { /* required */
-                Body: { /* required */
-                    Html: {
-                        Charset: "UTF-8",
-                        Data: data.body
+            Source: data.source, /* required */
+        }
+        let response =  null;
+        // Sending with template
+        if (data.template){
+            // Create sendEmail params
+            let params = {
+                Destination: { /* required */
+                    ToAddresses: [
+                        data.mail
+                        /* more items */
+                    ]
+                },
+                Template: data.template,
+                TemplateData: JSON.stringify(data.variables),
+                Source: data.source, /* required */
+            };
+            console.log('Sending email with template collected SES parameters :' + JSON.stringify(params));
+            response = await new AWS.SES({apiVersion: '2010-12-01'}).sendTemplatedEmail(params).promise();
+        }else {
+            // Create sendEmail params
+            let params = {
+                Destination: { /* required */
+                    ToAddresses: [
+                        data.mail
+                        /* more items */
+                    ]
+                },
+                Message: { /* required */
+                    Body: { /* required */
+                        Html: {
+                            Charset: "UTF-8",
+                            Data: data.body
+                        }
+                    },
+                    Subject: {
+                        Charset: 'UTF-8',
+                        Data: data.subject
                     }
                 },
-                Subject: {
-                    Charset: 'UTF-8',
-                    Data: data.subject
-                }
-            },
-            Source: data.source, /* required */
-        };
-
-        console.log('Sending email collected SES parameters :' + JSON.stringify(params));
-        let response = await new AWS.SES({apiVersion: '2010-12-01'}).sendEmail(params).promise();
+                Source: data.source, /* required */
+            };
+            console.log('Sending raw email collected SES parameters :' + JSON.stringify(params));
+            response = await new AWS.SES({apiVersion: '2010-12-01'}).sendEmail(params).promise();
+        }
         console.log("Sent email message id: " + response.MessageId);
         // Add message id to the data.
         data.result.message_id = response.MessageId;
