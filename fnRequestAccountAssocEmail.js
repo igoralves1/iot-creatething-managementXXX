@@ -117,8 +117,8 @@ const getEmailPayload = (params) => {
         "mqtt_response_payload": {
             "result": "email_sent"
         },
-        "template": templateName,
-        "variables": ""
+        //"template": templateName,
+        //"variables": ""
     }
 
     return payload
@@ -176,7 +176,11 @@ module.exports.fnRequestAccountAssocEmail = async (event) => {
 
             console.info('+++ Account does not exist ... ', publishParams)
         }
+        console.log('++++ Object.keys(publishParams).length', Object.keys(publishParams).length)
+        console.log('++++ Params before publis ', publishParams)
+
         if(Object.keys(publishParams).length > 0) {
+        console.log('Publishing ......')
             await publishMqtt(publishParams)
                 .then( () => console.log('Publish Done: Params - ', publishParams))
                 .catch(e => console.log(e))
