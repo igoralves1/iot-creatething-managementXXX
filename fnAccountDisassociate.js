@@ -24,12 +24,12 @@ async function isUserExist(user_email) {
         console.log("pool ==== ", pool)
 
         const sql = `SELECT count(1) AS numbers FROM users WHERE username = '${user_email}'`
-        console.log("sql ==== ", sql)
+        // console.log("sql ==== ", sql)
 
         const sqlResult = await pool.query(sql)
         const res = sqlResult[0]
 
-        console.log("sqlRes ==== ", sqlResult)
+        // console.log("sqlRes ==== ", sqlResult)
         var userexist
         if (res[0].numbers == 0) {
             userexist = false
@@ -67,7 +67,7 @@ async function CheckEmail(serial_num){
         // console.log("sqlRes ==== ", res)
         const data = res && res.length > 0 ? res[0] : []
 
-        // console.log("data ===== ", data)
+          console.log("data ===== ", data)
 
         if (!data || typeof data == 'undefined' || data.length == 0) {
             return []
@@ -187,8 +187,8 @@ const getEmailPayload = (params) => {
         "mqtt_response_payload": {
             "result": "disassociated"
         },
-        "template": templateName,
-        "variables": ""
+        // "template": templateName,
+        // "variables": ""
     }
 
     return payload
@@ -205,22 +205,25 @@ module.exports.fnAccountDisassociate = async (event) => {
         const account_email = event.account_email
         const language = event.language_iso639 ? event.language_iso639 : ''
 
-        const checkRes = await CheckEmail(serialNumber)
+        console.log('+++ Received payload', event)
+
+        let checkRes = await CheckEmail(serialNumber)
+
+        if (checkRes == null) {
+            checkRes = []
+        }
+
         const useremail = checkRes.length > 0 ? checkRes[0] : ""
         const ca_active_ref_id = checkRes.length > 0 ? checkRes[1] : ""
-// console.log( 'checkRes -- ', checkRes);
 
         if (useremail && useremail != null){
             await Disassociate(useremail, serialNumber, ca_active_ref_id)
             
             //get user's details
             const userDetails = await getUserDetails(useremail)
-    // console.log('==user details ', userDetails)
-    // console.log('==count users ', Object.keys(userDetails).length > 0)
 
             //get product name
             const productName = await getProductName(serialNumber)
-        // console.log('==Product Name ', productName)
 
             const emailPayload = getEmailPayload({
                 email: useremail, 
@@ -249,6 +252,8 @@ module.exports.fnAccountDisassociate = async (event) => {
         }
 
         if(Object.keys(publishParams).length > 0) {
+            console.log('++++ Publishing ...')
+
             await publishMqtt(publishParams)
                 .then( () => console.log('Publish Done: Params - ', publishParams))
                 .catch(e => console.log(e))
@@ -258,70 +263,3 @@ module.exports.fnAccountDisassociate = async (event) => {
         console.log("🚀 0.1 - error:", error.stack)
     }
 }
-
-
-/*module.exports.fnAccountDisassociate = async (event) => {
-    try {
-
-        console.log("🚀 1 - event:", event)
-        const retval = event.retval
-        console.log("🚀 2 - retval:", retval)
-        const topic = event.topic
-        console.log("🚀 3 - topic:", topic)
-        const res = topic.split("/")
-        console.log("🚀 4 - res:", res)
-        const serialNumber = res[2]
-        console.log("🚀 5 - serialNumber:", serialNumber)
-
-
-        const account_email = event.account_email
-        const language = event.language_iso639
-        //const serialNumber = "12345AB5678"
-
-
-        const checkRes = await CheckEmail(serialNumber)
-        const useremail = checkRes[0]
-        const ca_active_ref_id = checkRes[1]
-
-        var info
-        if (useremail != ""){
-            Disassociate(useremail, serialNumber, ca_active_ref_id)
-            info = {
-                "result": "disassociated"
-            }
-        } else {
-            info = {
-                "result": "was_disassociated"
-            }
-        }
-
-
-        var params = {
-            topic: `${MQTT_TOPIC_ENV}/scican/srv/${serialNumber}/response/account-disassociate`,
-            payload: JSON.stringify(info),
-            qos: '0'
-        };
-        await publishMqtt(params)
-
-
-        const input =
-            {
-            "language_iso639": "en",
-            "language_iso3166": "US"
-            }
-
-
-
-        //Q/scican/1234AB5678/srv/request/account-disassociate
-        //Q/scican/#
-        //Q/scican/srv/1234AB5678/response/account-disassociate
-
-
-
-    } catch (error) {
-        console.log("🚀 0 - error:", error)
-        console.log("🚀 0.1 - error:", error.stack)
-    }
-}
-*/
-

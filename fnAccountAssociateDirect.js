@@ -59,7 +59,6 @@ async function UserIdentification(account_email, account_password) {
 async function AssociateUnit(params) {
     const { user_id, useremail, serial_num} = params
     let userPrevAssociated = false
-    let userAssociated = false
     let diff_assoc_email = ''
     let isDisassociated = true
     let ass_active = 0
@@ -70,13 +69,10 @@ async function AssociateUnit(params) {
 
     try {
         const sql = `SELECT * FROM customers_units WHERE serial_num = '${serial_num}'`
-    // console.log("sql ==== ", sql)
 
         const sqlResult = await pool.query(sql)
         const res = sqlResult[0]
 
-    // console.log("sqlRes ==== ", sqlResult)
-    // console.log("res ==== ", res)
         const data = res ? res : []
 
         if ( data ) {
@@ -87,7 +83,6 @@ async function AssociateUnit(params) {
                     ca_active_ref_id = data[k].ca_active_ref_id
 
                     if(ass_active) {
-                        userAssociated = true
                         isDisassociated = false
                     }
                 }
@@ -99,10 +94,6 @@ async function AssociateUnit(params) {
                 }
             }
         }
-
-    // console.log('+++diff ass email', diff_assoc_email)
-    // console.log('+++user prev ass', userPrevAssociated)
-    // console.log('+++user asso ', userAssociated)
 
         // disassociate previously associated use 
         if(diff_assoc_email) {
@@ -119,22 +110,18 @@ async function AssociateUnit(params) {
             latest_oas_update_date=NOW()
             WHERE user_email= '${diff_assoc_email}' AND serial_num='${serial_num}'`
 
-
-// console.log("Update sql1 ==== ", sql1)
             const sqlResult1 = await pool.query(sql1)
-// console.log(" ===sql2res - ", sqlResult1[0])
+
             //set prev_assoc_email to empty
             isDisassociated = sqlResult1[0] ? sqlResult1[0].changedRows : false
-// console.log(" ===isDisassociated - ", isDisassociated)
+
             //update ustomers_units_assoc_dates table, set linked_to_user_end_date to now()
             const sql2 = `UPDATE scican.customers_units_assoc_dates SET
           linked_to_user_end_date=NOW(),
             data_updated=NOW()
           WHERE ca_active_ref_id='${diff_user_ref_id}' AND user_email='${diff_assoc_email}' AND serial_num='${serial_num}'`
 
-        // console.log("Update sql2 ==== ", sql2)
-                const sqlResult2 = await pool.query(sql2)
-// console.log(" ===sql2res - ", sqlResult2[0])
+            const sqlResult2 = await pool.query(sql2)
         }
 
         //if current user has previous associated but is not associated
@@ -145,9 +132,8 @@ async function AssociateUnit(params) {
                 prev_associations_active=prev_associations_active+1,association_active=1,
                 ca_active_ref_id='${ca_active_ref_id}',latest_oas_update_date=NOW()
                 WHERE serial_num='${serial_num}' AND user_email='${useremail}'`
-// console.log("Insert sql3 ==== ", sql3)
+
             const sqlResult3 = await pool.query(sql3)
-// console.log(" sql3res - ", sqlResult3[0])
             
             ref_id = ca_active_ref_id
 
@@ -156,14 +142,12 @@ async function AssociateUnit(params) {
             //Insert new data into customers_units table
             const sql6 = `INSERT INTO customers_units(idusers,user_email,prev_associations_active,association_active,serial_num,ca_active_ref_id,latest_oas_update_date,idunits_warranties) VALUES 
               ('${user_id}','${useremail}',1,1,'${serial_num}','${ref_id}',NOW(),0)`
-console.log("Insert sql6 ==== ", sql6)
-            const sqlResult6 = await pool.query(sql6)
-// console.log(" sql6res - ", sqlResult6[0])
-            associationComplete = sqlResult6[0] ? sqlResult6[0].affectedRows : false
 
-            
+            const sqlResult6 = await pool.query(sql6)
+
+            associationComplete = sqlResult6[0] ? sqlResult6[0].affectedRows : false
         }
-console.log('=====assoc complete ', associationComplete)
+
         //if insert/update of customer_units table was successfull, insert into customer_units_assoc_dates.
         if(associationComplete) {
             //Insert into customers_units_assoc_dates
@@ -183,9 +167,9 @@ console.log('=====assoc complete ', associationComplete)
                              NOW(),
                              0,
                              NOW())`
-    // console.log("Insert sql4 ==== ", sql4)
+    
             const sqlResult4 = await pool.query(sql4)
-    // console.log(" sql4res - ", sqlResult4[0])
+    
         }
 
         return associationComplete
@@ -263,8 +247,8 @@ const getEmailPayload = (params) => {
         "mqtt_response_payload": {
             "result": "associated"
         },
-        "template": templateName,
-        "variables": ""
+        // "template": templateName,
+        // "variables": ""
     }
 
     return payload
@@ -281,20 +265,16 @@ module.exports.fnAccountAssociateDirect = async (event) => {
         const account_email = event.account_email
         const language = event.language_iso639 ? event.language_iso639 : 'en'
         const account_password = event.account_password
-// console.log("account username ===== ", account_email)
-// console.log("account password ===== ", account_password)
 
         const userIdres = await UserIdentification(account_email, account_password)
-// console.log("userIdres ===== ", userIdres)
-
-        //if(Object.keys(userDetails).length > 0) {
-        if (userIdres && typeof userIdres != 'undefined'){
+console.log('+++user idres ,', userIdres)
+        if (userIdres && userIdres != null){
             //get user's details
             const userDetails = await getUserDetails(account_email)
 
             //activate online access
             const associated = await AssociateUnit({user_id: userDetails.idusers, useremail: account_email, serial_num: serialNumber})
-// console.log('===before email send -- ', associated)
+
             if(associated) {
                 //get product name
                 const productName = await getProductName(serialNumber)
@@ -329,6 +309,8 @@ module.exports.fnAccountAssociateDirect = async (event) => {
         }
 
         if(Object.keys(publishParams).length > 0) {
+            console.info('+++ Publishing ...')
+
             await publishMqtt(publishParams)
                 .then( () => console.log('Publish Done: Params - ', publishParams))
                 .catch(e => console.log(e))
