@@ -70,7 +70,7 @@ async function getPasswordHashData(user_email, password){
 
         var axiosconnect = await axios.create()
         let res = await axiosconnect.post(url, data)
-    // console.log("Create Password Hash ==== ", res)
+    
         if(res.data) {
             hash_data.password_hash = res.data.password_hash || ''
             hash_data.hash_time = res.data.hash_time || ''
@@ -81,6 +81,27 @@ async function getPasswordHashData(user_email, password){
     } catch (error) {
         console.log("🚀 0.getPasswordHashData - error:", error)
         console.log("🚀 0.1.getPasswordHashData - error:", error.stack)
+    }
+}
+
+async function updateActivationKey(email, activatin_key) {
+    let isUpdated = false
+
+    try {
+        const sql = `UPDATE users SET activationkey='${activatin_key}' WHERE username='${email}'`
+
+        if ( pool ) {
+            const sqlResult = await pool.query(sql)
+            const res = sqlResult[0]
+
+            isUpdated = sqlResult[0] ? sqlResult[0].changedRows : false
+        }
+        
+        return isUpdated
+
+    } catch (error) {
+        console.log("🚀 0.updateActivationKey - error: ", error)
+        console.log("🚀 0.1updateActivationKey - error stack: ", error.stack)
     }
 }
 
@@ -151,13 +172,18 @@ const getEmailPayload = (params) => {
         "mqtt_response_payload": {
             "result": "email_sent"
         },
-        "template": templateName,
-        "variables": ""
+        // "template": templateName,
+        // "variables": ""
     }
 
     return payload
 }
 
+/**
+ * if account exists and userDetail is not undefined(meaning query failed), send reset email 
+ * if user does not exist in db , publish accound does not exist
+ * else if query failed, do notthing
+*/
 module.exports.fnRequestAccountPasswordResetEmail = async (event) => {
     try {
         const retval = event.retval
@@ -169,10 +195,15 @@ module.exports.fnRequestAccountPasswordResetEmail = async (event) => {
         const account_email = event.account_email
         const language = event.language_iso639 ? event.language_iso639 : ''
 
-        const userDetails = await getUserDetails(account_email)
-        console.log('user details === ', userDetails)
+        console.log('++++ Received Payload ', event);
 
-        if(userDetails != null && Object.keys(userDetails).length > 0) {
+        let userDetails = await getUserDetails(account_email)
+
+        if(typeof userDetails !== 'object' || userDetails == null) {
+            userDetails = {}
+        }
+
+         if(userDetails != null && Object.keys(userDetails).length > 0) {
             //get activation key
             const activation_key = getRandomValue()
 
@@ -184,28 +215,35 @@ module.exports.fnRequestAccountPasswordResetEmail = async (event) => {
             const password_hash = hash_data.password_hash || ''
 
             if( password_hash != null && Object.keys(password_hash).length > 0) {
-                //get product name
-                const productName = await getProductName(serialNumber)
+
+                const activationKeyUpdated = await updateActivationKey(account_email, activation_key)
             
-                //get email payload
-                const emailPayload = getEmailPayload({
-                    email: account_email, 
-                    firstname: userDetails.firstname,
-                    lastname: userDetails.lastname, 
-                    product_name: productName,
-                    serial_num: serialNumber, 
-                    language: language,
-                    password_hash: password_hash,
-                    activation_key: activation_key 
-                })
+                if(activationKeyUpdated) {
+                    //get product name
+                    const productName = await getProductName(serialNumber)
+                
+                    //get email payload
+                    const emailPayload = getEmailPayload({
+                        email: account_email, 
+                        firstname: userDetails.firstname,
+                        lastname: userDetails.lastname, 
+                        product_name: productName,
+                        serial_num: serialNumber, 
+                        language: language,
+                        password_hash: password_hash,
+                        activation_key: activation_key 
+                    })
 
-                publishParams = {
-                    topic: `${MQTT_TOPIC_ENV}/scican/cmd/send_email`,
-                    payload: JSON.stringify(emailPayload),
-                    qos: '0' 
+                    publishParams = {
+                        topic: `${MQTT_TOPIC_ENV}/scican/cmd/send_email`,
+                        payload: JSON.stringify(emailPayload),
+                        qos: '0' 
+                    }
+
+                    console.info('+++ Sending Email ... ', publishParams)
+                } else {
+                    console.log('+++ Activation key not saved! - ', activationKeyUpdated)
                 }
-
-                console.info('+++ Sending Email ... ', publishParams)
             }
         } else if(Object.keys(userDetails).length == 0 && userDetails != null) {
             publishParams = {
@@ -215,9 +253,13 @@ module.exports.fnRequestAccountPasswordResetEmail = async (event) => {
             }
 
             console.info('+++ Account does not exist ... ', publishParams)
+        } else {
+            console.log("🚀 Something went wrong. Nothing Published: userDetails = ", userDetails)
         }
 
         if(Object.keys(publishParams).length > 0) {
+            console.info('+++ Publishing ...')
+
             await publishMqtt(publishParams)
                 .then( () => console.log('Publish Done: Params - ', publishParams))
                 .catch(e => console.log(e))
