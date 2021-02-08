@@ -61,7 +61,7 @@ const publishMqtt = async (params) => {
     new Promise((resolve) =>
         iotdata.publish(params, (err, res) => {
             if(err){
-                console.error()
+                console.error("Error send mqtt message on endpoint:" + endpoint + " data:" + JSON.stringify(params));
             }
             resolve(res);
         })
