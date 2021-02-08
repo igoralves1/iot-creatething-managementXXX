@@ -101,12 +101,18 @@ const preProcessPayload = (receivedData) => {
         throw new Error("Invalid email address on received data: " + JSON.stringify(receivedData));
     }
     data.mail = receivedData.mail;
-    data.subject = receivedData.subject;
+
+    if (receivedData.subject) {
+        data.subject = receivedData.subject;
+    }
     if (receivedData.body) {
         data.body = receivedData.body;
     }
+    // Template will override the simple email.
     if (receivedData.template) {
         data.template = receivedData.template;
+        delete data.subject;
+        delete data.body;
     }
     if (receivedData.variables) {
         data.variables = receivedData.variables;
