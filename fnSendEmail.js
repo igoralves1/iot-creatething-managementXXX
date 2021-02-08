@@ -15,7 +15,7 @@
 
  Topic:  Q/scican/cmd/send_email
 
- Test raw email:
+ Test simple email:
  {
  "mail": "nicolicioiu.liviu@enode.ro",
  "subject": "Demo Subject",
@@ -38,20 +38,12 @@ Before use this payload, please check if the template has been created, using th
  Topic:  Q/scican/cmd/send_email
  * Topic $ENV/scican/cmd/send_email, Q/scican/cmd/send_email
  *
- * The variables: language_iso639, language_iso3166, not in use so are optionally
- *  Required:
- *  mail,
- *  Optional:
- *  subject, body, mqtt_response_topic,source,mqtt_response_payload, mqtt_response_topic
  *
  *  The response payload will be delivered back with message status and the message id.
  *
  *  Source is used as a sender, default value is taken from config and override with payload if it exists
  *  Currently, there is used raw html body, not a template.
  *  The env Topic prefix will be added on the topic, to preserve the stage/ENV session.
- *  @todo
- *      - add template solution based on the language,
- *      - add template variables on payload on manage them
  */
 
 // Import AWS SDK
@@ -119,9 +111,6 @@ const preProcessPayload = (receivedData) => {
     data.mqtt_response_topic = receivedData.mqtt_response_topic;
     if (receivedData.source) {
         data.source = receivedData.source;
-    }
-    if (!data.subject) {
-        console.warn('Invalid payload field: subject.');
     }
     if (!data.mqtt_response_topic) {
         console.warn('Invalid payload field: mqtt_response_topic.');
