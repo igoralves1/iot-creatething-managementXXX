@@ -7,8 +7,6 @@ const Joi = require('@hapi/joi')
 var iotdata = new AWS.IotData({endpoint: process.env.MQTT_ENDPOINT});
 const MQTT_TOPIC_ENV = process.env.mqttTopicEnv
 
-
-
 const mysql = require('mysql2/promise')
 const axios = require('axios')
 
@@ -58,28 +56,22 @@ const publishMqtt = (params) =>
 async function CheckEmail(serial_num){
     try {
 
-        console.log("pool ==== ", pool)
+        // console.log("pool ==== ", pool)
 
         const sql = `SELECT * FROM customers_units WHERE association_active = 1 AND serial_num = '${serial_num}'`
-        console.log("sql ==== ", sql)
+        // console.log("sql ==== ", sql)
 
         const sqlResult = await pool.query(sql)
         const res = sqlResult[0]
 
-        console.log("sqlRes ==== ", sqlResult)
-        const data = res[0]
+        // console.log("sqlRes ==== ", res)
+        const data = res && res.length > 0 ? res[0] : []
 
+        // console.log("data ===== ", data)
 
-        console.log("data ===== ", data)
-
-
-
-
-        if (typeof data == 'undefined' || typeof data == []) {
-            return ""
+        if (!data || typeof data == 'undefined' || data.length == 0) {
+            return []
         } else {
-
-
             const outoput = [data.user_email, data.ca_active_ref_id]
             console.log("output ====== ", outoput)
             return [data.user_email, data.ca_active_ref_id]
@@ -109,7 +101,7 @@ async function Disassociate(user_email, serial_num, ca_active_ref_id){
         WHERE user_email='${user_email}' AND serial_num='${serial_num}'`
 
 
-        console.log("Update sql ==== ", sql)
+        // console.log("Update sql ==== ", sql)
         const sqlResult = await pool.query(sql)
 
 
@@ -118,9 +110,8 @@ async function Disassociate(user_email, serial_num, ca_active_ref_id){
             data_updated=NOW()
         WHERE ca_active_ref_id='${ca_active_ref_id}' AND user_email='${user_email}' AND serial_num='${serial_num}'`
 
-        console.log("Update sql2 ==== ", sql1)
+        // console.log("Update sql2 ==== ", sql1)
         const sqlResult2 = await pool.query(sql1)
-
 
     } catch (error) {
         console.log("🚀 0.isUserExist - error:", error)
@@ -128,11 +119,148 @@ async function Disassociate(user_email, serial_num, ca_active_ref_id){
     }
 }
 
+async function getUserDetails(user_email) {
+    let details = {}
+    try {
+        const sql = `SELECT firstname, lastname FROM users WHERE username = '${user_email}'`
 
+        if ( pool ) {
+            const sqlResult = await pool.query(sql)
+            const res = sqlResult[0]
 
+            if(res[0]) {
+                details.firstname = res[0].firstname
+                details.lastname = res[0].lastname
+            }
+        }
+        
+        return details
 
+    } catch (error) {
+        console.log("🚀 getUserDetails - error: ", error)
+        console.log("🚀 getUserDetails - error stack: ", error.stack)
+    }
+}
+
+async function getProductName(serial_number) {
+    let product_name = ''
+    
+    try {
+        const sql = `SELECT model_general_name FROM units_models WHERE productSerialNumberPrefix = '${serial_number.slice(0, 4)}'`
+
+        if ( pool ) {
+            const sqlResult = await pool.query(sql)
+            const res = sqlResult[0]
+
+            if(res[0]) {
+                product_name = res[0].model_general_name
+            }
+        }
+        
+        return product_name
+
+    } catch (error) {
+        console.log("🚀 getProductName - error: ", error)
+        console.log("🚀 getProductName - error stack: ", error.stack)
+    }
+}
+
+const getEmailPayload = (params) => {
+    const { email, firstname, lastname, product_name, serial_num, language } = params
+    const linkUrl = "updates.scican.com"
+    const source = "no-reply.notification@scican.com"
+    const templateName = "template_name"
+    let subject = "Account Disassociation"
+    let body = `Dear ${firstname}, ${lastname},  <br /><br /> `
+            + `You have selected to disassociate your ${product_name} with serial number ${serial_num} from your account ${email}. You can still access the cycle data prior to disassociation by logging in to your account on <a href='https://updates.scican.com'>updates.scican.com</a>.`
+            +` Your ${product_name} will not be able to upload any cycle data after the disassociation date and you will not be able to create any reports. <br /><br />`
+            + `If you want to associate your ${product_name} with serial number ${serial_num} again, please follow the Online Access steps from the unit. <br /><br />`
+            + `Please feel free to contact SciCan for more information <br /><br />`
+            + `Regards, <br /><br />`
+            + `SciCan Team`
+
+    const payload = {
+        "mail": email,
+        "subject": subject,
+        "body": body,
+        "mqtt_response_topic": `/scican/srv/${serial_num}/response/account-disassociate`,
+        "mqtt_response_payload": {
+            "result": "disassociated"
+        },
+        "template": templateName,
+        "variables": ""
+    }
+
+    return payload
+}
 
 module.exports.fnAccountDisassociate = async (event) => {
+    try {
+        const retval = event.retval
+        const topic = event.topic
+        const res = topic.split("/")
+        const serialNumber = res[2]
+        let publishParams = {}
+
+        const account_email = event.account_email
+        const language = event.language_iso639 ? event.language_iso639 : ''
+
+        const checkRes = await CheckEmail(serialNumber)
+        const useremail = checkRes.length > 0 ? checkRes[0] : ""
+        const ca_active_ref_id = checkRes.length > 0 ? checkRes[1] : ""
+// console.log( 'checkRes -- ', checkRes);
+
+        if (useremail && useremail != null){
+            await Disassociate(useremail, serialNumber, ca_active_ref_id)
+            
+            //get user's details
+            const userDetails = await getUserDetails(useremail)
+    // console.log('==user details ', userDetails)
+    // console.log('==count users ', Object.keys(userDetails).length > 0)
+
+            //get product name
+            const productName = await getProductName(serialNumber)
+        // console.log('==Product Name ', productName)
+
+            const emailPayload = getEmailPayload({
+                email: useremail, 
+                firstname: userDetails.firstname,
+                lastname: userDetails.lastname || '', 
+                product_name: productName,
+                serial_num: serialNumber, 
+                language: language 
+            })
+
+            publishParams = {
+                topic: `${MQTT_TOPIC_ENV}/scican/cmd/send_email`,
+                payload: JSON.stringify(emailPayload),
+                qos: '0' 
+            }
+
+            console.info('+++ Sending email  to topic ... ', publishParams)  
+        } else if(!useremail && useremail != null) {
+            publishParams = {
+                topic: `${MQTT_TOPIC_ENV}/scican/srv/${serialNumber}/response/account-disassociate`,
+                payload: JSON.stringify({"result": "was_disassociated"}),
+                qos: '0' 
+            }
+
+            console.info('+++ Was already associated. Publishing to unit ... ', publishParams)
+        }
+
+        if(Object.keys(publishParams).length > 0) {
+            await publishMqtt(publishParams)
+                .then( () => console.log('Publish Done: Params - ', publishParams))
+                .catch(e => console.log(e))
+        }
+    } catch (error) {
+        console.log("🚀 0 - error:", error)
+        console.log("🚀 0.1 - error:", error.stack)
+    }
+}
+
+
+/*module.exports.fnAccountDisassociate = async (event) => {
     try {
 
         console.log("🚀 1 - event:", event)
@@ -195,5 +323,5 @@ module.exports.fnAccountDisassociate = async (event) => {
         console.log("🚀 0.1 - error:", error.stack)
     }
 }
-
+*/
 

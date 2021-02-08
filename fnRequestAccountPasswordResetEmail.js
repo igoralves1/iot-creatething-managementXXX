@@ -2,10 +2,9 @@
 const AWS = require('aws-sdk')
 const S3 = new AWS.S3()
 const Joi = require('@hapi/joi')
+const crypto = require('crypto')
 var iotdata = new AWS.IotData({endpoint: process.env.MQTT_ENDPOINT});
 const MQTT_TOPIC_ENV = process.env.mqttTopicEnv
-
-
 
 const mysql = require('mysql2/promise')
 const axios = require('axios')
@@ -45,143 +44,187 @@ async function isUserExist(user_email) {
     }
 }
 
-
-
 const publishMqtt = (params) =>
   new Promise((resolve, reject) =>
   iotdata.publish(params, (err, res) => resolve(res)))
 
 
-async function SendEmail(email, userExist, language){
+  const getRandomValue = () => {
+    const randVal = Math.random() + Math.random() + Math.random() + Math.random() + Math.random()
+    let hash = crypto.createHash('md5').update(String(randVal)).digest("hex")
+
+    return hash
+}
+
+async function getPasswordHashData(user_email, password){
+
     try {
-        var body
-        var subject
-        var url = "https://dev4.scican.com/send-email-template"
-        //var url = "http://3.86.253.251/send-email-template"
+        var url = "http://3.86.253.251/user-password-create"
         var data
-        if (userExist == true) {
-            subject = "You are a customer"
-            body = "Hello, <br><br>" +
+        let hash_data = {}
 
-                "Please, click " + "<a href='https://updates.scican.com'>here</a>" + " to complete Online Access Activation.<br><br>"
-
-            data = {
-                sendto: email,
-                subject: subject,
-                body: body
-            }
-
-
-            var axiosconnect = await axios.create()
-            let res = await axiosconnect.post(url, data)
-            console.log("VPC Email ==== ", res)
-            return res.data.success
-
-        } else {
-            subject = "You are NOT a customer"
-            body = "Hello No Customer, <br><br>" +
-
-                "Please, click " + "<a href='https://updates.scican.com'>here</a>" + " to complete Online Access Activation.<br><br>"
-
-            data = {
-                sendto: email,
-                subject: subject,
-                body: body
-            }
-
-            var axiosconnect = await axios.create()
-            let res = await axiosconnect.post(url, data)
-
-            console.log("VPC Email ==== ", res)
-            return res.data.success
+        data = {
+            account_email: user_email,
+            account_password: password
         }
 
-    }catch (error) {
-        console.log("🚀 0.SendEmail - error:", error)
-        console.log("🚀 0.1.SendEmail - error:", error.stack)
+        var axiosconnect = await axios.create()
+        let res = await axiosconnect.post(url, data)
+    // console.log("Create Password Hash ==== ", res)
+        if(res.data) {
+            hash_data.password_hash = res.data.password_hash || ''
+            hash_data.hash_time = res.data.hash_time || ''
+        }
+
+        return hash_data
+
+    } catch (error) {
+        console.log("🚀 0.getPasswordHashData - error:", error)
+        console.log("🚀 0.1.getPasswordHashData - error:", error.stack)
     }
+}
+
+async function getUserDetails(user_email) {
+    let details = {}
+    try {
+        const sql = `SELECT firstname, lastname FROM users WHERE username = '${user_email}'`
+
+        if ( pool ) {
+            const sqlResult = await pool.query(sql)
+            const res = sqlResult[0]
+
+            if(res[0]) {
+                details.firstname = res[0].firstname
+                details.lastname = res[0].lastname
+            }
+        }
+        
+        return details
+
+    } catch (error) {
+        console.log("🚀 getUserDetails - error: ", error)
+        console.log("🚀 getUserDetails - error stack: ", error.stack)
+    }
+}
+
+async function getProductName(serial_number) {
+    let product_name = ''
+    
+    try {
+        const sql = `SELECT model_general_name FROM units_models WHERE productSerialNumberPrefix = '${serial_number.slice(0, 4)}'`
+
+        if ( pool ) {
+            const sqlResult = await pool.query(sql)
+            const res = sqlResult[0]
+
+            if(res[0]) {
+                product_name = res[0].model_general_name
+            }
+        }
+        
+        return product_name
+
+    } catch (error) {
+        console.log("🚀 getProductName - error: ", error)
+        console.log("🚀 getProductName - error stack: ", error.stack)
+    }
+}
+
+const getEmailPayload = (params) => {
+    const { email, firstname, lastname, product_name, serial_num, language, password_hash, activation_key } = params
+    const linkUrl = "updates.scican.com"
+    const source = "no-reply.notification@scican.com"
+    const templateName = "template_name"
+    let subject = "Reset Password"
+    let body = `Dear ${firstname}, ${lastname},  <br /><br /> `
+            + `You recently requested to reset your password for your Updates.SciCan page account. Click the button bellow to reset it.  <br /><br />`
+            + `<a href='https://updates.scican.com/passwordChange.php?user=${email}&keyid=${password_hash}&key=${activation_key}&lang=ENG'>Reset your password</a> <br /><br />`
+            + `If you did not request a password reset, please ignore this email. This password reset is only valid for the next 60 minutes.  <br /><br />`
+            + `Regards, <br /><br />`
+            + `SciCan Team`
+
+    const payload = {
+        "mail": email,
+        "subject": subject,
+        "body": body,
+        "mqtt_response_topic": `/scican/srv/${serial_num}/response/account-password_reset_email`,
+        "mqtt_response_payload": {
+            "result": "email_sent"
+        },
+        "template": templateName,
+        "variables": ""
+    }
+
+    return payload
 }
 
 module.exports.fnRequestAccountPasswordResetEmail = async (event) => {
     try {
-
-        console.log("🚀 1 - event:", event)
         const retval = event.retval
-        console.log("🚀 2 - retval:", retval)
         const topic = event.topic
-        console.log("🚀 3 - topic:", topic)
         const res = topic.split("/")
-        console.log("🚀 4 - res:", res)
         const serialNumber = res[2]
-        console.log("🚀 5 - serialNumber:", serialNumber)
-
-
-        // event: {
-        //     language_iso3166: 'US',
-        //         language_iso639: 'en',
-        //         account_email: '928064091@qq.com',
-        //         topic: 'Q/scican/1234AB5678/srv/request/account-password_reset_email'
-        // }
+        let publishParams = {}
 
         const account_email = event.account_email
-        const language = event.language_iso639
+        const language = event.language_iso639 ? event.language_iso639 : ''
 
-        //const serialNumber = "12345AB5678"
+        const userDetails = await getUserDetails(account_email)
+        console.log('user details === ', userDetails)
 
-        console.log("account_email === ", account_email)
+        if(userDetails != null && Object.keys(userDetails).length > 0) {
+            //get activation key
+            const activation_key = getRandomValue()
 
-        const userCheck = await isUserExist(account_email)
+            //get new password
+            const new_password = getRandomValue()
 
-        console.log("userCheck === ", userCheck)
+            //get password hash
+            const hash_data = await getPasswordHashData(account_email, new_password)
+            const password_hash = hash_data.password_hash || ''
 
-        var info
-        if (userCheck == true){
-            await SendEmail(account_email, userCheck, language)
-            info = {
-                "result": "email_sent"
+            if( password_hash != null && Object.keys(password_hash).length > 0) {
+                //get product name
+                const productName = await getProductName(serialNumber)
+            
+                //get email payload
+                const emailPayload = getEmailPayload({
+                    email: account_email, 
+                    firstname: userDetails.firstname,
+                    lastname: userDetails.lastname, 
+                    product_name: productName,
+                    serial_num: serialNumber, 
+                    language: language,
+                    password_hash: password_hash,
+                    activation_key: activation_key 
+                })
+
+                publishParams = {
+                    topic: `${MQTT_TOPIC_ENV}/scican/cmd/send_email`,
+                    payload: JSON.stringify(emailPayload),
+                    qos: '0' 
+                }
+
+                console.info('+++ Sending Email ... ', publishParams)
             }
-        } else {
-            await SendEmail(account_email, userCheck, language)
-            info = {
-                "result": "existing_account_not_found"
+        } else if(Object.keys(userDetails).length == 0 && userDetails != null) {
+            publishParams = {
+                topic: `${MQTT_TOPIC_ENV}/scican/srv/${serialNumber}/response/account-password_reset_email`,
+                payload: JSON.stringify({"result": "existing_account_not_found"}),
+                qos: '0' 
             }
+
+            console.info('+++ Account does not exist ... ', publishParams)
         }
 
-
-        var params = {
-            topic: `${MQTT_TOPIC_ENV}/scican/srv/${serialNumber}/response/account-password_reset_email`,
-            payload: JSON.stringify(info),
-            qos: '0'
-        };
-        await publishMqtt(params)
-
-
-
-
-        // {
-        //     "result": "email_sent"
-        // }
-        // {
-        //     "result": "existing_account_not_found"
-        // }
-
-
-        const input = {
-            "account_email": "928064091@qq.com",
-            "language_iso639": "en",
-            "language_iso3166": "US"
+        if(Object.keys(publishParams).length > 0) {
+            await publishMqtt(publishParams)
+                .then( () => console.log('Publish Done: Params - ', publishParams))
+                .catch(e => console.log(e))
         }
-
-        //Q/scican/1234AB5678/srv/request/account-password_reset_email
-        //Q/scican/#
-        //Q/scican/srv/1234AB5678/response/account-password_reset_email
-
-
-
     } catch (error) {
         console.log("🚀 0 - error:", error)
         console.log("🚀 0.1 - error:", error.stack)
     }
 }
-
 

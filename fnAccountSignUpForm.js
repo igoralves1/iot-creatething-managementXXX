@@ -5,6 +5,7 @@
 const AWS = require('aws-sdk')
 const S3 = new AWS.S3()
 const Joi = require('@hapi/joi')
+const crypto = require('crypto')
 var iotdata = new AWS.IotData({endpoint: process.env.MQTT_ENDPOINT});
 const MQTT_TOPIC_ENV = process.env.mqttTopicEnv
 
@@ -18,7 +19,8 @@ const pool = mysql.createPool({
     host     : process.env.rdsMySqlHost,
     user     : process.env.rdsMySqlUsername,
     password : process.env.rdsMySqlPassword,
-    database : process.env.rdsMySqlDb
+    database : process.env.rdsMySqlDb,
+    connectionLimit: 100
 })
 
 
@@ -27,11 +29,20 @@ const publishMqtt = (params) =>
         iotdata.publish(params, (err, res) => resolve(res)))
 
 
+const getRandomValue = () => {
+    const randVal = Math.random() + Math.random() + Math.random() + Math.random() + Math.random()
+    let hash = crypto.createHash('md5').update(String(randVal)).digest("hex")
+
+    return hash
+}
 
 async function isUserExist(user_email) {
     try {
+        if(!user_email ) {
+            return false
+        }
 
-        console.log("pool ==== ", pool)
+        // console.log("pool ==== ", pool)
 
         const sql = `SELECT count(1) AS numbers FROM users WHERE username = '${user_email}'`
         console.log("sql ==== ", sql)
@@ -40,10 +51,10 @@ async function isUserExist(user_email) {
         const res = sqlResult[0]
 
         console.log("sqlRes ==== ", sqlResult)
-        var userexist
-        if (res[0].numbers == 0) {
-            userexist = false
-        } else {
+
+        var userexist = false
+
+        if (res && res[0].numbers > 0) {
             userexist = true
         }
 
@@ -69,107 +80,354 @@ async function CreatePasswordHash(user_email, password){
             account_password: password
         }
 
-        console.log("ready to connect POST API")
-
         var axiosconnect = await axios.create()
         let res = await axiosconnect.post(url, data)
-        console.log("Create Password Hash ==== ", res)
-        return res.data.password_hash
+        // console.log("Create Password Hash ==== ", res)
+        return res.data && res.data.success ? res.data.password_hash : ''
 
     } catch (error) {
-        console.log("🚀 0.isUserExist - error:", error)
-        console.log("🚀 0.1.isUserExist - error:", error.stack)
+        console.log("🚀 0.CreatePasswordHash - error:", error)
+        console.log("🚀 0.1.CreatePasswordHash - error:", error.stack)
     }
 }
 
+async function InsertUser(data){
+    const activation_key = getRandomValue()
+    const { 
+        account_email,
+        password,
+        account_company_name,
+        account_contact_name,
+        account_phone_number,
+        account_address,
+        account_city,
+        account_subregion,
+        account_country,
+        account_zip_code,
+        language,
+        language_iso3166 } = data
 
-module.exports.fnAccountSignUpForm = async (event) => {
     try {
-        const topic = event.topic
-        const res = topic.split("/")
-        const serialNumber = res[2]
-        console.log("event ===== ", event)
+        const sql = `INSERT INTO users(password, username, company, firstname, telephone, office_address_one, city, state_province_region, country, zip_postal_code, lang,groups, email, activationkey, activationstatus, activationdate) VALUES 
+                ('${password}','${account_email}','${account_company_name}','${account_contact_name}','${account_phone_number}','${account_address}','${account_city}','${account_subregion}','${account_country}','${account_zip_code}','${language}','customer','${account_email}','${activation_key}','activated',CURRENT_TIMESTAMP())`
 
+// console.log("Insert User sql ==== ", sql)
 
-        const input =
-            {
-                "account_email": "928064091@qq.com",
-                "account_password": "sc1canltd",
+        const sqlResult6 = await pool.query(sql, );
+// console.log('==sqlResult6', sqlResult6)    
+        const result = sqlResult6 ? sqlResult6[0] : {}
 
-                "account_company_name": "Alpha",
-                "account_contact_name": "Bravo",
-                "account_phone_number": "+14167778888",
-                "account_address": "Charlie",
-                "account_city": "Delta",
-                "account_subregion": "Echo",
-                "account_country": "Foxtrot",
-                "account_zip_code": "Golf",
+// console.log('==sqlResult6[0]', result)
+// console.log('==sqlResult6.insertId', result.insertId)
+        return result ? result.insertId : '' // result.affectedRows
+    } catch (error) {
+        console.log("🚀 0.InsertUser - error:", error)
+        console.log("🚀 0.1.InsertUser - error:", error.stack)
+    }
+}
 
-                "language_iso639": "en",
-                "language_iso3166": "US"
-            }
+/**
+ * Activate online access for unit.
+ * @param params - {user_id:'', useremail: '', serial_num: '' }
+ * @returns string
+ */
+async function AssociateUnit(params) {
+    const { user_id, useremail, serial_num} = params
+    let userPrevAssociated = false
+    let userAssociated = false
+    let diff_assoc_email = ''
+    let isDisassociated = true
+    let ass_active = 0
+    let associationComplete = false
+    let ca_active_ref_id = ''
+    let diff_user_ref_id = ''
+    let ref_id = getRandomValue()
 
+    try {
+        const sql = `SELECT * FROM customers_units WHERE serial_num = '${serial_num}'`
+        console.log("sql ==== ", sql)
 
-        const account_email = event.account_email
-        const account_password = event.account_password
-        console.log("account email ===== ", account_email)
+        const sqlResult = await pool.query(sql)
+        const res = sqlResult[0]
 
-        console.log("account password ===== ", account_email)
+        // console.log("sqlRes ==== ", sqlResult)
+        console.log("res ==== ", res)
+        const data = res ? res : []
 
-        const account_company_name = event.account_company_name
-        const account_contact_name = event.account_contact_name
-        const account_phone_number = event.account_phone_number
-        const account_address = event.account_address
-        const account_city = event.account_city
-        const account_subregion = event.account_subregion
-        const account_country = event.account_country
-        const account_zip_code = event.account_zip_code
-        const language = event.language_iso639
-        const language_iso3166 = event.language_iso3166
+        if ( data ) {
+            for( const k in data ) {
+                ass_active = data[k].association_active
+                if(useremail == data[k].user_email) {
+                    userPrevAssociated = true
+                    ca_active_ref_id = data[k].ca_active_ref_id
 
+                    if(ass_active) {
+                        userAssociated = true
+                        isDisassociated = false
+                    }
+                }
 
-
-        const userExist = await isUserExist(account_email)
-        console.log("userExist ===== ", userExist)
-
-
-        var info
-        if (userExist == true){
-            info = {
-                "result": "account_already_exists"
-            }
-        } else {
-            console.log("ready to POST CreatePasswordHash")
-            const passwordhash = await CreatePasswordHash(account_email, account_password)
-
-
-
-
-            console.log("passwordhash ===== ", passwordhash)
-            info = {
-                "result": "associated"
+                if(ass_active && data[k].user_email !== useremail) {
+                    diff_assoc_email = data[k].user_email
+                    diff_user_ref_id = data[k].ca_active_ref_id
+                    isDisassociated = false
+                }
             }
         }
 
+        console.log('+++diff ass email', diff_assoc_email)
+        console.log('+++user prev ass', userPrevAssociated)
+        console.log('+++user asso ', userAssociated)
 
-        var params = {
-            topic: `${MQTT_TOPIC_ENV}/scican/srv/${serialNumber}/response/account-signup-form`,
-            payload: JSON.stringify(info),
-            qos: '0'
-        };
-        await publishMqtt(params)
+        // disassociate previously associated use 
+        if(diff_assoc_email) {
+            //update customers_units table, set association_active=0
+            const sql1 = `UPDATE scican.customers_units SET
+            association_active=0,
+            association_from=NULL,
+            ca_active_ref_id=NULL,
+            web_conf_confirmed=0,
+            web_conf_confirmed_date='0000-00-00 00:00:00',
+            email_conf_sent_by_unit=0,
+            email_conf_sent_by_unit_date='0000-00-00 00:00:00',
+            current_location_date='0000-00-00 00:00:00',
+            latest_oas_update_date=NOW()
+            WHERE user_email= '${diff_assoc_email}' AND serial_num='${serial_num}'`
 
 
-        //Q/scican/1234AB5678/srv/request/account-signup-form
-        //Q/scican/#
-        //Q/scican/srv/1234AB5678/response/account-signup-form
+console.log("Update sql1 ==== ", sql1)
+            const sqlResult1 = await pool.query(sql1)
+console.log(" ===sql2res - ", sqlResult1[0])
+            //set prev_assoc_email to empty
+            isDisassociated = sqlResult1[0] ? sqlResult1[0].changedRows : false
+console.log(" ===isDisassociated - ", isDisassociated)
+            //update ustomers_units_assoc_dates table, set linked_to_user_end_date to now()
+            const sql2 = `UPDATE scican.customers_units_assoc_dates SET
+          linked_to_user_end_date=NOW(),
+            data_updated=NOW()
+          WHERE ca_active_ref_id='${diff_user_ref_id}' AND user_email='${diff_assoc_email}' AND serial_num='${serial_num}'`
 
+                console.log("Update sql2 ==== ", sql2)
+                const sqlResult2 = await pool.query(sql2)
+console.log(" ===sql2res - ", sqlResult2[0])
+        }
 
+        //if current user has previous associated but is not associated
+        if (userPrevAssociated && isDisassociated) {
+            //Update customers_units table set association_active=1
+            const sql3 = `UPDATE scican.customers_units SET web_conf_confirmed=1,
+                web_conf_confirmed_date=NOW(),email_conf_sent_by_unit=1,email_conf_sent_by_unit_date=NOW(),
+                prev_associations_active=prev_associations_active+1,association_active=1,
+                ca_active_ref_id='${ca_active_ref_id}',latest_oas_update_date=NOW()
+                WHERE serial_num='${serial_num}' AND user_email='${useremail}'`
+console.log("Insert sql3 ==== ", sql3)
+            const sqlResult3 = await pool.query(sql3)
+console.log(" sql3res - ", sqlResult3[0])
+            
+            ref_id = ca_active_ref_id
 
+            associationComplete = sqlResult3[0] ? sqlResult3[0].changedRows : false
+        } else if(!userPrevAssociated && isDisassociated) {
+            //Insert new data into customers_units table
+            const sql6 = `INSERT INTO customers_units(idusers,user_email,prev_associations_active,association_active,serial_num,ca_active_ref_id,latest_oas_update_date,idunits_warranties) VALUES 
+              ('${user_id}','${useremail}',1,1,'${serial_num}','${ref_id}',NOW(),0)`
+console.log("Insert sql6 ==== ", sql6)
+            const sqlResult6 = await pool.query(sql6)
+console.log(" sql6res - ", sqlResult6[0])
+            associationComplete = sqlResult6[0] ? sqlResult6[0].affectedRows : false
+
+            
+        }
+console.log('=====assoc complete ', associationComplete)
+        //if insert/update of customer_units table was successfull, insert into customer_units_assoc_dates.
+        if(associationComplete) {
+            //Insert into customers_units_assoc_dates
+            const sql4 = `INSERT INTO scican.customers_units_assoc_dates
+                            (idusers,
+                            user_email,
+                            serial_num,
+                            ca_active_ref_id,
+                            linked_to_user_start_date,
+                            cycle_count_at_conf_assoc,
+                            data_updated)
+                            VALUES
+                            ('${user_id}',
+                            '${useremail}',
+                            '${serial_num}',
+                            '${ref_id}',
+                             NOW(),
+                             0,
+                             NOW())`
+    console.log("Insert sql4 ==== ", sql4)
+            const sqlResult4 = await pool.query(sql4)
+    console.log(" sql4res - ", sqlResult4[0])
+        }
+
+        return associationComplete
+        
+    } catch (error) {
+        console.log("🚀 0.AssociateUnit - error:", error)
+        console.log("🚀 0.1.AssociateUnit - error:", error.stack)
+    }
+}
+
+async function getUserDetails(user_email) {
+    let details = {}
+    try {
+        const sql = `SELECT firstname, lastname FROM users WHERE username = '${user_email}'`
+
+        if ( pool ) {
+            const sqlResult = await pool.query(sql)
+            const res = sqlResult[0]
+
+            if(res[0]) {
+                details.firstname = res[0].firstname || ''
+                details.lastname = res[0].lastname || ''
+            }
+        }
+        
+        return details
+
+    } catch (error) {
+        console.log("🚀 getUserDetails - error: ", error)
+        console.log("🚀 getUserDetails - error stack: ", error.stack)
+    }
+}
+
+async function getProductName(serial_number) {
+    let product_name = ''
+    
+    try {
+        const sql = `SELECT model_general_name FROM units_models WHERE productSerialNumberPrefix = '${serial_number.slice(0, 4)}'`
+
+        if ( pool ) {
+            const sqlResult = await pool.query(sql)
+            const res = sqlResult[0]
+
+            if(res[0]) {
+                product_name = res[0].model_general_name
+            }
+        }
+        
+        return product_name
+
+    } catch (error) {
+        console.log("🚀 getProductName - error: ", error)
+        console.log("🚀 getProductName - error stack: ", error.stack)
+    }
+}
+
+const getEmailPayload = (params) => {
+    const { email, firstname, lastname, product_name, serial_num, language } = params
+    const linkUrl = "updates.scican.com"
+    const source = "no-reply.notification@scican.com"
+    const templateName = "template_name"
+    let subject = "Account Sign Up"
+    let body = `Dear ${firstname},  <br /><br /> `
+            + `Welcome to  <a href='https://updates.scican.com'>updates.scican.com</a>. You have successfully created an account on our website using “email address”. Feel free to sign-in to your account and edit your profile. <br /><br />`
+            + `Thank you for choosing ${product_name}. <br /><br />`
+            + `${serial_num} has been successfully registered and activated on your account on <a href='https://updates.scican.com'>updates.scican.com</a>. You can now access your cycle data, unit information and manuals by logging into your account. `
+            + `Please feel free to contact SciCan or your local dealer for more information about ${product_name} and its G4<sup>+</sup> features. <br /><br />`
+            + `Regards, <br /><br />`
+            + `SciCan Team`
+
+    const payload = {
+        "mail": email,
+        "subject": subject,
+        "body": body,
+        "mqtt_response_topic": `/scican/srv/${serial_num}/response/account-signup-form`,
+        "mqtt_response_payload": {
+            "result": "associated"
+        },
+        "template": templateName,
+        "variables": ""
+    }
+
+    return payload
+}
+
+module.exports.fnAccountSignUpForm = async (event) => {
+    try {
+        const retval = event.retval
+        const topic = event.topic
+        const res = topic.split("/")
+        const serialNumber = res[2]
+        let publishParams = {}
+        const account_password = event.account_password | ''
+        let data = {
+            account_email: event.account_email || '',
+            account_company_name:  event.account_company_name || '',
+            account_contact_name:  event.account_contact_name || '',
+            account_phone_number:  event.account_phone_number || '',
+            account_address:  event.account_address || '',
+            account_city:  event.account_city || '',
+            account_subregion:  event.account_subregion || '',
+            account_country:  event.account_country || '',
+            account_zip_code:  event.account_zip_code || '',
+            language:  event.language_iso639 || '',
+            language_iso3166:  event.language_iso3166 || ''
+        }
+        
+console.log("account username ===== ", data.account_email)
+console.log("account password ===== ", account_password)
+
+        //get user's details
+        const userExist = await isUserExist(data.account_email)
+    console.log('==user Exists ', userExist)
+
+        if (data.account_email && !userExist && typeof userExist != 'undefined'){
+            const passwordhash = await CreatePasswordHash(data.account_email, account_password)
+
+            data.password = passwordhash
+// console.log('==passwordhash ', passwordhash)
+            const user_id = await InsertUser(data)
+console.log('USER ID - ', user_id)
+
+            if(user_id) {
+                //activate online access
+                const associated = await AssociateUnit({user_id: user_id, useremail: data.account_email, serial_num: serialNumber})
+
+                if(associated) {
+                //get product name
+                const productName = await getProductName(serialNumber)
+    // console.log('==Product Name ', productName)
+        
+                    //get payload
+                    const emailPayload = getEmailPayload({
+                        email: data.account_email, 
+                        firstname: data.account_contact_name,
+                        lastname: data.lastname || '', 
+                        product_name: productName,
+                        serial_num: serialNumber, 
+                        language: data.language 
+                    })
+    
+                    publishParams = {
+                        topic: `${MQTT_TOPIC_ENV}/scican/cmd/send_email`,
+                        payload: JSON.stringify(emailPayload),
+                        qos: '0' 
+                    }
+
+                    console.info('+++ Sending Email ... ', publishParams)
+                }
+            }
+        } else if(userExist && typeof userExist != 'undefined') {
+            publishParams = {
+                topic: `${MQTT_TOPIC_ENV}/scican/srv/${serialNumber}/response/account-signup-form`,
+                payload: JSON.stringify({"result": "account_already_exists"}),
+                qos: '0' 
+            }
+
+            console.info('+++ Account already exists ... ', publishParams)
+        }
+
+        if(Object.keys(publishParams).length > 0) {
+            await publishMqtt(publishParams)
+                .then( () => console.log('Publish Done: Params - ', publishParams))
+                .catch(e => console.log(e))
+        }
     } catch (error) {
         console.log("🚀 0 - error:", error)
         console.log("🚀 0.1 - error:", error.stack)
     }
 }
-
-

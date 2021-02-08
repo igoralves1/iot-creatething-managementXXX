@@ -21,17 +21,17 @@ const pool = mysql.createPool({
 async function isUserExist(user_email) {
     try {
 
-        console.log("pool ==== ", pool)
+        // console.log("pool ==== ", pool)
 
         const sql = `SELECT count(1) AS numbers FROM users WHERE username = '${user_email}'`
-        console.log("sql ==== ", sql)
+        // console.log("sql ==== ", sql)
 
         const sqlResult = await pool.query(sql)
         const res = sqlResult[0]
 
-        console.log("sqlRes ==== ", sqlResult)
+        // console.log("sqlRes ==== ", sqlResult)
         var userexist
-        if (res[0].numbers == 0) {
+        if (res[0] && res[0].numbers == 0) {
             userexist = false
         } else {
             userexist = true
@@ -45,157 +45,144 @@ async function isUserExist(user_email) {
     }
 }
 
+async function getUserDetails(user_email) {
+    let details = {}
+    try {
+        const sql = `SELECT firstname, lastname, company, telephone FROM users WHERE username = '${user_email}'`
 
+        if ( pool ) {
+            const sqlResult = await pool.query(sql)
+            const res = sqlResult[0]
+
+            if(res[0]) {
+                details.firstname = res[0].firstname
+                details.lastname = res[0].lastname
+                details.company = res[0].lastname
+                details.phone = res[0].telephone
+            }
+        }
+        
+        return details
+
+    } catch (error) {
+        console.log("🚀 getUserDetails - error: ", error)
+        console.log("🚀 getUserDetails - error stack: ", error.stack)
+    }
+}
+
+async function getProductName(serial_number) {
+    let product_name = ''
+    
+    try {
+        const sql = `SELECT model_general_name FROM units_models WHERE productSerialNumberPrefix = '${serial_number.slice(0, 4)}'`
+
+        if ( pool ) {
+            const sqlResult = await pool.query(sql)
+            const res = sqlResult[0]
+
+            if(res[0]) {
+                product_name = res[0].model_general_name
+            }
+        }
+        
+        return product_name
+
+    } catch (error) {
+        console.log("🚀 getProductName - error: ", error)
+        console.log("🚀 getProductName - error stack: ", error.stack)
+    }
+}
+
+const getEmailPayload = (params) => {
+    const { email, firstname, lastname, company, phone, product_name, serial_num, language } = params
+    const linkUrl = "updates.scican.com"
+    const source = "no-reply.notification@scican.com"
+    const templateName = "template_name"
+    let subject = "Account SignUp"
+    let body = `Dear ${firstname}, ${lastname},  <br /><br /> `
+            + `Thank you for choosing ${product_name}. <br /><br />`
+            + `Please, click <a href='https://${linkUrl}/register.php?user=CUSTOMER&action=onlineaccess&email=${email}&sn=${serial_num}&firstname=${firstname}&lastname=${lastname}&company=${company}&phone=${phone}'>here</a> to complete your registration and online activation for ${serial_num}.<br /><br /> `
+            + `You can access your cycle data, unit information and manuals by logging into your account on <a href='https://updates.scican.com'>updates.scican.com</a>. <br /><br />`
+            + `Please feel free to contact SciCan or your local dealer for more information about ${product_name} and its G4<sup>+</sup> features. <br /><br />`
+            + `Regards, <br /><br />`
+            + `SciCan Team`
+
+    
+
+    const payload = {
+        "mail": email,
+        "subject": subject,
+        "body": body,
+        "mqtt_response_topic": `/scican/srv/${serial_num}/response/account-signup-email`,
+        "mqtt_response_payload": {
+            "result": "email_sent"
+        },
+        "template": templateName,
+        "variables": ""
+    }
+
+    return payload
+}
 
 const publishMqtt = (params) =>
     new Promise((resolve, reject) =>
         iotdata.publish(params, (err, res) => resolve(res)))
 
 
-async function SendEmail(email, userExist, serial_num, language){
-    try {
-        var body
-        var subject
-        var url = "https://dev4.scican.com/send-email-template"
-        //var url = "http://3.86.253.251/send-email-template"
-        const weburl = "updates.scican.com"
-        var data
-        if (userExist == true) {
-            subject = "Account SignUp Email"
-            // body = "Hello, <br><br>" +
-            //
-            //     "Please, click " + "<a href='https://updates.scican.com'>here</a>" + " to complete Online Access Activation.<br><br>"
-
-
-            body = "Hello, <br><br>" +
-
-                "Your Scican account is already exist. Please log in your account.<br><br>" +
-
-
-                "Regards,<br>" +
-                "The <a href='https://updates.scican.com'>updates.scican.com</a> Team."
-
-
-            data = {
-                sendto: email,
-                subject: subject,
-                body: body
-            }
-
-            console.log("body ===== ", body)
-
-            var axiosconnect = await axios.create()
-
-            console.log("axiosconnect ==== ", axiosconnect)
-            let res = await axiosconnect.post(url, data)
-            console.log("VPC Assoc Email ==== ", res)
-            return res.data.success
-
-        } else {
-            subject = "Account SignUp Email"
-            body = "Hello, <br><br>" +
-
-                "Please, click " + "<a href='https://updates.scican.com'>here</a>" + " to sign up your email.<br><br>"
-
-            data = {
-                sendto: email,
-                subject: subject,
-                body: body
-            }
-
-            var axiosconnect = await axios.create()
-            let res = await axiosconnect.post(url, data)
-
-            console.log("VPC Email ==== ", res)
-            return res.data.success
-        }
-
-    }catch (error) {
-        console.log("🚀 0.SendEmail - error:", error)
-        console.log("🚀 0.1.SendEmail - error:", error.stack)
-    }
-}
-
 module.exports.fnAccountSignUpEmail = async (event) => {
     try {
-
+        const retval = event.retval
         const topic = event.topic
-        console.log("🚀 3 - topic:", topic)
         const res = topic.split("/")
-        console.log("🚀 4 - res:", res)
         const serialNumber = res[2]
-        console.log("🚀 5 - serialNumber:", serialNumber)
-
-
-        // event: {
-        //     language_iso3166: 'US',
-        //         language_iso639: 'en',
-        //         account_email: '928064091@qq.com',
-        //         topic: 'Q/scican/1234AB5678/srv/request/account-password_reset_email'
-        // }
+        let publishParams = {}
 
         const account_email = event.account_email
-        const language = event.language_iso639
+        const language = event.language_iso639 ? event.language_iso639 : ''
 
-        //const serialNumber = "12345AB5678"
-
-        console.log("account_email === ", account_email)
-
-        const userCheck = await isUserExist(account_email)
-
-        console.log("userCheck === ", userCheck)
-
-        var info
-        if (userCheck == true){
-            await SendEmail(account_email, userCheck, serialNumber, language)
-            info = {
-                "result": "account_already_exist"
-            }
-        } else {
-            await SendEmail(account_email, userCheck, serialNumber, language)
-            info = {
-                "result": "email_sent"
-            }
+        const userDetails = await getUserDetails(account_email)
+        
+        if(typeof userDetails !== 'object' || userDetails == null) {
+            userDetails = {}
         }
 
+        if(Object.keys(userDetails).length == 0) {
+            //get product name
+            const productName = await getProductName(serialNumber)
 
-        var params = {
-            topic: `${MQTT_TOPIC_ENV}/scican/srv/${serialNumber}/response/account-signup-email`,
-            payload: JSON.stringify(info),
-            qos: '0'
-        };
-        await publishMqtt(params)
+            const emailPayload = getEmailPayload({
+                email: account_email, 
+                firstname: userDetails.firstname,
+                lastname: userDetails.lastname,
+                company: userDetails.company,
+                phone: userDetails.phone, 
+                product_name: productName,
+                serial_num: serialNumber, 
+                language: language 
+            })
 
-
-
-
-        // {
-        //     "result": "email_sent"
-        // }
-        // {
-        //     "result": "existing_account_not_found"
-        // }
-
-
-        const input = {
-            "account_email": "928064091@qq.com",
-            "language_iso639": "en",
-            "language_iso3166": "US"
-        }
-
-        const input1111 =
-            {
-                "account_email": "zzheng@scican.com",
-                "language_iso639": "en",
-                "language_iso3166": "US"
+            publishParams = {
+                topic: `${MQTT_TOPIC_ENV}/scican/cmd/send_email`,
+                payload: JSON.stringify(emailPayload),
+                qos: '0' 
             }
 
-        //Q/scican/1234AB5678/srv/request/account-signup-email
-        //Q/scican/#
-        //Q/scican/srv/1234AB5678/response/account-signup-email
+            console.info('+++ Sending email  to topic ... ', publishParams)        
+        } else if( Object.keys(userDetails).length == 0 ) {
+            publishParams = {
+                topic: `${MQTT_TOPIC_ENV}/scican/srv/${serialNumber}/response/account-signup-email`,
+                payload: JSON.stringify({"result": "account_already_exist"}),
+                qos: '0' 
+            }
 
+            console.info('+++ Account Exist publishing to unit ... ', publishParams)
+        }
 
-
+        if(Object.keys(publishParams).length > 0) {
+            await publishMqtt(publishParams)
+                .then( () => console.log('Publish Done: Params - ', publishParams))
+                .catch(e => console.log(e))
+        }
     } catch (error) {
         console.log("🚀 0 - error:", error)
         console.log("🚀 0.1 - error:", error.stack)
