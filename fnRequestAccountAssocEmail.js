@@ -175,6 +175,8 @@ module.exports.fnRequestAccountAssocEmail = async (event) => {
             }
 
             console.info('+++ Account does not exist ... ', publishParams)
+        } else {
+            console.log("🚀 Something went wrong. Nothing Published: userDetails = ", userDetails)
         }
 
         if(Object.keys(publishParams).length > 0) {

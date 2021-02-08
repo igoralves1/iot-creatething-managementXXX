@@ -194,6 +194,11 @@ const getEmailPayload = (params) => {
     return payload
 }
 
+/**
+ * if entry exists in customer unit table then process disassociation and and send email 
+ * if user does not exist in table , publish was associated
+ * else if check entry in table query failed, do notthing
+*/
 module.exports.fnAccountDisassociate = async (event) => {
     try {
         const retval = event.retval
@@ -249,6 +254,8 @@ module.exports.fnAccountDisassociate = async (event) => {
             }
 
             console.info('+++ Was already associated. Publishing to unit ... ', publishParams)
+        } else {
+            console.log("🚀 Something went wrong. Nothing Published: useremail = ", useremail)
         }
 
         if(Object.keys(publishParams).length > 0) {

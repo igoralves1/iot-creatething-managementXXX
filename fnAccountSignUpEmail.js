@@ -96,7 +96,7 @@ const getEmailPayload = (params) => {
     const source = "no-reply.notification@scican.com"
     const templateName = "template_name"
     let subject = "Account SignUp"
-    let body = `Dear ${email}  <br /><br /> `
+    let body = `Dear Sir/Madam  <br /><br /> `
             + `Thank you for choosing ${product_name}. <br /><br />`
             + `Please, click <a href='https://${linkUrl}/register.php?user=CUSTOMER&action=onlineaccess&email=${email}&sn=${serial_num}'>here</a> to complete your registration and online activation for ${serial_num}.<br /><br /> `
             + `You can access your cycle data, unit information and manuals by logging into your account on <a href='https://updates.scican.com'>updates.scican.com</a>. <br /><br />`
@@ -170,6 +170,8 @@ module.exports.fnAccountSignUpEmail = async (event) => {
             }
 
             console.info('+++ Account Exist publishing to unit ... ', publishParams)
+        } else {
+            console.log("🚀 Something went wrong. Nothing Published: userDetails = ", userDetails)
         }
 
         if(Object.keys(publishParams).length > 0) {

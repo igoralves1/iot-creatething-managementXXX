@@ -20,7 +20,7 @@ const pool = mysql.createPool({
     user     : process.env.rdsMySqlUsername,
     password : process.env.rdsMySqlPassword,
     database : process.env.rdsMySqlDb,
-    connectionLimit: 100
+    connectionLimit: 10
 })
 
 
@@ -339,8 +339,8 @@ const getEmailPayload = (params) => {
         "mqtt_response_payload": {
             "result": "associated"
         },
-        "template": templateName,
-        "variables": ""
+        //"template": templateName,
+        //"variables": ""
     }
 
     return payload
@@ -419,6 +419,8 @@ console.log('USER ID - ', user_id)
             }
 
             console.info('+++ Account already exists ... ', publishParams)
+        } else {
+            console.log("🚀 Something went wrong. Nothing Published: userExist = ", userExist)
         }
 
         if(Object.keys(publishParams).length > 0) {

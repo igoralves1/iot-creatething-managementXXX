@@ -266,8 +266,10 @@ module.exports.fnAccountAssociateDirect = async (event) => {
         const language = event.language_iso639 ? event.language_iso639 : 'en'
         const account_password = event.account_password
 
+        console.log('++++ Received Payload ', event);
+
         const userIdres = await UserIdentification(account_email, account_password)
-console.log('+++user idres ,', userIdres)
+
         if (userIdres && userIdres != null){
             //get user's details
             const userDetails = await getUserDetails(account_email)
@@ -306,6 +308,8 @@ console.log('+++user idres ,', userIdres)
             }
             
             console.info('+++ Invalid Credentials ... ', publishParams)
+        } else {
+            console.log("🚀 Something went wrong. Nothing Published: userIdres = ", Idres)
         }
 
         if(Object.keys(publishParams).length > 0) {
