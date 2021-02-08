@@ -179,7 +179,7 @@ module.exports.fnSendEmail = async function (event) {
         }
         let response =  null;
         // Sending with template
-        if (data.template){
+        if (data.template && data.template !== ''){
             // Create sendEmail params
             let params = {
                 Destination: { /* required */
