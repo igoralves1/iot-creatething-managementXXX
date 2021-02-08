@@ -5,11 +5,8 @@ const Joi = require('@hapi/joi')
 var iotdata = new AWS.IotData({endpoint: process.env.MQTT_ENDPOINT});
 const MQTT_TOPIC_ENV = process.env.mqttTopicEnv
 
-
-
 const mysql = require('mysql2/promise')
 const axios = require('axios')
-
 
 const pool = mysql.createPool({
     host     : process.env.rdsMySqlHost,
@@ -94,14 +91,14 @@ async function getProductName(serial_number) {
 }
 
 const getEmailPayload = (params) => {
-    const { email, firstname, lastname, company, phone, product_name, serial_num, language } = params
+    const { email, product_name, serial_num, language } = params
     const linkUrl = "updates.scican.com"
     const source = "no-reply.notification@scican.com"
     const templateName = "template_name"
     let subject = "Account SignUp"
-    let body = `Dear ${firstname}, ${lastname},  <br /><br /> `
+    let body = `Dear ${email}  <br /><br /> `
             + `Thank you for choosing ${product_name}. <br /><br />`
-            + `Please, click <a href='https://${linkUrl}/register.php?user=CUSTOMER&action=onlineaccess&email=${email}&sn=${serial_num}&firstname=${firstname}&lastname=${lastname}&company=${company}&phone=${phone}'>here</a> to complete your registration and online activation for ${serial_num}.<br /><br /> `
+            + `Please, click <a href='https://${linkUrl}/register.php?user=CUSTOMER&action=onlineaccess&email=${email}&sn=${serial_num}'>here</a> to complete your registration and online activation for ${serial_num}.<br /><br /> `
             + `You can access your cycle data, unit information and manuals by logging into your account on <a href='https://updates.scican.com'>updates.scican.com</a>. <br /><br />`
             + `Please feel free to contact SciCan or your local dealer for more information about ${product_name} and its G4<sup>+</sup> features. <br /><br />`
             + `Regards, <br /><br />`
@@ -117,8 +114,8 @@ const getEmailPayload = (params) => {
         "mqtt_response_payload": {
             "result": "email_sent"
         },
-        "template": templateName,
-        "variables": ""
+        //"template": templateName,
+        // "variables": ""
     }
 
     return payload
@@ -139,23 +136,20 @@ module.exports.fnAccountSignUpEmail = async (event) => {
 
         const account_email = event.account_email
         const language = event.language_iso639 ? event.language_iso639 : ''
+        console.log('++++ Received Payload ', event);        
 
         const userDetails = await getUserDetails(account_email)
-        
+console.log('++++ User Details ', userDetails);        
         if(typeof userDetails !== 'object' || userDetails == null) {
             userDetails = {}
         }
-
+//There is not user details it the request so cannot set first/last name etc
         if(Object.keys(userDetails).length == 0) {
             //get product name
             const productName = await getProductName(serialNumber)
 
             const emailPayload = getEmailPayload({
                 email: account_email, 
-                firstname: userDetails.firstname,
-                lastname: userDetails.lastname,
-                company: userDetails.company,
-                phone: userDetails.phone, 
                 product_name: productName,
                 serial_num: serialNumber, 
                 language: language 
@@ -168,7 +162,7 @@ module.exports.fnAccountSignUpEmail = async (event) => {
             }
 
             console.info('+++ Sending email  to topic ... ', publishParams)        
-        } else if( Object.keys(userDetails).length == 0 ) {
+        } else if( Object.keys(userDetails).length > 0 ) {
             publishParams = {
                 topic: `${MQTT_TOPIC_ENV}/scican/srv/${serialNumber}/response/account-signup-email`,
                 payload: JSON.stringify({"result": "account_already_exist"}),
