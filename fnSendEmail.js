@@ -28,12 +28,12 @@ Before use this payload, please check if the template has been created, using th
 
 
  Test template email:
- {
- "mail": "nicolicioiu.liviu@enode.ro",
- "template": "test_welcome_en",
- "variables": {"name":"John Doe"},
- "mqtt_response_topic": "/dev/null"
- }
+{
+"mail": "nicolicioiu.liviu@enode.ro",
+"template": "test_welcome_en",
+"variables": {"name":"John Doe"},
+"mqtt_response_topic": "/dev/null"
+}
 
  Topic:  Q/scican/cmd/send_email
  * Topic $ENV/scican/cmd/send_email, Q/scican/cmd/send_email
@@ -60,6 +60,9 @@ const publishMqtt = async (params) => {
     const iotdata = new AWS.IotData({endpoint: endpoint});
     new Promise((resolve) =>
         iotdata.publish(params, (err, res) => {
+            if(err){
+                console.error()
+            }
             resolve(res);
         })
     )
@@ -68,22 +71,6 @@ const publishMqtt = async (params) => {
  * Default payload
  * @type {{language_iso639: string, mqtt_response_topic: string, mail: string, subject: string, header: string,  mqtt_qos: string, source: string, body: string, mqtt_response_payload: {result: string, messageId: string}}}
  */
-const data = {
-    mail: '',
-    subject: '',
-    body: '',
-    mqtt_response_topic: '',
-    mqtt_response_payload: {
-        result: "email_not_sent"
-    },
-    mqtt_qos: '0',
-    template: '',
-    variables: {},
-    source: process.env.AWS_SES_EMAIL_SENDER ? process.env.AWS_SES_EMAIL_SENDER.trim() : 'no-reply.notification@scican.com',
-    result: {
-        message_id: ''
-    }
-};
 /**
  * Preprocess the payload and fill it with default values if there is any need.
  *
@@ -91,6 +78,22 @@ const data = {
  * @returns {{}}
  */
 const preProcessPayload = (receivedData) => {
+    let data = {
+        mail: '',
+        subject: '',
+        body: '',
+        mqtt_response_topic: '',
+        mqtt_response_payload: {
+            result: "email_not_sent"
+        },
+        mqtt_qos: '0',
+        template: '',
+        variables: {},
+        source: process.env.AWS_SES_EMAIL_SENDER ? process.env.AWS_SES_EMAIL_SENDER.trim() : 'no-reply.notification@scican.com',
+        result: {
+            message_id: ''
+        }
+    };
     if (receivedData.source && !emailIsValid(receivedData.source)) {
         throw new Error("Invalid email source address on received data: " + JSON.stringify(receivedData));
     }
@@ -121,6 +124,7 @@ const preProcessPayload = (receivedData) => {
     if (!data.body && !data.template) {
         console.warn('Invalid payload fields configuration: body and template are not defined.');
     }
+    return data;
 }
 
 /**
@@ -143,7 +147,7 @@ const postProcessHandler = async (processedData) => {
             qos: processedData.mqtt_qos
         };
         try {
-            console.log('Start dlr back email notification on mqtt:' + JSON.stringify(data));
+            console.log('Start dlr back email notification on mqtt:' + JSON.stringify(processedData));
             return publishMqtt(params).then(
                 function () {
                     console.log("Sent dlr back to for params: " + JSON.stringify(params));
@@ -153,7 +157,7 @@ const postProcessHandler = async (processedData) => {
                     console.error(err);
                 });
         } catch (err) {
-            console.error('Error deliver back the email notification on mqtt:' + JSON.stringify(data));
+            console.error('Error deliver back the email notification on mqtt:' + JSON.stringify(processedData));
             console.error(err);
         }
     }
@@ -166,8 +170,8 @@ const postProcessHandler = async (processedData) => {
 module.exports.fnSendEmail = async function (event) {
     //Preprocess the payload
     console.log('Sending email start process handler from payload:' + JSON.stringify(event));
+    let data = preProcessPayload(event);
     try {
-        preProcessPayload(event);
         let params = {
             Destination: { /* required */
                 ToAddresses: [
