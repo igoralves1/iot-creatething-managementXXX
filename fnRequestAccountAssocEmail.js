@@ -141,7 +141,7 @@ module.exports.fnRequestAccountAssocEmail = async (event) => {
         const account_email = event.account_email
         const language = event.language_iso639 ? event.language_iso639 : ''
 
-        const userDetails = await getUserDetails(account_email)
+        let userDetails = await getUserDetails(account_email)
 
         if(typeof userDetails !== 'object' || userDetails == null) {
             userDetails = {}
@@ -176,11 +176,10 @@ module.exports.fnRequestAccountAssocEmail = async (event) => {
 
             console.info('+++ Account does not exist ... ', publishParams)
         }
-        console.log('++++ Object.keys(publishParams).length', Object.keys(publishParams).length)
-        console.log('++++ Params before publis ', publishParams)
 
         if(Object.keys(publishParams).length > 0) {
-        console.log('Publishing ......')
+            console.log('Publishing ......')
+
             await publishMqtt(publishParams)
                 .then( () => console.log('Publish Done: Params - ', publishParams))
                 .catch(e => console.log(e))

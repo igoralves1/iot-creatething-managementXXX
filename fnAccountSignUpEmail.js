@@ -138,12 +138,12 @@ module.exports.fnAccountSignUpEmail = async (event) => {
         const language = event.language_iso639 ? event.language_iso639 : ''
         console.log('++++ Received Payload ', event);        
 
-        const userDetails = await getUserDetails(account_email)
-console.log('++++ User Details ', userDetails);        
+        let userDetails = await getUserDetails(account_email)
+        
         if(typeof userDetails !== 'object' || userDetails == null) {
             userDetails = {}
         }
-//There is not user details it the request so cannot set first/last name etc
+
         if(Object.keys(userDetails).length == 0) {
             //get product name
             const productName = await getProductName(serialNumber)
