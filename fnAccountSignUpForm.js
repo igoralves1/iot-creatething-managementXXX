@@ -259,14 +259,14 @@ async function AssociateUnit(params) {
             //Insert new data into customers_units table
             const sql6 = `INSERT INTO customers_units(idusers,user_email,prev_associations_active,association_active,serial_num,ca_active_ref_id,latest_oas_update_date,idunits_warranties) VALUES 
               ('${user_id}','${useremail}',1,1,'${serial_num}','${ref_id}',NOW(),0)`
-console.log("Insert sql6 ==== ", sql6)
+
             const sqlResult6 = await pool.query(sql6)
-console.log(" sql6res - ", sqlResult6[0])
+
             associationComplete = sqlResult6[0] ? sqlResult6[0].affectedRows : false
 
             
         }
-console.log('=====assoc complete ', associationComplete)
+
         //if insert/update of customer_units table was successfull, insert into customer_units_assoc_dates.
         if(associationComplete) {
             //Insert into customers_units_assoc_dates
@@ -286,9 +286,8 @@ console.log('=====assoc complete ', associationComplete)
                              NOW(),
                              0,
                              NOW())`
-    console.log("Insert sql4 ==== ", sql4)
+    
             const sqlResult4 = await pool.query(sql4)
-    console.log(" sql4res - ", sqlResult4[0])
         }
 
         return associationComplete
