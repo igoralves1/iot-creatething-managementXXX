@@ -53,13 +53,17 @@ const publishMqtt = (params) =>
 
 
 
-async function CheckEmail(serial_num){
+async function CheckEmail(serial_num, email){
+    if(!serial_num || serial_num == null || !email || email == null) {
+        console.log( '+++ Missing data - ', {'serial_number': serial_num, 'email': email} )
+        return []
+    }
+
     try {
 
         // console.log("pool ==== ", pool)
 
-        const sql = `SELECT * FROM customers_units WHERE association_active = 1 AND serial_num = '${serial_num}'`
-        // console.log("sql ==== ", sql)
+        const sql = `SELECT * FROM customers_units WHERE association_active = 1 AND serial_num = '${serial_num}' and user_email='${email}'`
 
         const sqlResult = await pool.query(sql)
         const res = sqlResult[0]
@@ -67,13 +71,11 @@ async function CheckEmail(serial_num){
         // console.log("sqlRes ==== ", res)
         const data = res && res.length > 0 ? res[0] : []
 
-          console.log("data ===== ", data)
-
         if (!data || typeof data == 'undefined' || data.length == 0) {
             return []
         } else {
             const outoput = [data.user_email, data.ca_active_ref_id]
-            console.log("output ====== ", outoput)
+            //console.log("output ====== ", outoput)
             return [data.user_email, data.ca_active_ref_id]
         }
 
@@ -167,11 +169,12 @@ async function getProductName(serial_number) {
 
 const getEmailPayload = (params) => {
     const { email, firstname, lastname, product_name, serial_num, language } = params
+    const lname = lastname ? `, ${lastname}` : ''
     const linkUrl = "updates.scican.com"
     const source = "no-reply.notification@scican.com"
     const templateName = "template_name"
     let subject = "Account Disassociation"
-    let body = `Dear ${firstname}, ${lastname},  <br /><br /> `
+    let body = `Dear ${firstname}${lname},  <br /><br /> `
             + `You have selected to disassociate your ${product_name} with serial number ${serial_num} from your account ${email}. You can still access the cycle data prior to disassociation by logging in to your account on <a href='https://updates.scican.com'>updates.scican.com</a>.`
             +` Your ${product_name} will not be able to upload any cycle data after the disassociation date and you will not be able to create any reports. <br /><br />`
             + `If you want to associate your ${product_name} with serial number ${serial_num} again, please follow the Online Access steps from the unit. <br /><br />`
@@ -212,7 +215,7 @@ module.exports.fnAccountDisassociate = async (event) => {
 
         console.log('+++ Received payload', event)
 
-        let checkRes = await CheckEmail(serialNumber)
+        let checkRes = await CheckEmail(serialNumber, account_email)
 
         if (checkRes == null) {
             checkRes = []
