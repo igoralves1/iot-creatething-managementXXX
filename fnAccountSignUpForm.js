@@ -37,6 +37,10 @@ const getRandomValue = () => {
 }
 
 async function isUserExist(user_email) {
+    if(!user_email || user_email == null) {
+        return false
+    }
+
     try {
         if(!user_email ) {
             return false
@@ -66,14 +70,17 @@ async function isUserExist(user_email) {
     }
 }
 
-
-
-
-async function CreatePasswordHash(user_email, password){
+async function getPasswordHashData(user_email, password){
+    if(!user_email || user_email == null || !password || password == null) {
+        console.log(' password hash missing data - user email', user_email)
+        console.log(' password hash missing data - password', password)
+        return false
+    }
 
     try {
         var url = "http://3.86.253.251/user-password-create"
         var data
+        let hash_data = {}
 
         data = {
             account_email: user_email,
@@ -82,12 +89,17 @@ async function CreatePasswordHash(user_email, password){
 
         var axiosconnect = await axios.create()
         let res = await axiosconnect.post(url, data)
-        // console.log("Create Password Hash ==== ", res)
-        return res.data && res.data.success ? res.data.password_hash : ''
+    
+        if(res.data) {
+            hash_data.password_hash = res.data.password_hash || ''
+            hash_data.hash_time = res.data.hash_time || ''
+        }
+
+        return hash_data
 
     } catch (error) {
-        console.log("🚀 0.CreatePasswordHash - error:", error)
-        console.log("🚀 0.1.CreatePasswordHash - error:", error.stack)
+        console.log("🚀 0.getPasswordHashData - error:", error)
+        console.log("🚀 0.1.getPasswordHashData - error:", error.stack)
     }
 }
 
@@ -111,18 +123,41 @@ async function InsertUser(data){
         const sql = `INSERT INTO users(password, username, company, firstname, telephone, office_address_one, city, state_province_region, country, zip_postal_code, lang,groups, email, activationkey, activationstatus, activationdate) VALUES 
                 ('${password}','${account_email}','${account_company_name}','${account_contact_name}','${account_phone_number}','${account_address}','${account_city}','${account_subregion}','${account_country}','${account_zip_code}','${language}','customer','${account_email}','${activation_key}','activated',CURRENT_TIMESTAMP())`
 
-// console.log("Insert User sql ==== ", sql)
-
         const sqlResult6 = await pool.query(sql, );
-// console.log('==sqlResult6', sqlResult6)    
+    
         const result = sqlResult6 ? sqlResult6[0] : {}
 
-// console.log('==sqlResult6[0]', result)
-// console.log('==sqlResult6.insertId', result.insertId)
         return result ? result.insertId : '' // result.affectedRows
     } catch (error) {
         console.log("🚀 0.InsertUser - error:", error)
         console.log("🚀 0.1.InsertUser - error:", error.stack)
+    }
+}
+
+async function updateLastLogin(params) {
+    let isUpdated = false
+    const {user_id, hash_time, email} = params
+
+    if(!user_id || user_id == null || !hash_time || hash_time == null || !email || email == null) {
+        return false
+    }
+
+    try {
+        const sql = `INSERT INTO lastlogin (idusers,uip,attempts,time,successfullogin,date,loggedinto,temail)
+        VALUES ('${user_id}','','0','${hash_time}','yes',NOW(),'Registered', '${email}')`
+
+        if ( pool ) {
+            const sqlResult = await pool.query(sql)
+            const res = sqlResult[0]
+
+            isUpdated = sqlResult[0] ? Boolean(sqlResult[0].affectedRows) : false
+        }
+        
+        return isUpdated
+
+    } catch (error) {
+        console.log("🚀 0.updateActivationKey - error: ", error)
+        console.log("🚀 0.1updateActivationKey - error stack: ", error.stack)
     }
 }
 
@@ -133,8 +168,12 @@ async function InsertUser(data){
  */
 async function AssociateUnit(params) {
     const { user_id, useremail, serial_num} = params
+
+    if(!user_id || user_id == null || !serial_num || serial_num == null || !useremail || useremail == null) {
+        return false
+    }
+    
     let userPrevAssociated = false
-    let userAssociated = false
     let diff_assoc_email = ''
     let isDisassociated = true
     let ass_active = 0
@@ -145,13 +184,11 @@ async function AssociateUnit(params) {
 
     try {
         const sql = `SELECT * FROM customers_units WHERE serial_num = '${serial_num}'`
-        console.log("sql ==== ", sql)
+        
 
         const sqlResult = await pool.query(sql)
         const res = sqlResult[0]
 
-        // console.log("sqlRes ==== ", sqlResult)
-        console.log("res ==== ", res)
         const data = res ? res : []
 
         if ( data ) {
@@ -162,7 +199,6 @@ async function AssociateUnit(params) {
                     ca_active_ref_id = data[k].ca_active_ref_id
 
                     if(ass_active) {
-                        userAssociated = true
                         isDisassociated = false
                     }
                 }
@@ -174,10 +210,6 @@ async function AssociateUnit(params) {
                 }
             }
         }
-
-        console.log('+++diff ass email', diff_assoc_email)
-        console.log('+++user prev ass', userPrevAssociated)
-        console.log('+++user asso ', userAssociated)
 
         // disassociate previously associated use 
         if(diff_assoc_email) {
@@ -194,22 +226,19 @@ async function AssociateUnit(params) {
             latest_oas_update_date=NOW()
             WHERE user_email= '${diff_assoc_email}' AND serial_num='${serial_num}'`
 
-
-console.log("Update sql1 ==== ", sql1)
             const sqlResult1 = await pool.query(sql1)
-console.log(" ===sql2res - ", sqlResult1[0])
+
             //set prev_assoc_email to empty
             isDisassociated = sqlResult1[0] ? sqlResult1[0].changedRows : false
-console.log(" ===isDisassociated - ", isDisassociated)
+
             //update ustomers_units_assoc_dates table, set linked_to_user_end_date to now()
             const sql2 = `UPDATE scican.customers_units_assoc_dates SET
           linked_to_user_end_date=NOW(),
             data_updated=NOW()
           WHERE ca_active_ref_id='${diff_user_ref_id}' AND user_email='${diff_assoc_email}' AND serial_num='${serial_num}'`
 
-                console.log("Update sql2 ==== ", sql2)
                 const sqlResult2 = await pool.query(sql2)
-console.log(" ===sql2res - ", sqlResult2[0])
+
         }
 
         //if current user has previous associated but is not associated
@@ -220,9 +249,8 @@ console.log(" ===sql2res - ", sqlResult2[0])
                 prev_associations_active=prev_associations_active+1,association_active=1,
                 ca_active_ref_id='${ca_active_ref_id}',latest_oas_update_date=NOW()
                 WHERE serial_num='${serial_num}' AND user_email='${useremail}'`
-console.log("Insert sql3 ==== ", sql3)
+
             const sqlResult3 = await pool.query(sql3)
-console.log(" sql3res - ", sqlResult3[0])
             
             ref_id = ca_active_ref_id
 
@@ -322,7 +350,7 @@ const getEmailPayload = (params) => {
     const linkUrl = "updates.scican.com"
     const source = "no-reply.notification@scican.com"
     const templateName = "template_name"
-    let subject = "Account Sign Up"
+    let subject = "Account Sign Up and Online Activation"
     let body = `Dear ${firstname},  <br /><br /> `
             + `Welcome to  <a href='https://updates.scican.com'>updates.scican.com</a>. You have successfully created an account on our website using “email address”. Feel free to sign-in to your account and edit your profile. <br /><br />`
             + `Thank you for choosing ${product_name}. <br /><br />`
@@ -353,7 +381,7 @@ module.exports.fnAccountSignUpForm = async (event) => {
         const res = topic.split("/")
         const serialNumber = res[2]
         let publishParams = {}
-        const account_password = event.account_password | ''
+        const account_password = event.account_password || ''
         let data = {
             account_email: event.account_email || '',
             account_company_name:  event.account_company_name || '',
@@ -375,13 +403,29 @@ console.log("account password ===== ", account_password)
         const userExist = await isUserExist(data.account_email)
     console.log('==user Exists ', userExist)
 
-        if (data.account_email && !userExist && typeof userExist != 'undefined'){
-            const passwordhash = await CreatePasswordHash(data.account_email, account_password)
+        if (data.account_email && !userExist && userExist != null){
+            let user_id = ''
+            let isLastLoginUpdated = false
 
-            data.password = passwordhash
-// console.log('==passwordhash ', passwordhash)
-            const user_id = await InsertUser(data)
+            const hash_data = await getPasswordHashData(data.account_email, account_password)
+console.log('==passwordhash data- ', hash_data)            
+            if (hash_data && hash_data != null) {
+                data.password = hash_data.password_hash || ''
+                const hash_time = hash_data.hash_time || ''
+ 
+         
+                user_id = await InsertUser(data)
+
+                const login_params = {
+                    user_id: user_id,
+                    hash_time: hash_time,
+                    email: data.account_email
+                }
+                isLastLoginUpdated = await updateLastLogin(login_params)
+            }
+            
 console.log('USER ID - ', user_id)
+console.log('Last Login updated? - ', isLastLoginUpdated)
 
             if(user_id) {
                 //activate online access
@@ -390,7 +434,6 @@ console.log('USER ID - ', user_id)
                 if(associated) {
                 //get product name
                 const productName = await getProductName(serialNumber)
-    // console.log('==Product Name ', productName)
         
                     //get payload
                     const emailPayload = getEmailPayload({
@@ -411,7 +454,7 @@ console.log('USER ID - ', user_id)
                     console.info('+++ Sending Email ... ', publishParams)
                 }
             }
-        } else if(userExist && typeof userExist != 'undefined') {
+        } else if(userExist && userExist !== null) {
             publishParams = {
                 topic: `${MQTT_TOPIC_ENV}/scican/srv/${serialNumber}/response/account-signup-form`,
                 payload: JSON.stringify({"result": "account_already_exists"}),
