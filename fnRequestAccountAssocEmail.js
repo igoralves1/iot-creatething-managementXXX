@@ -95,11 +95,12 @@ async function getProductName(serial_number) {
 
 const getEmailPayload = (params) => {
     const { email, firstname, lastname, product_name, serial_num, language } = params
+    const lname = lastname ? `, ${lastname}` : ''
     const linkUrl = "updates.scican.com"
     const source = "no-reply.notification@scican.com"
     const templateName = "template_name"
     let subject = "Account Association"
-    let body = `Dear ${firstname}, ${lastname},  <br /><br /> `
+    let body = `Dear ${firstname}${lname},  <br /><br /> `
             + `Thank you for choosing ${product_name}. <br /><br />`
             + `Please, click <a href='https://${linkUrl}/?action=onlineaccess&email=${email}&sn=${serial_num}'>here</a> to complete your registration and online activation for ${serial_num}.<br /><br /> `
             + `You can access your cycle data, unit information and manuals by logging into your account on <a href='https://updates.scican.com'>updates.scican.com</a>. <br /><br />`

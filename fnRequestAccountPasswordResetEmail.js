@@ -153,11 +153,12 @@ async function getProductName(serial_number) {
 
 const getEmailPayload = (params) => {
     const { email, firstname, lastname, product_name, serial_num, language, password_hash, activation_key } = params
+    const lname = lastname ? `, ${lastname}` : ''
     const linkUrl = "updates.scican.com"
     const source = "no-reply.notification@scican.com"
     const templateName = "template_name"
     let subject = "Reset Password"
-    let body = `Dear ${firstname}, ${lastname},  <br /><br /> `
+    let body = `Dear ${firstname}${lname},  <br /><br /> `
             + `You recently requested to reset your password for your Updates.SciCan page account. Click the button bellow to reset it.  <br /><br />`
             + `<a href='https://updates.scican.com/passwordChange.php?user=${email}&keyid=${password_hash}&key=${activation_key}&lang=ENG'>Reset your password</a> <br /><br />`
             + `If you did not request a password reset, please ignore this email. This password reset is only valid for the next 60 minutes.  <br /><br />`

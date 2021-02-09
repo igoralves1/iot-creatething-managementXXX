@@ -229,11 +229,12 @@ async function getProductName(serial_number) {
 
 const getEmailPayload = (params) => {
     const { email, firstname, lastname, product_name, serial_num, language } = params
+    const lname = lastname ? `, ${lastname}` : ''
     const linkUrl = "updates.scican.com"
     const source = "no-reply.notification@scican.com"
     const templateName = "template_name"
     let subject = "Online Access Activation"
-    let body = `Dear ${firstname}, ${lastname},  <br /><br /> `
+    let body = `Dear ${firstname}${lname},  <br /><br /> `
             + `${serial_num} has been successfully registered and activated on your account on  <a href='https://updates.scican.com'>updates.scican.com</a>. You can now access your cycle data, unit information by logging into your account. <br /><br />`
             + `Please feel free to contact SciCan or your local dealer for more information about ${product_name} and its G4<sup>+</sup> features. <br /><br />`
             + `Regards, <br /><br />`
