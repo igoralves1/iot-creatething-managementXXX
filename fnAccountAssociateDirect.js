@@ -11,7 +11,7 @@ const MQTT_TOPIC_ENV = process.env.mqttTopicEnv
 
 
 const mysql = require('mysql2/promise')
-const axios = require('axios')
+
 
 
 const pool = mysql.createPool({
@@ -35,7 +35,8 @@ const getRandomValue = () => {
     return hash
 }
 
-async function UserIdentification(account_email, account_password) {
+async function UserIdentification(account_email, account_password, axios) {
+
     var url = "http://3.86.253.251/user-authentication"
     var data
 
@@ -257,6 +258,7 @@ const getEmailPayload = (params) => {
 
 module.exports.fnAccountAssociateDirect = async (event) => {
     try {
+        const axios = require('axios');
         const retval = event.retval
         const topic = event.topic
         const res = topic.split("/")
@@ -269,7 +271,7 @@ module.exports.fnAccountAssociateDirect = async (event) => {
 
         console.log('++++ Received Payload ', event);
 
-        const userIdres = await UserIdentification(account_email, account_password)
+        const userIdres = await UserIdentification(account_email, account_password, axios);
 
         if (userIdres && userIdres != null){
             //get user's details
