@@ -34,7 +34,7 @@ const Joi = require('@hapi/joi')
 const crypto = require('crypto')
 var iotdata = new AWS.IotData({endpoint: process.env.MQTT_ENDPOINT});
 const MQTT_TOPIC_ENV = process.env.mqttTopicEnv
-
+const { getPasswordHash } = require('./utils/getPasswordHash')
 
 
 const mysql = require('mysql2/promise')
@@ -112,9 +112,10 @@ async function getPasswordHashData(user_email, password, axios){
     }
 
     try {
-        var url = "http://3.86.253.251/user-password-create"
+        var url = "https://3.94.80.183/user-password-create" //"http://3.86.253.251/user-password-create"
         var data
         let hash_data = {}
+    console.log(' identification url - ', url)
 
         data = {
             account_email: user_email,
@@ -452,22 +453,25 @@ module.exports.fnAccountSignUpForm = async (event) => {
         if (data.account_email && !userExist && userExist != null){
             let user_id = ''
             let isLastLoginUpdated = false
+            const hash_time = Date.now()
 
-            const hash_data = await getPasswordHashData(data.account_email, account_password, axios)
+            // const hash_data = await getPasswordHashData(data.account_email, account_password, axios)
+            const password_hash = getPasswordHash(data.account_email, account_password, hash_time)
             
-            if (hash_data && hash_data != null) {
-                data.password = hash_data.password_hash || ''
-                const hash_time = hash_data.hash_time || ''
+            // if (hash_data && hash_data != null) {
+            // if (password_hash) {
+            data.password = password_hash || ''
+            // const hash_time = hash_data.hash_time || ''
 
-                user_id = await InsertUser(data)
+            user_id = await InsertUser(data)
 
-                const login_params = {
-                    user_id: user_id,
-                    hash_time: hash_time,
-                    email: data.account_email
-                }
-                isLastLoginUpdated = await updateLastLogin(login_params)
+            const login_params = {
+                user_id: user_id,
+                hash_time: hash_time,
+                email: data.account_email
             }
+            isLastLoginUpdated = await updateLastLogin(login_params)
+            // }
 
             if(user_id) {
                 //activate online access

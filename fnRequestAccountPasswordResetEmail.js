@@ -23,6 +23,7 @@ const Joi = require('@hapi/joi')
 const crypto = require('crypto')
 var iotdata = new AWS.IotData({endpoint: process.env.MQTT_ENDPOINT});
 const MQTT_TOPIC_ENV = process.env.mqttTopicEnv
+const { getPasswordHash } = require('./utils/getPasswordHash')
 
 const mysql = require('mysql2/promise')
 // const axios = require('axios')
@@ -89,10 +90,11 @@ console.log('--- sql ', sql)
 async function getPasswordHashData(user_email, password, axios){
 
     try {
-        var url = "http://3.86.253.251/user-password-create"
+        var url = "http://ws.scican.com/user-password-create" //"http://3.86.253.251/user-password-create"
         var data
         let hash_data = {}
-
+    console.log(' identification url - ', url)
+    
         data = {
             account_email: user_email,
             account_password: password
@@ -244,13 +246,10 @@ module.exports.fnRequestAccountPasswordResetEmail = async (event) => {
         const account_email = event.account_email
         const language = event.language_iso639 ? event.language_iso639 : ''
 
-        console.log('++++ Received Payload ', event);
+        console.log('++++ Received Payload ', event)
 
         let userDetails = await getUserDetails(account_email)
 console.log('+++ user details - ', userDetails)
-        /*if(typeof userDetails !== 'object' || userDetails == null) {
-            userDetails = {}
-        }*/
         
         if(typeof userDetails == 'object' && Object.keys(userDetails).length > 0) {
             //check if online access is active for this unit
@@ -265,11 +264,12 @@ console.log('+++ user details - ', userDetails)
             const new_password = getRandomValue()
 
             //get password hash
-            const hash_data = await getPasswordHashData(account_email, new_password, axios)
-            const password_hash = hash_data.password_hash || ''
+            // const hash_data = await getPasswordHashData(account_email, new_password, axios)
+            // const password_hash = hash_data.password_hash || ''
+            const password_hash = getPasswordHash(account_email, new_password, Date.now())
+            console.log(' Password Hash = ', password_hash)
 
-            if( password_hash != null && Object.keys(password_hash).length > 0) {
-
+            if(password_hash) {
                 const activationKeyUpdated = await updateActivationKey(account_email, activation_key)
             
                 if(activationKeyUpdated) {
