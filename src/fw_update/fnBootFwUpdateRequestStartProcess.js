@@ -31,7 +31,7 @@ async function createRef (version,FIRMWARE_BUCKET_NAME) {
     const refString = ref.toString('utf8')
     // refConcatenated = refString
     let str2arr = refString.split('\n')
-    refConcatenated = str2arr.join('\\n')
+    refConcatenated = str2arr.join('\n')
     // TODO handle the new lines - is not working when publishing in the MQTT broker
     // let arrRef = refString.split('\n')
     // arrRef.shift()
@@ -63,14 +63,14 @@ module.exports.fnBootFwUpdateRequestStartProcess = async event => {
 
     This function is trigged by the following topics:
 
-    P/SCICAN/AJCPA009/CAN/CMD/boot_fw_update_request_start_process/PROCESS_0_v1-8-59_1234567890
-    {
-        "path" : "CAN/CMD/boot_fw_update_request_start_process/PROCESS_0_v1-8-59_1234567890",
-        "data" : {
-            "sn" : "AJCPA009",
-            "node" : "PROCESS",
-        }
+P/SCICAN/AJCPA009/CAN/CMD/boot_fw_update_request_start_process/PROCESS_0_v1-8-59_1234567890
+{
+    "path" : "CAN/CMD/boot_fw_update_request_start_process/PROCESS_0_v1-8-59_1234567890",
+    "data" : {
+        "sn" : "AJCPA009",
+        "node" : "PROCESS"
     }
+}
 
     This function should publish the follow topic:
 
@@ -139,7 +139,7 @@ module.exports.fnBootFwUpdateRequestStartProcess = async event => {
         console.log("🚀 14 - bodyJson:", bodyJson)
         let params = {
             topic: `${MQTT_TOPIC_ENV}/MSSTER/${serialNumber}/${path}`,
-            payload: JSON.stringify(JSON.parse(bodyJson)), 
+            payload: JSON.stringify(bodyJson), 
             qos: '0'
         };
         console.log("🚀 15 - params:", params)
