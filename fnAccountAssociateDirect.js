@@ -1,6 +1,22 @@
-//Project 12 Need to test
-
 'use strict'
+
+/**
+ * Activate online access ONLY if the user is successfully authenticated. Disassociate associated user if any
+ * If association is successful, publish to (P/Q/D)/scican/evn/get-account-information
+ * 
+ * TOPICS: 
+ * - Request: (P|Q|D)/scican/1234AB5678/srv/request/account-associate-direct
+ * - Response: (P|Q|D)/scican/srv/+/response/account-associate-direct
+ * 
+ * Expected Payload:
+ * {
+ *  "account_email": "digitalgroupbravog4demo@gmail.com",
+ *  "language_iso639": "en",
+ *  "language_iso3166": "US"
+ * }
+ *
+ */
+
 const AWS = require('aws-sdk')
 const S3 = new AWS.S3()
 const Joi = require('@hapi/joi')
@@ -181,6 +197,12 @@ async function AssociateUnit(params) {
     }
 }
 
+/**
+ * Returns an object with payload data ready for publishing
+ * 
+ * @param {string} user_email
+ * @returns {Object} 
+ */
 async function getUserDetails(user_email) {
     let details = {}
     try {
@@ -202,9 +224,16 @@ async function getUserDetails(user_email) {
     } catch (error) {
         console.log("🚀 getUserDetails - error: ", error)
         console.log("🚀 getUserDetails - error stack: ", error.stack)
+        return {}
     }
 }
 
+/**
+ * Returns product name
+ * 
+ * @param {string} serial_number
+ * @returns {string} 
+ */
 async function getProductName(serial_number) {
     let product_name = ''
     
@@ -225,6 +254,7 @@ async function getProductName(serial_number) {
     } catch (error) {
         console.log("🚀 getProductName - error: ", error)
         console.log("🚀 getProductName - error stack: ", error.stack)
+        return ''
     }
 }
 

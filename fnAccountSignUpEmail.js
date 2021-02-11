@@ -1,4 +1,22 @@
 'use strict'
+
+/**
+ * Send an email with a link to sign up for an account ONLY if the user does not have an account
+ * 
+ * TOPICS: 
+ * - Request: (P|Q|D)/scican/1234AB5678/srv/request/account-signup-email
+ * - Response: (P|Q|D)/scican/srv/+/response/account-signup-email
+
+ * 
+ * Expected Payload:
+ * {
+ *  "account_email": "digitalgroupbravog4demo@gmail.com",
+ *  "language_iso639": "en",
+ *  "language_iso3166": "US"
+ * }
+ *
+ */
+
 const AWS = require('aws-sdk')
 const S3 = new AWS.S3()
 const Joi = require('@hapi/joi')
@@ -39,9 +57,17 @@ async function isUserExist(user_email) {
     } catch (error) {
         console.log("🚀 0.isUserExist - error:", error)
         console.log("🚀 0.1.isUserExist - error:", error.stack)
+        return false
     }
 }
 
+/**
+ * Returns an object with payload data ready for publishing
+ * 
+ * @param {string} user_email
+ * @returns {Object} 
+ */
+/*
 async function getUserDetails(user_email) {
     let details = {}
     try {
@@ -65,8 +91,14 @@ async function getUserDetails(user_email) {
         console.log("🚀 getUserDetails - error: ", error)
         console.log("🚀 getUserDetails - error stack: ", error.stack)
     }
-}
+}*/
 
+/**
+ * Returns product name
+ * 
+ * @param {string} serial_number
+ * @returns {string} 
+ */
 async function getProductName(serial_number) {
     let product_name = ''
     
@@ -87,6 +119,7 @@ async function getProductName(serial_number) {
     } catch (error) {
         console.log("🚀 getProductName - error: ", error)
         console.log("🚀 getProductName - error stack: ", error.stack)
+        return ''
     }
 }
 
@@ -138,13 +171,10 @@ module.exports.fnAccountSignUpEmail = async (event) => {
         const language = event.language_iso639 ? event.language_iso639 : ''
         console.log('++++ Received Payload ', event);        
 
-        let userDetails = await getUserDetails(account_email)
-        
-        if(typeof userDetails !== 'object' || userDetails == null) {
-            userDetails = {}
-        }
+        const userExist = await isUserExist(account_email)
+    console.log('==user Exists ', userExist)
 
-        if(Object.keys(userDetails).length == 0) {
+        if(!userExist && userExist != null) {
             //get product name
             const productName = await getProductName(serialNumber)
 
@@ -162,7 +192,7 @@ module.exports.fnAccountSignUpEmail = async (event) => {
             }
 
             console.info('+++ Sending email  to topic ... ', publishParams)        
-        } else if( Object.keys(userDetails).length > 0 ) {
+        } else if( userExist && userExist !== null ) {
             publishParams = {
                 topic: `${MQTT_TOPIC_ENV}/scican/srv/${serialNumber}/response/account-signup-email`,
                 payload: JSON.stringify({"result": "account_already_exist"}),
@@ -171,7 +201,7 @@ module.exports.fnAccountSignUpEmail = async (event) => {
 
             console.info('+++ Account Exist publishing to unit ... ', publishParams)
         } else {
-            console.log("🚀 Something went wrong. Nothing Published: userDetails = ", userDetails)
+            console.log("🚀 Something went wrong. Nothing Published: userExists = ", userExist)
         }
 
         if(Object.keys(publishParams).length > 0) {

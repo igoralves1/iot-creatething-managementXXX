@@ -45,8 +45,8 @@ custom:
   fnAccountDisassociate: 'fnAccountDisassociate'
   fnAccountAssociateDirect: 'fnAccountAssociateDirect'
   fnSendEmail: 'fnSendEmail'
-  
   fnAccountSignUpForm: 'fnAccountSignUpForm'
+  fnScicanGetAccountInformation: 'fnScicanGetAccountInformation'
   
   # ------ TESTS ------
   fnAutomatedTests: 'fnAutomatedTests'
@@ -1310,6 +1310,47 @@ functions:
       rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
       rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
       rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
+
+  fnScicanGetAccountInformation:
+    name: ${self:provider.stage}-${self:custom.fnScicanGetAccountInformation}
+    handler: fnScicanGetAccountInformation.fnScicanGetAccountInformation
+    events:
+    - iot:
+        name: ${self:provider.stage}_${self:custom.fnScicanGetAccountInformation}
+        sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/evn/get-account-information' "
+    memorySize: 512
+    timeout: 900
+    maximumEventAge: 7200
+    maximumRetryAttempts: 1
+    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnScicanGetAccountInformation}
+    iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+      - "iot:*"
+      Resource: '*'
+    - Effect: 'Allow'
+      Action:
+      - 'rds:*'
+      Resource: 'arn:aws:rds:${self:provider.region}:${ssm:scican-id~true}:db:${ssm:rdsMySqlCluster-${self:provider.stage}~true}'
+    - Effect: 'Allow'
+      Action:
+      - 'logs:CreateLogGroup'
+      - 'logs:CreateLogStream'
+      - 'logs:PutLogEvents'
+      - 'ec2:CreateNetworkInterface'
+      - 'ec2:DescribeNetworkInterfaces'
+      - 'ec2:DeleteNetworkInterfaces'
+      Resource: "*"
+    vpc: ${file(env.yml):vpc-${self:provider.stage}}
+    environment:
+      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
+      mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
+      BUCKET_SCICAN_RND_LOGS: '${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}'
+      rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
+      rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
+      rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
+      rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
+
 
   fnFwUpdateFlow_test:
     name: ${self:provider.stage}-${self:custom.fnFwUpdateFlow_test}

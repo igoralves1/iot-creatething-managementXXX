@@ -1,4 +1,22 @@
 'use strict'
+
+/**
+ * Send and email with a link to reset password ONLY if the user has activated onine access for the unit
+ * 
+ * TOPICS: 
+ * - Request: (P|Q|D)/scican/1234AB5678/srv/request/account-password_reset_email
+ * - Response: (P|Q|D)/scican/srv/+/response/account-password_reset_email
+
+ * 
+ * Expected Payload:
+ * {
+ *  "account_email": "digitalgroupbravog4demo@gmail.com",
+ *  "language_iso639": "en",
+ *  "language_iso3166": "US"
+ * }
+ *
+ */
+
 const AWS = require('aws-sdk')
 const S3 = new AWS.S3()
 const Joi = require('@hapi/joi')
@@ -7,7 +25,8 @@ var iotdata = new AWS.IotData({endpoint: process.env.MQTT_ENDPOINT});
 const MQTT_TOPIC_ENV = process.env.mqttTopicEnv
 
 const mysql = require('mysql2/promise')
-const axios = require('axios')
+// const axios = require('axios')
+const { isatty } = require('tty')
 
 
 const pool = mysql.createPool({
@@ -17,46 +36,57 @@ const pool = mysql.createPool({
     database : process.env.rdsMySqlDb
 })
 
-async function isUserExist(user_email) {
-    try {
-
-        console.log("pool ==== ", pool)
-
-        const sql = `SELECT count(1) AS numbers FROM users WHERE username = '${user_email}'`
-        console.log("sql ==== ", sql)
-
-        const sqlResult = await pool.query(sql)
-        const res = sqlResult[0]
-
-        console.log("sqlRes ==== ", sqlResult)
-        var userexist
-        if (res[0].numbers == 0) {
-            userexist = false
-        } else {
-            userexist = true
-        }
-
-        return userexist
-
-    } catch (error) {
-        console.log("🚀 0.isUserExist - error:", error)
-        console.log("🚀 0.1.isUserExist - error:", error.stack)
-    }
-}
-
 const publishMqtt = (params) =>
-  new Promise((resolve, reject) =>
-  iotdata.publish(params, (err, res) => resolve(res)))
+    new Promise((resolve, reject) =>
+    iotdata.publish(params, (err, res) => resolve(res)))
 
 
-  const getRandomValue = () => {
+const getRandomValue = () => {
     const randVal = Math.random() + Math.random() + Math.random() + Math.random() + Math.random()
     let hash = crypto.createHash('md5').update(String(randVal)).digest("hex")
 
     return hash
 }
 
-async function getPasswordHashData(user_email, password){
+/**
+ * Returns an array of units
+ * 
+ * @param {string} email 
+ * @returns {Array}
+ */
+async function checkOnlineAccessStatus(email, serial_number) {
+    let isActive = false
+    
+    try {
+        const sql = `SELECT association_active FROM customers_units WHERE association_active = 1 AND user_email = '${email}' AND serial_num = '${serial_number}'`
+console.log('--- sql ', sql)
+        if ( pool ) {
+            const sqlResult = await pool.query(sql)
+            const res = sqlResult[0]
+            const data = res && res != null ? res : []
+
+            if(data.length > 0) {
+                isActive = true
+            }
+        }
+        
+        return isActive
+    } catch (error) {
+        console.log("🚀 checkOnlineAccessStatus - error: ", error)
+        console.log("🚀 checkOnlineAccessStatus - error stack: ", error.stack)
+        return false
+    }
+}
+
+/**
+ * Get password hash data
+ * 
+ * @param {string} user_email 
+ * @param {string} password 
+ * 
+ * @returns Object
+ */
+async function getPasswordHashData(user_email, password, axios){
 
     try {
         var url = "http://3.86.253.251/user-password-create"
@@ -81,6 +111,7 @@ async function getPasswordHashData(user_email, password){
     } catch (error) {
         console.log("🚀 0.getPasswordHashData - error:", error)
         console.log("🚀 0.1.getPasswordHashData - error:", error.stack)
+        return {}
     }
 }
 
@@ -102,9 +133,16 @@ async function updateActivationKey(email, activatin_key) {
     } catch (error) {
         console.log("🚀 0.updateActivationKey - error: ", error)
         console.log("🚀 0.1updateActivationKey - error stack: ", error.stack)
+        return false
     }
 }
 
+/**
+ * Returns an object with payload data ready for publishing
+ * 
+ * @param {string} user_email
+ * @returns {Object} 
+ */
 async function getUserDetails(user_email) {
     let details = {}
     try {
@@ -128,6 +166,12 @@ async function getUserDetails(user_email) {
     }
 }
 
+/**
+ * Returns product name
+ * 
+ * @param {string} serial_number
+ * @returns {string} 
+ */
 async function getProductName(serial_number) {
     let product_name = ''
     
@@ -182,16 +226,20 @@ const getEmailPayload = (params) => {
 
 /**
  * if account exists and userDetail is not undefined(meaning query failed), send reset email 
- * if user does not exist in db , publish accound does not exist
+ * if user does not exist in db , publish account does not exist
  * else if query failed, do notthing
+ * 
+ * Only allow password change if there is online access active
 */
 module.exports.fnRequestAccountPasswordResetEmail = async (event) => {
     try {
+        const axios = require('axios');
         const retval = event.retval
         const topic = event.topic
         const res = topic.split("/")
         const serialNumber = res[2]
         let publishParams = {}
+        let isActive = false
 
         const account_email = event.account_email
         const language = event.language_iso639 ? event.language_iso639 : ''
@@ -199,12 +247,17 @@ module.exports.fnRequestAccountPasswordResetEmail = async (event) => {
         console.log('++++ Received Payload ', event);
 
         let userDetails = await getUserDetails(account_email)
-
-        if(typeof userDetails !== 'object' || userDetails == null) {
+console.log('+++ user details - ', userDetails)
+        /*if(typeof userDetails !== 'object' || userDetails == null) {
             userDetails = {}
+        }*/
+        
+        if(typeof userDetails == 'object' && Object.keys(userDetails).length > 0) {
+            //check if online access is active for this unit
+            isActive = checkOnlineAccessStatus(account_email, serialNumber)
         }
 
-         if(userDetails != null && Object.keys(userDetails).length > 0) {
+        if(isActive && isActive != null) {
             //get activation key
             const activation_key = getRandomValue()
 
@@ -212,7 +265,7 @@ module.exports.fnRequestAccountPasswordResetEmail = async (event) => {
             const new_password = getRandomValue()
 
             //get password hash
-            const hash_data = await getPasswordHashData(account_email, new_password)
+            const hash_data = await getPasswordHashData(account_email, new_password, axios)
             const password_hash = hash_data.password_hash || ''
 
             if( password_hash != null && Object.keys(password_hash).length > 0) {
@@ -246,7 +299,7 @@ module.exports.fnRequestAccountPasswordResetEmail = async (event) => {
                     console.log('+++ Activation key not saved! - ', activationKeyUpdated)
                 }
             }
-        } else if(Object.keys(userDetails).length == 0 && userDetails != null) {
+        } else if(typeof userDetails == 'object' && Object.keys(userDetails).length == 0 && userDetails != null) {
             publishParams = {
                 topic: `${MQTT_TOPIC_ENV}/scican/srv/${serialNumber}/response/account-password_reset_email`,
                 payload: JSON.stringify({"result": "existing_account_not_found"}),
@@ -255,7 +308,8 @@ module.exports.fnRequestAccountPasswordResetEmail = async (event) => {
 
             console.info('+++ Account does not exist ... ', publishParams)
         } else {
-            console.log("🚀 Something went wrong. Nothing Published: userDetails = ", userDetails)
+            console.log("🚀 1-Something went wrong. Nothing Published: userDetails = ", userDetails)
+            console.log("🚀 2- OR Online Access is not active. isActive = ", isActive)
         }
 
         if(Object.keys(publishParams).length > 0) {

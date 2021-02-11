@@ -1,4 +1,22 @@
 'use strict'
+
+/**
+ * Send an email with a link to activate online access ONLY if the user has an account
+ * 
+ * TOPICS: 
+ * - Request: (P|Q|D)/scican/1234AB5678/srv/request/account-associate-email
+ * - Response: (P|Q|D)/scican/srv/+/response/account-associate-email
+
+ * 
+ * Expected Payload:
+ * {
+ *  "account_email": "digitalgroupbravog4demo@gmail.com",
+ *  "language_iso639": "en",
+ *  "language_iso3166": "US"
+ * }
+ *
+ */
+
 const AWS = require('aws-sdk')
 const S3 = new AWS.S3()
 const Joi = require('@hapi/joi')
@@ -47,6 +65,12 @@ async function isUserExist(user_email) {
     }
 }
 
+/**
+ * Returns an object with payload data ready for publishing
+ * 
+ * @param {string} user_email
+ * @returns {Object} 
+ */
 async function getUserDetails(user_email) {
     let details = {}
     try {
@@ -70,6 +94,12 @@ async function getUserDetails(user_email) {
     }
 }
 
+/**
+ * Returns product name
+ * 
+ * @param {string} serial_number
+ * @returns {string} 
+ */
 async function getProductName(serial_number) {
     let product_name = ''
     
@@ -144,11 +174,11 @@ module.exports.fnRequestAccountAssocEmail = async (event) => {
 
         let userDetails = await getUserDetails(account_email)
 
-        if(typeof userDetails !== 'object' || userDetails == null) {
+        /*if(typeof userDetails !== 'object' || userDetails == null) {
             userDetails = {}
-        }
+        }*/
 
-        if(userDetails != null && Object.keys(userDetails).length > 0) {
+        if(typeof userDetails == 'object' && Object.keys(userDetails).length > 0) {
             //get product name
             const productName = await getProductName(serialNumber)
         
@@ -168,7 +198,7 @@ module.exports.fnRequestAccountAssocEmail = async (event) => {
             }
 
             console.info('+++ Sending Email ... ', publishParams)
-        } else if(Object.keys(userDetails).length == 0 && userDetails != null) {
+        } else if(typeof userDetails == 'object' && Object.keys(userDetails).length == 0) {
             publishParams = {
                 topic: `${MQTT_TOPIC_ENV}/scican/srv/${serialNumber}/response/account-associate-email`,
                 payload: JSON.stringify({"result": "existing_account_not_found"}),
