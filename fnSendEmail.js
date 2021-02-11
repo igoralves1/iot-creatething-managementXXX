@@ -48,24 +48,19 @@ Before use this payload, please check if the template has been created, using th
 
 // Import AWS SDK
 const AWS = require("aws-sdk");
-// Set the region
-AWS.config.update({region: process.env.AWS_SES_REGION});
+// Custom AWS configutation
+AWS.config.update({
+    region: process.env.AWS_SES_REGION,
+    maxRetries: 10,
+    httpOptions: {
+        timeout: 15000,
+        connectTimeout: 3000
+    }
+});
+
 // Email validator
 const emailIsValid = (email) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-// Mqtt publiser method
-const publishMqtt = async (params) => {
-    const endpoint = process.env.MQTT_ENDPOINT;
-    const iotdata = new AWS.IotData({endpoint: endpoint});
-    new Promise((resolve) =>
-        iotdata.publish(params, (err, res) => {
-            if(err){
-                console.error("Error send mqtt message on endpoint:" + endpoint + " data:" + JSON.stringify(params));
-            }
-            resolve(res);
-        })
-    )
 }
 /**
  * Default payload
@@ -159,7 +154,7 @@ const postProcessHandler = async (processedData) => {
                     console.log("Sent dlr back to for params: " + JSON.stringify(params));
                 }).catch(
                 function (err) {
-                    console.error('Error sending back dlr to error: ' + err);
+                    console.error('Error sending back dlr to error: ' + err + ", for params: " + JSON.stringify(params));
                     console.error(err);
                 });
         } catch (err) {
@@ -171,13 +166,15 @@ const postProcessHandler = async (processedData) => {
 /**
  * The handler function
  * @param event
+ * @param context
  * @returns {Promise<void>}
  */
-module.exports.fnSendEmail = async function (event) {
+module.exports.fnSendEmail = async function (event, context, callback) {
     //Preprocess the payload
     console.log('Sending email start process handler from payload:' + JSON.stringify(event));
     let data = preProcessPayload(event);
     try {
+
         let params = {
             Destination: { /* required */
                 ToAddresses: [
@@ -230,14 +227,33 @@ module.exports.fnSendEmail = async function (event) {
             console.log('Sending raw email collected SES parameters :' + JSON.stringify(params));
             response = await new AWS.SES({apiVersion: '2010-12-01'}).sendEmail(params).promise();
         }
-        console.log("Sent email message id: " + response.MessageId);
-        // Add message id to the data.
+        console.log("Sent email message id: " + response.MessageId + "");
         data.result.message_id = response.MessageId;
         data.mqtt_response_payload.result = 'email_sent';
+        // Add message id to the data.
+        if(data.mqtt_response_topic) {
+            return new Promise((resolve, reject) => {
+                const topicPrefix = process.env.MQTT_TOPIC_ENV ? process.env.MQTT_TOPIC_ENV.trim() : 'Q/'
+                let mqttParams = {
+                    topic: (topicPrefix + data.mqtt_response_topic).replace('//', '/'),
+                    payload: JSON.stringify(data.mqtt_response_payload),
+                    qos: data.mqtt_qos
+                };
+                const endpoint = process.env.MQTT_ENDPOINT;
+                const iotdata = new AWS.IotData({endpoint: endpoint});
+                iotdata.publish(mqttParams, (err, res) => {
+                    if (err) {
+                        err.mqtt_endpoint = endpoint;
+                        err.mqtt_params = mqttParams;
+                        reject(err);
+                    }
+                    console.log("Sent mqtt notification: " + endpoint + ", " + JSON.stringify(mqttParams));
+                })
+            });
+        }
     } catch (err) {
         console.error('Error sending email from payload:' + JSON.stringify(event));
         console.error(err);
-    }finally {
-       await postProcessHandler(data);
+        throw err;
     }
 }
