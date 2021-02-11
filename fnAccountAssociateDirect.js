@@ -11,7 +11,7 @@ const MQTT_TOPIC_ENV = process.env.mqttTopicEnv
 
 
 const mysql = require('mysql2/promise')
-const axios = require('axios')
+
 
 
 const pool = mysql.createPool({
@@ -35,7 +35,8 @@ const getRandomValue = () => {
     return hash
 }
 
-async function UserIdentification(account_email, account_password) {
+async function UserIdentification(account_email, account_password, axios) {
+
     var url = "http://3.86.253.251/user-authentication"
     var data
 
@@ -257,11 +258,13 @@ const getEmailPayload = (params) => {
 
 module.exports.fnAccountAssociateDirect = async (event) => {
     try {
+        const axios = require('axios');
         const retval = event.retval
         const topic = event.topic
         const res = topic.split("/")
         const serialNumber = res[2]
         let publishParams = {}
+        let associated = false
 
         const account_email = event.account_email
         const language = event.language_iso639 ? event.language_iso639 : 'en'
@@ -269,14 +272,14 @@ module.exports.fnAccountAssociateDirect = async (event) => {
 
         console.log('++++ Received Payload ', event);
 
-        const userIdres = await UserIdentification(account_email, account_password)
+        const userIdres = await UserIdentification(account_email, account_password, axios);
 
         if (userIdres && userIdres != null){
             //get user's details
             const userDetails = await getUserDetails(account_email)
 
             //activate online access
-            const associated = await AssociateUnit({user_id: userDetails.idusers, useremail: account_email, serial_num: serialNumber})
+            associated = await AssociateUnit({user_id: userDetails.idusers, useremail: account_email, serial_num: serialNumber})
 
             if(associated) {
                 //get product name
@@ -297,8 +300,15 @@ module.exports.fnAccountAssociateDirect = async (event) => {
                     payload: JSON.stringify(emailPayload),
                     qos: '0' 
                 }
+                /*publishParams = {
+                    topic: `${MQTT_TOPIC_ENV}/scican/cmd/send_email`,
+                    payload: JSON.stringify(emailPayload),
+                    qos: '0' 
+                }*/
 
                 console.info('+++ Sending Email ... ', publishParams)
+            } else {
+                console.log("🚀 Already associated. Nothing Published:")
             }
             
         } else if(!userIdres && typeof userIdres != 'undefined') {
@@ -319,6 +329,24 @@ module.exports.fnAccountAssociateDirect = async (event) => {
             await publishMqtt(publishParams)
                 .then( () => console.log('Publish Done: Params - ', publishParams))
                 .catch(e => console.log(e))
+
+            if(associated) {
+                //publish to Account Event topic
+                const eventParams = {
+                    "email": account_email,
+                    "serial_number": serialNumber,
+                    "response_topic": `${MQTT_TOPIC_ENV}/scican/srv/${serialNumber}/event/account`
+                }
+                const evPubParams = {
+                    topic: `${MQTT_TOPIC_ENV}/scican/evn/get-account-information`,
+                    payload: JSON.stringify(eventParams),
+                    qos: '0' 
+                }
+
+                await publishMqtt(evPubParams)
+                .then( () => console.log('Publish to Account Event Done: Params - ', evPubParams))
+                .catch(e => console.log(e))
+            }
         }
         
 
