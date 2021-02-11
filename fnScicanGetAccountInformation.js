@@ -3,9 +3,11 @@
 /**
  * Gets user information including all units owned by the user.
  * 
- * Topic: (P/Q/D)/scican/evn/get-account-information
+ * Topics: 
+ *  - Request: (P/Q/D)/scican/evn/get-account-information
+ *  - Response: response_topic from payload
  * 
- * Expected Payload
+ * Expected Payload:
  * {
  *  "email": "digitalgroupbravog4demo@gmail.com",
  *  "serial_number": "1234AB5678",
@@ -13,23 +15,25 @@
  * }
  * 
  * Response Payload:
- * {
- *  "account_state": "associated",
- *  "account_state_time_modified_utc_seconds": 1612904346746,
- *  "account_company_name": "Scican",
- *  "account_contact_name": "Digital Group",
- *  "account_phone_number": "1231231234",
- *  "account_address": "",
- *  "account_city": "",
- *  "account_subregion": "",
- *  "account_country": "CA",
- *  "account_zip_code": "",
- *  "units": [
- *    {
- *      "serial_number": "1234AB5678"
- *    }
- *  ]
- * }
+ * accounts: [
+ *  {
+ *      "account_state": "associated",
+ *      "account_state_time_modified_utc_seconds": 1612904346746,
+ *      "account_company_name": "Scican",
+ *      "account_contact_name": "Digital Group",
+ *      "account_phone_number": "1231231234",
+ *      "account_address": "",
+ *      "account_city": "",
+ *      "account_subregion": "",
+ *      "account_country": "CA",
+ *      "account_zip_code": "",
+ *      "units": [
+*           {
+*            "serial_number": "1234AB5678"
+*           }
+ *      ]
+ *  }
+ * ]
  * 
  */
 
@@ -101,7 +105,7 @@ async function getCustomerUnits(email) {
     let units = []
     
     try {
-        const sql = `SELECT serial_num, association_active FROM customers_units WHERE user_email = '${email}'`
+        const sql = `SELECT serial_num, association_active FROM customers_units WHERE association_active = 1 AND user_email = '${email}'`
 
         if ( pool ) {
             const sqlResult = await pool.query(sql)
@@ -193,11 +197,11 @@ module.exports.fnScicanGetAccountInformation = async (event) => {
 
         let userDetails = await getUserDetails(email)
 
-        if(typeof userDetails !== 'object' || userDetails == null) {
+        /*if(typeof userDetails !== 'object' || userDetails == null) {
             userDetails = {}
-        }
+        }*/
 
-        if(Object.keys(userDetails).length > 0) {
+        if(typeof userDetails == 'object' && Object.keys(userDetails).length > 0) {
             //get user's units
             const units = await getCustomerUnits(email)
 

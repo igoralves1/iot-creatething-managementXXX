@@ -1,7 +1,33 @@
-//Project 13 Need to test
-//VPC time out error. How to fix ????
-
 'use strict'
+
+/**
+ * Sign up a user if email does not exist. Activate online access. Disassociate any account associated to this SN
+ * If association is successful, publish to (P/Q/D)/scican/evn/get-account-information
+ * 
+ * TOPICS: 
+ * - Request: (P|Q|D)/scican/1234AB5678/srv/request/account-signup-form
+ * - Response: (P|Q|D)/scican/srv/+/response/account-signup-form
+ * 
+ * Expected Payload:
+ * {
+ *  "account_email": "bobdemo@gmail.com",
+ *  "account_password": "sc1canltd",
+ *
+ *  "account_company_name": "Bob Company",
+ *  "account_contact_name": "Bob Demo",
+ *  "account_phone_number": "+14167778888",
+ *  "account_address": "1440 Don Mills",
+ *  "account_city": "Toronto",
+ *  "account_subregion": "Ontario",
+ *  "account_country": "Canada",
+ *  "account_zip_code": "m1m 4m4",
+ *
+ *  "language_iso639": "en",
+ *  "language_iso3166": "US"
+ * }
+ *
+ */
+
 const AWS = require('aws-sdk')
 const S3 = new AWS.S3()
 const Joi = require('@hapi/joi')
@@ -12,7 +38,7 @@ const MQTT_TOPIC_ENV = process.env.mqttTopicEnv
 
 
 const mysql = require('mysql2/promise')
-const axios = require('axios')
+// const axios = require('axios')
 
 
 const pool = mysql.createPool({
@@ -70,7 +96,15 @@ async function isUserExist(user_email) {
     }
 }
 
-async function getPasswordHashData(user_email, password){
+/**
+ * Get password hash data
+ * 
+ * @param {string} user_email 
+ * @param {string} password 
+ * 
+ * @returns Object
+ */
+async function getPasswordHashData(user_email, password, axios){
     if(!user_email || user_email == null || !password || password == null) {
         console.log(' password hash missing data - user email', user_email)
         console.log(' password hash missing data - password', password)
@@ -211,7 +245,7 @@ async function AssociateUnit(params) {
             }
         }
 
-        // disassociate previously associated use 
+        // disassociate previously associated unit 
         if(diff_assoc_email) {
             //update customers_units table, set association_active=0
             const sql1 = `UPDATE scican.customers_units SET
@@ -232,10 +266,9 @@ async function AssociateUnit(params) {
             isDisassociated = sqlResult1[0] ? sqlResult1[0].changedRows : false
 
             //update ustomers_units_assoc_dates table, set linked_to_user_end_date to now()
-            const sql2 = `UPDATE scican.customers_units_assoc_dates SET
-          linked_to_user_end_date=NOW(),
-            data_updated=NOW()
-          WHERE ca_active_ref_id='${diff_user_ref_id}' AND user_email='${diff_assoc_email}' AND serial_num='${serial_num}'`
+            const sql2 = `UPDATE scican.customers_units_assoc_dates 
+                        SET linked_to_user_end_date=NOW(), data_updated=NOW() 
+                        WHERE ca_active_ref_id='${diff_user_ref_id}' AND user_email='${diff_assoc_email}' AND serial_num='${serial_num}'`
 
                 const sqlResult2 = await pool.query(sql2)
 
@@ -258,7 +291,7 @@ async function AssociateUnit(params) {
         } else if(!userPrevAssociated && isDisassociated) {
             //Insert new data into customers_units table
             const sql6 = `INSERT INTO customers_units(idusers,user_email,prev_associations_active,association_active,serial_num,ca_active_ref_id,latest_oas_update_date,idunits_warranties) VALUES 
-              ('${user_id}','${useremail}',1,1,'${serial_num}','${ref_id}',NOW(),0)`
+            ('${user_id}','${useremail}',1,1,'${serial_num}','${ref_id}',NOW(),0)`
 
             const sqlResult6 = await pool.query(sql6)
 
@@ -283,9 +316,9 @@ async function AssociateUnit(params) {
                             '${useremail}',
                             '${serial_num}',
                             '${ref_id}',
-                             NOW(),
-                             0,
-                             NOW())`
+                            NOW(),
+                            0,
+                            NOW())`
     
             const sqlResult4 = await pool.query(sql4)
         }
@@ -298,6 +331,12 @@ async function AssociateUnit(params) {
     }
 }
 
+/**
+ * Returns an object with payload data ready for publishing
+ * 
+ * @param {string} user_email
+ * @returns {Object} 
+ */
 async function getUserDetails(user_email) {
     let details = {}
     try {
@@ -318,9 +357,16 @@ async function getUserDetails(user_email) {
     } catch (error) {
         console.log("🚀 getUserDetails - error: ", error)
         console.log("🚀 getUserDetails - error stack: ", error.stack)
+        return {}
     }
 }
 
+/**
+ * Returns product name
+ * 
+ * @param {string} serial_number
+ * @returns {string} 
+ */
 async function getProductName(serial_number) {
     let product_name = ''
     
@@ -375,11 +421,13 @@ const getEmailPayload = (params) => {
 
 module.exports.fnAccountSignUpForm = async (event) => {
     try {
+        const axios = require('axios')
         const retval = event.retval
         const topic = event.topic
         const res = topic.split("/")
         const serialNumber = res[2]
         let publishParams = {}
+        let associated = false
         const account_password = event.account_password || ''
         let data = {
             account_email: event.account_email || '',
@@ -395,8 +443,7 @@ module.exports.fnAccountSignUpForm = async (event) => {
             language_iso3166:  event.language_iso3166 || ''
         }
         
-console.log("account username ===== ", data.account_email)
-console.log("account password ===== ", account_password)
+        console.log("++++ Received Event = ", event)
 
         //get user's details
         const userExist = await isUserExist(data.account_email)
@@ -406,13 +453,12 @@ console.log("account password ===== ", account_password)
             let user_id = ''
             let isLastLoginUpdated = false
 
-            const hash_data = await getPasswordHashData(data.account_email, account_password)
-console.log('==passwordhash data- ', hash_data)            
+            const hash_data = await getPasswordHashData(data.account_email, account_password, axios)
+            
             if (hash_data && hash_data != null) {
                 data.password = hash_data.password_hash || ''
                 const hash_time = hash_data.hash_time || ''
- 
-         
+
                 user_id = await InsertUser(data)
 
                 const login_params = {
@@ -422,13 +468,10 @@ console.log('==passwordhash data- ', hash_data)
                 }
                 isLastLoginUpdated = await updateLastLogin(login_params)
             }
-            
-console.log('USER ID - ', user_id)
-console.log('Last Login updated? - ', isLastLoginUpdated)
 
             if(user_id) {
                 //activate online access
-                const associated = await AssociateUnit({user_id: user_id, useremail: data.account_email, serial_num: serialNumber})
+                associated = await AssociateUnit({user_id: user_id, useremail: data.account_email, serial_num: serialNumber})
 
                 if(associated) {
                 //get product name
@@ -466,9 +509,29 @@ console.log('Last Login updated? - ', isLastLoginUpdated)
         }
 
         if(Object.keys(publishParams).length > 0) {
+            console.log('+++ Publishing ...')
+
             await publishMqtt(publishParams)
                 .then( () => console.log('Publish Done: Params - ', publishParams))
                 .catch(e => console.log(e))
+
+            if(associated) {
+                //publish to Account Event topic
+                const eventParams = {
+                    "email": data.account_email,
+                    "serial_number": serialNumber,
+                    "response_topic": `${MQTT_TOPIC_ENV}/scican/srv/${serialNumber}/event/account`
+                }
+                const evPubParams = {
+                    topic: `${MQTT_TOPIC_ENV}/scican/evn/get-account-information`,
+                    payload: JSON.stringify(eventParams),
+                    qos: '0' 
+                }
+
+                await publishMqtt(evPubParams)
+                .then( () => console.log('Publish to Account Event Done: Params - ', evPubParams))
+                .catch(e => console.log(e))
+            }
         }
     } catch (error) {
         console.log("🚀 0 - error:", error)
