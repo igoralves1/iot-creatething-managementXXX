@@ -132,7 +132,7 @@ const getEmailPayload = (params) => {
     let subject = "Account Association"
     let body = `Dear ${firstname}${lname},  <br /><br /> `
             + `Thank you for choosing ${product_name}. <br /><br />`
-            + `Please, click <a href='https://${linkUrl}/?action=onlineaccess&email=${email}&sn=${serial_num}'>here</a> to complete your registration and online activation for ${serial_num}.<br /><br /> `
+            + `Please, click <a href='https://${linkUrl}/?action=onlineaccess&email=${email}&sn=${serial_num}&pub=1'>here</a> to complete your registration and online activation for ${serial_num}.<br /><br /> `
             + `You can access your cycle data, unit information and manuals by logging into your account on <a href='https://updates.scican.com'>updates.scican.com</a>. <br /><br />`
             + `Please feel free to contact SciCan or your local dealer for more information about ${product_name} and its G4<sup>+</sup> features. <br /><br />`
             + `Regards, <br /><br />`
