@@ -24,6 +24,7 @@ const S3 = new AWS.S3()
 const Joi = require('@hapi/joi')
 var iotdata = new AWS.IotData({endpoint: process.env.MQTT_ENDPOINT});
 const MQTT_TOPIC_ENV = process.env.mqttTopicEnv
+const { getPasswordHash } = require('./utils/getPasswordHash')
 
 const mysql = require('mysql2/promise')
 const axios = require('axios')
@@ -288,7 +289,7 @@ module.exports.fnAccountDisassociate = async (event) => {
             } else {
                 console.log("🚀 Dissociation not successful. isDisassociated = ", isDisassociated)
             }
-        } else if(!useremail && useremail != null) {
+        } else if(account_email && !useremail && useremail != null) {
             publishParams = {
                 topic: `${MQTT_TOPIC_ENV}/scican/srv/${serialNumber}/response/account-disassociate`,
                 payload: JSON.stringify({"result": "was_disassociated"}),
