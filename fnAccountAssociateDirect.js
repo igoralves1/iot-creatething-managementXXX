@@ -23,11 +23,11 @@ const Joi = require('@hapi/joi')
 const crypto = require('crypto')
 var iotdata = new AWS.IotData({endpoint: process.env.MQTT_ENDPOINT});
 const MQTT_TOPIC_ENV = process.env.mqttTopicEnv
-
+const { getPasswordHash } = require('./utils/getPasswordHash')
+const { isValidUserLogin } = require('./utils/userAuthentication')
 
 
 const mysql = require('mysql2/promise')
-
 
 
 const pool = mysql.createPool({
@@ -53,14 +53,13 @@ const getRandomValue = () => {
 
 async function UserIdentification(account_email, account_password, axios) {
 
-    var url = "http://3.86.253.251/user-authentication"
+    var url = "http://3.94.80.183/user-authentication" //"http://3.86.253.251/user-authentication"
     var data
 
     data = {
         account_email: account_email,
         account_password: account_password
     }
-
 
     var axiosconnect = await axios.create()
     let res = await axiosconnect.post(url, data)
@@ -157,8 +156,9 @@ async function AssociateUnit(params) {
             associationComplete = sqlResult3[0] ? sqlResult3[0].changedRows : false
         } else if(!userPrevAssociated && isDisassociated) {
             //Insert new data into customers_units table
-            const sql6 = `INSERT INTO customers_units(idusers,user_email,prev_associations_active,association_active,serial_num,ca_active_ref_id,latest_oas_update_date,idunits_warranties) VALUES 
-              ('${user_id}','${useremail}',1,1,'${serial_num}','${ref_id}',NOW(),0)`
+            const sql6 = `INSERT INTO customers_units
+                (idusers,user_email,prev_associations_active,association_active,serial_num,ca_active_ref_id,latest_oas_update_date,idunits_warranties,web_conf_confirmed, web_conf_confirmed_date,email_conf_sent_by_unit,email_conf_sent_by_unit_date) 
+                VALUES ('${user_id}','${useremail}',1,1,'${serial_num}','${ref_id}',NOW(),0,1,NOW(),1,NOW())`
 
             const sqlResult6 = await pool.query(sql6)
 
@@ -302,7 +302,7 @@ module.exports.fnAccountAssociateDirect = async (event) => {
 
         console.log('++++ Received Payload ', event);
 
-        const userIdres = await UserIdentification(account_email, account_password, axios);
+        const userIdres = await isValidUserLogin(account_email, account_password, pool)
 
         if (userIdres && userIdres != null){
             //get user's details
@@ -314,6 +314,8 @@ module.exports.fnAccountAssociateDirect = async (event) => {
             if(associated) {
                 //get product name
                 const productName = await getProductName(serialNumber)
+
+                pool.end()
     
                 //get payload
                 const emailPayload = getEmailPayload({
@@ -330,11 +332,6 @@ module.exports.fnAccountAssociateDirect = async (event) => {
                     payload: JSON.stringify(emailPayload),
                     qos: '0' 
                 }
-                /*publishParams = {
-                    topic: `${MQTT_TOPIC_ENV}/scican/cmd/send_email`,
-                    payload: JSON.stringify(emailPayload),
-                    qos: '0' 
-                }*/
 
                 console.info('+++ Sending Email ... ', publishParams)
             } else {
