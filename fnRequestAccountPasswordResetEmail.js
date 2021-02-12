@@ -203,10 +203,11 @@ const getEmailPayload = (params) => {
     const linkUrl = "updates.scican.com"
     const source = "no-reply.notification@scican.com"
     const templateName = "template_name"
+    const lang = 'ENG'
     let subject = "Reset Password"
     let body = `Dear ${firstname}${lname},  <br /><br /> `
             + `You recently requested to reset your password for your Updates.SciCan page account. Click the button bellow to reset it.  <br /><br />`
-            + `<a href='https://updates.scican.com/passwordChange.php?user=${email}&keyid=${password_hash}&key=${activation_key}&lang=ENG'>Reset your password</a> <br /><br />`
+            + `<a href='https://updates.scican.com/passwordChange.php?user=${email}&keyid=${password_hash}&key=${activation_key}&lang=${lang}&sn=${serial_num}&pub=1'>Reset your password</a> <br /><br />`
             + `If you did not request a password reset, please ignore this email. This password reset is only valid for the next 60 minutes.  <br /><br />`
             + `Regards, <br /><br />`
             + `SciCan Team`
