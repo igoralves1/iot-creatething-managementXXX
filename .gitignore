@@ -62,4 +62,4 @@ fabric.properties
 # *.iml
 # modules.xml
 
-.env.*
+.env.*.DS_Store
