@@ -8,7 +8,13 @@ const https = require('https')
 const { v4: uuidv4 } = require('uuid');
 const { table } = require('console');
 
-
+// Added lower timeout to reduce the running in pending.
+AWS.config.update({
+    httpOptions: {
+        timeout: 5000,
+        connectTimeout: 3000
+    }
+});
 
 const publishMqtt = (params) =>
   new Promise((resolve, reject) =>
@@ -68,10 +74,11 @@ module.exports.fnSciCanRnDlogs = async (event) => {
         console.log("🚀 2 - topic:", topic)
         const awsRequestId = uuidv4()
         console.log("🚀 3 - awsRequestId:", awsRequestId)
-        let respUploadToS3 = await uploadToS3(`${awsRequestId}.json`, JSON.stringify(topic))
-        console.log("🚀 4 - respUploadToS3:", respUploadToS3)
+        
         let repInsertMongo = await insertMongo(topic)
-        console.log("🚀 5 - repInsertMongo:", repInsertMongo)
+        console.log("🚀 5 - repInsertMongo:", repInsertMongo);
+        // let respUploadToS3 = await uploadToS3(`${awsRequestId}.json`, JSON.stringify(topic))
+        // console.log("🚀 4 - respUploadToS3:", respUploadToS3);
         // await insertMongoAtlas(topic)
         
         // let info = {

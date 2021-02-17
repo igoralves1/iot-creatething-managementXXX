@@ -22,12 +22,12 @@
     "mysql2": "^2.1.0",
     "node-zabbix-sender": "^1.1.0",
     "pg": "^8.4.1",
-    "serverless": "^2.23.0",
+    "serverless": "^2.25.1",
     "uuid": "^7.0.3"
   },
   "devDependencies": {
     "serverless-add-api-key": "^4.1.0",
     "serverless-domain-manager": "^3.3.1",
-    "serverless-iam-roles-per-function": "^3.1.1-720dc0f"
+    "serverless-iam-roles-per-function": "2.0.2"
   }
 }
