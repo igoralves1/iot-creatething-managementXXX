@@ -22,6 +22,9 @@ const S3 = new AWS.S3()
 const Joi = require('@hapi/joi')
 var iotdata = new AWS.IotData({endpoint: process.env.MQTT_ENDPOINT});
 const MQTT_TOPIC_ENV = process.env.mqttTopicEnv
+const { saveAssociationEmailRequest } = require('./utils/ManageAssociations')
+const { getProductName } = require('./utils/ProductsData')
+const { isUserExist } = require('./utils/UsersData')
 
 const mysql = require('mysql2/promise')
 const axios = require('axios')
@@ -30,98 +33,9 @@ const pool = mysql.createPool({
     host     : process.env.rdsMySqlHost,
     user     : process.env.rdsMySqlUsername,
     password : process.env.rdsMySqlPassword,
-    database : process.env.rdsMySqlDb
+    database : process.env.rdsMySqlDb,
+    connectionLimit: 10
 })
-
-async function isUserExist(user_email) {
-    try {
-
-        // console.log("pool ==== ", pool)
-
-        const sql = `SELECT count(1) AS numbers FROM users WHERE username = '${user_email}'`
-        // console.log("sql ==== ", sql)
-
-        const sqlResult = await pool.query(sql)
-        const res = sqlResult[0]
-
-        // console.log("sqlRes ==== ", sqlResult)
-        var userexist
-        if (res[0] && res[0].numbers == 0) {
-            userexist = false
-        } else {
-            userexist = true
-        }
-
-        return userexist
-
-    } catch (error) {
-        console.log("🚀 0.isUserExist - error:", error)
-        console.log("🚀 0.1.isUserExist - error:", error.stack)
-        return false
-    }
-}
-
-/**
- * Returns an object with payload data ready for publishing
- * 
- * @param {string} user_email
- * @returns {Object} 
- */
-/*
-async function getUserDetails(user_email) {
-    let details = {}
-    try {
-        const sql = `SELECT firstname, lastname, company, telephone FROM users WHERE username = '${user_email}'`
-
-        if ( pool ) {
-            const sqlResult = await pool.query(sql)
-            const res = sqlResult[0]
-
-            if(res[0]) {
-                details.firstname = res[0].firstname
-                details.lastname = res[0].lastname
-                details.company = res[0].lastname
-                details.phone = res[0].telephone
-            }
-        }
-        
-        return details
-
-    } catch (error) {
-        console.log("🚀 getUserDetails - error: ", error)
-        console.log("🚀 getUserDetails - error stack: ", error.stack)
-    }
-}*/
-
-/**
- * Returns product name
- * 
- * @param {string} serial_number
- * @returns {string} 
- */
-async function getProductName(serial_number) {
-    let product_name = ''
-    
-    try {
-        const sql = `SELECT model_general_name FROM units_models WHERE productSerialNumberPrefix = '${serial_number.slice(0, 4)}'`
-
-        if ( pool ) {
-            const sqlResult = await pool.query(sql)
-            const res = sqlResult[0]
-
-            if(res[0]) {
-                product_name = res[0].model_general_name
-            }
-        }
-        
-        return product_name
-
-    } catch (error) {
-        console.log("🚀 getProductName - error: ", error)
-        console.log("🚀 getProductName - error stack: ", error.stack)
-        return ''
-    }
-}
 
 const getEmailPayload = (params) => {
     const { email, product_name, serial_num, language } = params
@@ -171,12 +85,15 @@ module.exports.fnAccountSignUpEmail = async (event) => {
         const language = event.language_iso639 ? event.language_iso639 : ''
         console.log('++++ Received Payload ', event);        
 
-        const userExist = await isUserExist(account_email)
+        const userExist = await isUserExist(account_email, pool)
     console.log('==user Exists ', userExist)
 
         if(!userExist && userExist != null) {
+            //insert email and sn into online_access_email_request table
+            const saveRequest = await saveAssociationEmailRequest(serialNumber, account_email, pool)
+
             //get product name
-            const productName = await getProductName(serialNumber)
+            const productName = await getProductName(serialNumber, pool)
 
             const emailPayload = getEmailPayload({
                 email: account_email, 
@@ -205,6 +122,8 @@ module.exports.fnAccountSignUpEmail = async (event) => {
         }
 
         if(Object.keys(publishParams).length > 0) {
+            console.info('+++ Publishing ...')
+
             await publishMqtt(publishParams)
                 .then( () => console.log('Publish Done: Params - ', publishParams))
                 .catch(e => console.log(e))

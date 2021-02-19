@@ -20,10 +20,13 @@
 const AWS = require('aws-sdk')
 const S3 = new AWS.S3()
 const Joi = require('@hapi/joi')
-const crypto = require('crypto')
+// const crypto = require('crypto')
 var iotdata = new AWS.IotData({endpoint: process.env.MQTT_ENDPOINT});
 const MQTT_TOPIC_ENV = process.env.mqttTopicEnv
 const { getPasswordHash } = require('./utils/getPasswordHash')
+const { getProductName, checkOnlineAccessStatus } = require('./utils/ProductsData')
+const { getUserDetails, updateActivationKey } = require('./utils/UsersData')
+const { generateRandomValue } = require('./utils/helpers')
 
 const mysql = require('mysql2/promise')
 // const axios = require('axios')
@@ -34,168 +37,14 @@ const pool = mysql.createPool({
     host     : process.env.rdsMySqlHost,
     user     : process.env.rdsMySqlUsername,
     password : process.env.rdsMySqlPassword,
-    database : process.env.rdsMySqlDb
+    database : process.env.rdsMySqlDb,
+    connectionLimit: 10
 })
 
 const publishMqtt = (params) =>
     new Promise((resolve, reject) =>
     iotdata.publish(params, (err, res) => resolve(res)))
 
-
-const getRandomValue = () => {
-    const randVal = Math.random() + Math.random() + Math.random() + Math.random() + Math.random()
-    let hash = crypto.createHash('md5').update(String(randVal)).digest("hex")
-
-    return hash
-}
-
-/**
- * Returns an array of units
- * 
- * @param {string} email 
- * @returns {Array}
- */
-async function checkOnlineAccessStatus(email, serial_number) {
-    let isActive = false
-    
-    try {
-        const sql = `SELECT association_active FROM customers_units WHERE association_active = 1 AND user_email = '${email}' AND serial_num = '${serial_number}'`
-console.log('--- sql ', sql)
-        if ( pool ) {
-            const sqlResult = await pool.query(sql)
-            const res = sqlResult[0]
-            const data = res && res != null ? res : []
-
-            if(data.length > 0) {
-                isActive = true
-            }
-        }
-        
-        return isActive
-    } catch (error) {
-        console.log("🚀 checkOnlineAccessStatus - error: ", error)
-        console.log("🚀 checkOnlineAccessStatus - error stack: ", error.stack)
-        return false
-    }
-}
-
-/**
- * Get password hash data
- * 
- * @param {string} user_email 
- * @param {string} password 
- * 
- * @returns Object
- */
-async function getPasswordHashData(user_email, password, axios){
-
-    try {
-        var url = "http://ws.scican.com/user-password-create" //"http://3.86.253.251/user-password-create"
-        var data
-        let hash_data = {}
-    console.log(' identification url - ', url)
-    
-        data = {
-            account_email: user_email,
-            account_password: password
-        }
-
-        var axiosconnect = await axios.create()
-        let res = await axiosconnect.post(url, data)
-    
-        if(res.data) {
-            hash_data.password_hash = res.data.password_hash || ''
-            hash_data.hash_time = res.data.hash_time || ''
-        }
-
-        return hash_data
-
-    } catch (error) {
-        console.log("🚀 0.getPasswordHashData - error:", error)
-        console.log("🚀 0.1.getPasswordHashData - error:", error.stack)
-        return {}
-    }
-}
-
-async function updateActivationKey(email, activatin_key) {
-    let isUpdated = false
-
-    try {
-        const sql = `UPDATE users SET activationkey='${activatin_key}' WHERE username='${email}'`
-
-        if ( pool ) {
-            const sqlResult = await pool.query(sql)
-            const res = sqlResult[0]
-
-            isUpdated = sqlResult[0] ? sqlResult[0].changedRows : false
-        }
-        
-        return isUpdated
-
-    } catch (error) {
-        console.log("🚀 0.updateActivationKey - error: ", error)
-        console.log("🚀 0.1updateActivationKey - error stack: ", error.stack)
-        return false
-    }
-}
-
-/**
- * Returns an object with payload data ready for publishing
- * 
- * @param {string} user_email
- * @returns {Object} 
- */
-async function getUserDetails(user_email) {
-    let details = {}
-    try {
-        const sql = `SELECT firstname, lastname FROM users WHERE username = '${user_email}'`
-
-        if ( pool ) {
-            const sqlResult = await pool.query(sql)
-            const res = sqlResult[0]
-
-            if(res[0]) {
-                details.firstname = res[0].firstname
-                details.lastname = res[0].lastname
-            }
-        }
-        
-        return details
-
-    } catch (error) {
-        console.log("🚀 getUserDetails - error: ", error)
-        console.log("🚀 getUserDetails - error stack: ", error.stack)
-    }
-}
-
-/**
- * Returns product name
- * 
- * @param {string} serial_number
- * @returns {string} 
- */
-async function getProductName(serial_number) {
-    let product_name = ''
-    
-    try {
-        const sql = `SELECT model_general_name FROM units_models WHERE productSerialNumberPrefix = '${serial_number.slice(0, 4)}'`
-
-        if ( pool ) {
-            const sqlResult = await pool.query(sql)
-            const res = sqlResult[0]
-
-            if(res[0]) {
-                product_name = res[0].model_general_name
-            }
-        }
-        
-        return product_name
-
-    } catch (error) {
-        console.log("🚀 getProductName - error: ", error)
-        console.log("🚀 getProductName - error stack: ", error.stack)
-    }
-}
 
 const getEmailPayload = (params) => {
     const { email, firstname, lastname, product_name, serial_num, language, password_hash, activation_key } = params
@@ -207,7 +56,7 @@ const getEmailPayload = (params) => {
     let subject = "Reset Password"
     let body = `Dear ${firstname}${lname},  <br /><br /> `
             + `You recently requested to reset your password for your Updates.SciCan page account. Click the button bellow to reset it.  <br /><br />`
-            + `<a href='https://updates.scican.com/passwordChange.php?user=${email}&keyid=${password_hash}&key=${activation_key}&lang=${lang}&sn=${serial_num}&pub=1'>Reset your password</a> <br /><br />`
+            + `<a href='https://updates.scican.com/passwordChange.php?user=${email}&keyid=${password_hash}&key=${activation_key}&lang=${lang}'>Reset your password</a> <br /><br />`
             + `If you did not request a password reset, please ignore this email. This password reset is only valid for the next 60 minutes.  <br /><br />`
             + `Regards, <br /><br />`
             + `SciCan Team`
@@ -249,33 +98,30 @@ module.exports.fnRequestAccountPasswordResetEmail = async (event) => {
 
         console.log('++++ Received Payload ', event)
 
-        let userDetails = await getUserDetails(account_email)
-console.log('+++ user details - ', userDetails)
+        let userDetails = await getUserDetails(account_email, pool)
         
         if(typeof userDetails == 'object' && Object.keys(userDetails).length > 0) {
             //check if online access is active for this unit
-            isActive = checkOnlineAccessStatus(account_email, serialNumber)
+            //isActive = checkOnlineAccessStatus(account_email, serialNumber, pool)
         }
 
-        if(isActive && isActive != null) {
+        if(typeof userDetails == 'object' && Object.keys(userDetails).length > 0) {
             //get activation key
-            const activation_key = getRandomValue()
+            const activation_key = generateRandomValue()
 
             //get new password
-            const new_password = getRandomValue()
+            const new_password = generateRandomValue()
 
             //get password hash
-            // const hash_data = await getPasswordHashData(account_email, new_password, axios)
-            // const password_hash = hash_data.password_hash || ''
             const password_hash = getPasswordHash(account_email, new_password, Date.now())
             console.log(' Password Hash = ', password_hash)
 
             if(password_hash) {
-                const activationKeyUpdated = await updateActivationKey(account_email, activation_key)
+                const activationKeyUpdated = await updateActivationKey(account_email, activation_key, pool)
             
                 if(activationKeyUpdated) {
                     //get product name
-                    const productName = await getProductName(serialNumber)
+                    const productName = await getProductName(serialNumber, pool)
                 
                     //get email payload
                     const emailPayload = getEmailPayload({
