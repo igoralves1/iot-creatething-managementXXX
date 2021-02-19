@@ -48,8 +48,6 @@ module.exports.fnAccountGet = async (event) => {
 
         const association_data = await unitActiveAssociation(serial_number, pool)
     console.log('==unit association ', association_data)
-        
-        pool.end()
 
         if(association_data != null && Object.keys(association_data).length > 0) {
             const account_email = association_data.user_email
@@ -67,7 +65,7 @@ module.exports.fnAccountGet = async (event) => {
             }
 
             console.info('+++ Association exists. Publish Params ... ', publishParams)        
-        } else {
+        } else if (association_data != null) {
             publishParams = {
                 topic: `${MQTT_TOPIC_ENV}/scican/srv/${serial_number}/event/account`,
                 payload: JSON.stringify({
@@ -78,6 +76,8 @@ module.exports.fnAccountGet = async (event) => {
             }
 
             console.info('+++ No Associations found ... ', publishParams)
+        } else {
+            console.log("🚀 1-Something went wrong. Nothing Published: association_data = ", association_data)
         }
 
         if(Object.keys(publishParams).length > 0) {
