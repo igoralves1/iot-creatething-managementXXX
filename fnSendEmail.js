@@ -125,6 +125,9 @@ const preProcessPayload = (receivedData) => {
     if (!data.body && !data.template) {
         console.warn('Invalid payload fields configuration: body and template are not defined.');
     }
+    if (receivedData.mqtt_response_payload &&  receivedData.mqtt_response_payload.result != null) {
+        data.mqtt_response_payload.result = receivedData.mqtt_response_payload.result
+    } 
     return data;
 }
 
@@ -229,7 +232,7 @@ module.exports.fnSendEmail = async function (event, context, callback) {
         }
         console.log("Sent email message id: " + response.MessageId + "");
         data.result.message_id = response.MessageId;
-        data.mqtt_response_payload.result = 'email_sent';
+        data.mqtt_response_payload.result = (data.mqtt_response_payload &&  data.mqtt_response_payload.result != null) ? data.mqtt_response_payload.result : 'email_sent';
         // Add message id to the data.
         if(data.mqtt_response_topic) {
             return new Promise((resolve, reject) => {
