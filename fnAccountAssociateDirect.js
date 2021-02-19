@@ -275,7 +275,7 @@ const getEmailPayload = (params) => {
         "mail": email,
         "subject": subject,
         "body": body,
-        "mqtt_response_topic": `/scican/${serial_num}/srv/request/account-associate-direct`,
+        "mqtt_response_topic": `/scican/srv/${serial_num}/response/account-associate-direct`,
         "mqtt_response_payload": {
             "result": "associated"
         },
@@ -314,8 +314,6 @@ module.exports.fnAccountAssociateDirect = async (event) => {
             if(associated) {
                 //get product name
                 const productName = await getProductName(serialNumber)
-
-                pool.end()
     
                 //get payload
                 const emailPayload = getEmailPayload({
