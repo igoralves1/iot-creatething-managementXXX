@@ -52,6 +52,7 @@ custom:
   # ------ TESTS ------
   fnAutomatedTests: 'fnAutomatedTests'
   fnFwUpdateFlow_test: 'fnFwUpdateFlow_test'
+  fnTestSciCanRnDlogs: 'fnTestSciCanRnDlogs'
 
 
 
@@ -1218,10 +1219,6 @@ functions:
       Action:
       - "iot:*"
       Resource: '*'
-    - Effect: "Allow"
-      Action:
-      - "AWSLambdaVPCAccessExecutionRole"
-      Resource: '*'
     - Effect: 'Allow'
       Action:
       - 'logs:CreateLogGroup'
@@ -1243,7 +1240,6 @@ functions:
       MQTT_TOPIC_ENV: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
       AWS_SES_REGION: ${file(env.yml):AWS_SES_REGION}
       AWS_SES_EMAIL_SENDER: ${file(env.yml):AWS_SES_EMAIL_SENDER}
-      AWS_NODEJS_CONNECTION_REUSE_ENABLED: 1
 
   fnAutomatedTests:
     name: ${self:provider.stage}-${self:custom.fnAutomatedTests}
@@ -1431,6 +1427,40 @@ functions:
     environment:
       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
       mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
+
+  fnTestSciCanRnDlogs:
+    name: ${self:provider.stage}-${self:custom.fnTestSciCanRnDlogs}
+    handler: fnTestSciCanRnDlogs.fnTestSciCanRnDlogs
+    events:
+      - iot:
+          name: ${self:provider.stage}_${self:custom.fnTestSciCanRnDlogs}
+          sql: "SELECT * AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/test/event' "
+    memorySize: 512
+    timeout: 600
+    maximumEventAge: 7200
+    maximumRetryAttempts: 1
+    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnTestSciCanRnDlogs}
+    iamRoleStatements:
+      - Effect: "Allow"
+        Action:
+          - "iot:*"
+        Resource: '*'
+      - Effect: 'Allow'
+        Action:
+          - 's3:*'
+        Resource: 'arn:aws:s3:::${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}/*'
+      - Effect: 'Allow'
+        Action:
+          - 'logs:CreateLogGroup'
+          - 'logs:CreateLogStream'
+          - 'logs:PutLogEvents'
+          - 'ec2:CreateNetworkInterface'
+          - 'ec2:DescribeNetworkInterfaces'
+          - 'ec2:DeleteNetworkInterfaces'
+        Resource: "*"
+    vpc: ${file(env.yml):vpc-${self:provider.stage}}
+    environment:
+      BUCKET_SCICAN_RND_LOGS: '${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}'
 
 # ===========================================
 resources:

@@ -66,7 +66,8 @@ const publishMqtt = (params) =>
 async function getUserDetails(email) {
     let details = {}
     try {
-        const sql = `SELECT username, firstname, lastname, telephone, company, office_address_one, office_address_two, city, country,  zip_postal_code, state_province_region FROM users WHERE username = '${email}'`
+        const sql = `SELECT email, firstname, lastname, telephone, company, office_address_one, office_address_two, city, 
+country,  zip_postal_code, state_province_region FROM users WHERE username = '${email}'`
 
         if ( pool ) {
             const sqlResult = await pool.query(sql)
@@ -75,7 +76,6 @@ async function getUserDetails(email) {
             if(res[0]) {
                 details.firstname = res[0].firstname || ''
                 details.lastname = res[0].lastname || ''
-                details.email = res[0].username || ''
                 details.telephone = res[0].telephone || ''
                 details.company = res[0].company || ''
                 details.address1 = res[0].office_address_one || ''
@@ -86,7 +86,7 @@ async function getUserDetails(email) {
                 details.zip_code = res[0].zip_postal_code || ''
             }
         }
-        console.log('details', details);
+        
         return details
 
     } catch (error) {
@@ -146,7 +146,7 @@ const processPaylodData = (serial_num, userDetail, units ) => {
     const address = address1 +(address2 ? `, ${address2}` : '')
     let account_state = ""
     let customer_units = []
-console.log(userDetail);
+
     //process units
     for( const k in units) {
         if(units[k].serial_number == serial_num) {
