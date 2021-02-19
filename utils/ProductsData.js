@@ -202,15 +202,15 @@ exports.unitAssociations = async (serial_num, pool) => {
  */
 exports.unitActiveAssociation = async (serial_num, pool) => {
     try {
-        const sql = `SELECT * FROM customers_units WHERE association_active = 1 AND serial_num = ?`
+        const sql = `SELECT user_email, association_active FROM customers_units WHERE association_active = 1 AND serial_num = ? LIMIT 1`
 
         const sqlResult = await pool.query(sql, [serial_num])
         const res = sqlResult[0]
 
-        return res ? res[0] : []
+        return res && res.length > 0? res[0] : []
     } catch (error) {
         console.log("🚀 0.unitAssociations - error:", error)
         console.log("🚀 0.1.unitAssociations - error:", error.stack)
-        return []
+        return null
     }
 }
