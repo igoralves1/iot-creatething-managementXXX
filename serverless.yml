@@ -48,11 +48,11 @@ custom:
   fnAccountSignUpForm: 'fnAccountSignUpForm'
   fnScicanGetAccountInformation: 'fnScicanGetAccountInformation'
   fnAccountGet: 'fnAccountGet'
-  
+
   # ------ TESTS ------
   fnAutomatedTests: 'fnAutomatedTests'
   fnFwUpdateFlow_test: 'fnFwUpdateFlow_test'
-  fnTestSciCanRnDlogs: 'fnTestSciCanRnDlogs'
+  fnWatchman: 'fnWatchman'
 
 
 
@@ -178,7 +178,6 @@ provider:
     Action:
     - "iot:*"
     Resource: '*'
-
   - Effect: 'Allow'
     Action:
     - 's3:*'
@@ -1428,18 +1427,19 @@ functions:
       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
       mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
 
-  fnTestSciCanRnDlogs:
-    name: ${self:provider.stage}-${self:custom.fnTestSciCanRnDlogs}
-    handler: fnTestSciCanRnDlogs.fnTestSciCanRnDlogs
+  fnWatchman:
+    name: ${self:provider.stage}-${self:custom.fnWatchman}
+    handler: fnWatchman.handler
     events:
       - iot:
-          name: ${self:provider.stage}_${self:custom.fnTestSciCanRnDlogs}
-          sql: "SELECT * AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/+/test/event' "
-    memorySize: 512
-    timeout: 600
-    maximumEventAge: 7200
+          name: ${self:provider.stage}_${self:custom.fnWatchman}
+          sql: "SELECT * AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/watchman' "
+      - schedule: cron(0/5 * * * ? *)
+    memorySize: 256
+    timeout: 10
+    maximumEventAge: 120
     maximumRetryAttempts: 1
-    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnTestSciCanRnDlogs}
+    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnWatchman}
     iamRoleStatements:
       - Effect: "Allow"
         Action:
@@ -1461,6 +1461,8 @@ functions:
     vpc: ${file(env.yml):vpc-${self:provider.stage}}
     environment:
       BUCKET_SCICAN_RND_LOGS: '${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}'
+      ZABBIX_SERVER: 'ip-172-31-87-224.ec2.internal'
+      ZABBIX_HOSTNAME: '${self:provider.stage}.fnWatchman'
 
 # ===========================================
 resources:
