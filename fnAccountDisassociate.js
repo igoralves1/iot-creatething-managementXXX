@@ -82,6 +82,11 @@ const getEmailPayload = (params) => {
  * else if check entry in table query failed, do notthing
 */
 module.exports.fnAccountDisassociate = async (event) => {
+    console.log('🚀 - Getting a Connection  ......  ')
+
+    const connection = await pool.getConnection()
+    console.log('🚀 - Connection  ====  ', connection)
+
     try {
         const retval = event.retval
         const topic = event.topic
@@ -89,30 +94,30 @@ module.exports.fnAccountDisassociate = async (event) => {
         const serialNumber = res[2]
         let publishParams = {}
         let isDisassociated = false
+        let useremail = ''
+        let ca_active_ref_id = ''
 
         const account_email = event.account_email
         const language = event.language_iso639 ? event.language_iso639 : ''
 
         console.log('+++ Received payload', event)
+        
+        let checkRes = await associationDetails(account_email, serialNumber, connection)
 
-        let checkRes = await associationDetails(account_email, serialNumber, pool)
-
-        if (checkRes == null) {
-            checkRes = []
+        if (checkRes != null) {
+            useremail = checkRes.length > 0 ? checkRes[0] : ""
+            ca_active_ref_id = checkRes.length > 0 ? checkRes[1] : ""
         }
 
-        const useremail = checkRes.length > 0 ? checkRes[0] : ""
-        const ca_active_ref_id = checkRes.length > 0 ? checkRes[1] : ""
-console.log('checkRes', checkRes)
-        if (useremail && useremail != null){
-            isDisassociated = await disassociate(useremail, serialNumber, ca_active_ref_id, pool)
+        if (useremail && useremail != null) {
+            isDisassociated = await disassociate(useremail, serialNumber, ca_active_ref_id, connection)
             
             if(isDisassociated) {
                 //get user's details
-                const userDetails = await getUserDetails(useremail, pool)
+                const userDetails = await getUserDetails(useremail, connection)
 
                 //get product name
-                const productName = await getProductName(serialNumber, pool)
+                const productName = await getProductName(serialNumber, connection)
 
                 const emailPayload = getEmailPayload({
                     email: useremail, 
@@ -131,9 +136,16 @@ console.log('checkRes', checkRes)
 
                 console.info('+++ Sending email  to topic ... ', publishParams)  
             } else {
+                if(isDisassociated == null) {
+                    publishParams = {
+                        topic: `${MQTT_TOPIC_ENV}/scican/srv/${serialNumber}/response/account-disassociate`,
+                        payload: JSON.stringify({"result": "unknown_error"}),
+                        qos: '0' 
+                    }
+                }
                 console.log("🚀 Dissociation not successful. isDisassociated = ", isDisassociated)
             }
-        } else if(account_email && !useremail && useremail != null) {
+        } else if(account_email && !useremail && useremail != null && checkRes != null) {
             publishParams = {
                 topic: `${MQTT_TOPIC_ENV}/scican/srv/${serialNumber}/response/account-disassociate`,
                 payload: JSON.stringify({"result": "was_disassociated"}),
@@ -142,6 +154,13 @@ console.log('checkRes', checkRes)
 
             console.info('+++ Was already associated. Publishing to unit ... ', publishParams)
         } else {
+            if(checkRes == null) {
+                publishParams = {
+                    topic: `${MQTT_TOPIC_ENV}/scican/srv/${serialNumber}/response/account-disassociate`,
+                    payload: JSON.stringify({"result": "unknown_error"}),
+                    qos: '0' 
+                }
+            }
             console.log("🚀 Something went wrong. Nothing Published: useremail = ", useremail)
         }
 
@@ -169,5 +188,8 @@ console.log('checkRes', checkRes)
     } catch (error) {
         console.log("🚀 0 - error:", error)
         console.log("🚀 0.1 - error:", error.stack)
+    } finally {
+        await connection.release()
+        console.log('🚀 - Connection released - ', connection)
     }
 }

@@ -41,6 +41,8 @@ const AWS = require('aws-sdk')
 var iotdata = new AWS.IotData({endpoint: process.env.MQTT_ENDPOINT});
 const MQTT_TOPIC_ENV = process.env.mqttTopicEnv
 const uuid = require('uuid')
+const { getCustomerUnits } = require('./utils/ProductsData')
+const { getUserDetails } = require('./utils/UsersData')
 
 const mysql = require('mysql2/promise')
 const axios = require('axios');
@@ -63,6 +65,7 @@ const publishMqtt = (params) =>
  * @param {string} email 
  * @returns {Object}
  */
+/*
 async function getUserDetails(email) {
     let details = {}
     try {
@@ -95,6 +98,7 @@ async function getUserDetails(email) {
         return {}
     }
 }
+*/
 
 /**
  * Returns an array of units
@@ -102,6 +106,7 @@ async function getUserDetails(email) {
  * @param {string} email 
  * @returns {Array}
  */
+/*
 async function getCustomerUnits(email) {
     let units = []
     
@@ -132,6 +137,7 @@ async function getCustomerUnits(email) {
         return []
     }
 }
+*/
 
 /**
  * Returns an object with payload data ready for publishing
@@ -186,26 +192,27 @@ console.log(userDetail);
 
 
 module.exports.fnScicanGetAccountInformation = async (event) => {
+    console.log('🚀 - Getting a Connection  ......  ')
+
+    const connection = await pool.getConnection()
+    console.log('🚀 - Connection  ===  ', connection)
+
     try {
         const retval = event.retval
         const serial_number = event.serial_number || ''
         const email = event.email || ''
         const response_topic = event.response_topic || ''
+        const error_topic = event.error_topic || ''
         
         let publishParams = {}
 
         console.log('+++ Received payload == ', event)
 
-        let userDetails = await getUserDetails(email)
+        let userDetails = await getUserDetails(email, connection)
 
-        /*if(typeof userDetails !== 'object' || userDetails == null) {
-            userDetails = {}
-        }*/
-
-        if(typeof userDetails == 'object' && Object.keys(userDetails).length > 0) {
+        if(userDetails != null && typeof userDetails == 'object' && Object.keys(userDetails).length > 0) {
             //get user's units
-            const units = await getCustomerUnits(email)
-
+            const units = await getCustomerUnits(email, connection)
             //get payload
             const payload = processPaylodData(serial_number, userDetails, units)
 
@@ -217,6 +224,13 @@ module.exports.fnScicanGetAccountInformation = async (event) => {
 
             console.info('+++ Sending Account Change Event ... ', publishParams)
         } else {
+            if(userDetails == null) {
+                publishParams = {
+                    topic: error_topic,
+                    payload: JSON.stringify({"result": "unknown_error"}),
+                    qos: '0' 
+                }
+            }
             console.log("🚀 Something went wrong. Nothing Published: userDetails = ", userDetails)
         }
 
@@ -230,6 +244,9 @@ module.exports.fnScicanGetAccountInformation = async (event) => {
     } catch (error) {
         console.log("🚀 0 - error:", error)
         console.log("🚀 0.1 - error:", error.stack)
+    } finally {
+        await connection.release()
+        console.log('🚀 - Connection released - ', connection)
     }
 }
 
