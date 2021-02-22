@@ -33,12 +33,6 @@ const mysql = require('mysql2/promise')
 const axios = require('axios')
 
 
-const pool = mysql.createPool({
-    host     : process.env.rdsMySqlHost,
-    user     : process.env.rdsMySqlUsername,
-    password : process.env.rdsMySqlPassword,
-    database : process.env.rdsMySqlDb
-})
 
 
 const publishMqtt = (params) =>
@@ -82,6 +76,7 @@ const getEmailPayload = (params) => {
  * else if check entry in table query failed, do notthing
 */
 module.exports.fnAccountDisassociate = async (event) => {
+    let connection;
     try {
         const retval = event.retval
         const topic = event.topic
@@ -95,7 +90,7 @@ module.exports.fnAccountDisassociate = async (event) => {
 
         console.log('+++ Received payload', event)
 
-        let checkRes = await associationDetails(account_email, serialNumber, pool)
+        let checkRes = await associationDetails(account_email, serialNumber, connection)
 
         if (checkRes == null) {
             checkRes = []
@@ -105,14 +100,21 @@ module.exports.fnAccountDisassociate = async (event) => {
         const ca_active_ref_id = checkRes.length > 0 ? checkRes[1] : ""
 console.log('checkRes', checkRes)
         if (useremail && useremail != null){
-            isDisassociated = await disassociate(useremail, serialNumber, ca_active_ref_id, pool)
+
+            connection = mysql.createConnection({
+                host     : process.env.rdsMySqlHost,
+                user     : process.env.rdsMySqlUsername,
+                password : process.env.rdsMySqlPassword,
+                database : process.env.rdsMySqlDb
+            });
+            isDisassociated = await disassociate(useremail, serialNumber, ca_active_ref_id, connection)
             
             if(isDisassociated) {
                 //get user's details
-                const userDetails = await getUserDetails(useremail, pool)
+                const userDetails = await getUserDetails(useremail, connection)
 
                 //get product name
-                const productName = await getProductName(serialNumber, pool)
+                const productName = await getProductName(serialNumber, connection)
 
                 const emailPayload = getEmailPayload({
                     email: useremail, 
@@ -169,5 +171,9 @@ console.log('checkRes', checkRes)
     } catch (error) {
         console.log("🚀 0 - error:", error)
         console.log("🚀 0.1 - error:", error.stack)
+    } finally {
+        if(connection){
+            connection.end();
+        }
     }
 }
