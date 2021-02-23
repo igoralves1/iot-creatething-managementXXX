@@ -10,8 +10,7 @@ const dbPool = pool.createPool({
 })
 
 module.exports.execute = async function (sql, args){
-    const promisePool = dbPool.promise();
     // query database using promises
-    const [rows, fields] = await promisePool.execute(sql, args);
+    const [rows, fields] = await dbPool.execute(sql, args);
     return rows;
 }

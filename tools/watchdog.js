@@ -3,9 +3,6 @@ const ZabbixSender = require('node-zabbix-sender');
 // Performace lib
 const {performance} = require('perf_hooks');
 
-
-// The items count
-let itemsCount = 0;
 //Milliseconds start
 let startMiliSeconds = performance.now();
 
@@ -18,11 +15,11 @@ const configured = typeof process.env.ZABBIX_SERVER !== "undefined" && typeof pr
 const sender = new ZabbixSender({
     host: process.env.ZABBIX_SERVER,
     items_host: process.env.ZABBIX_HOSTNAME,
+    timeout: 2000
 });
 
 // Private item adding
 const addItem = (type, code, value) => {
-    itemsCount++;
     // Trapper key, can be [err] or [err.svc]
     let key;
     if (code) {
@@ -31,8 +28,8 @@ const addItem = (type, code, value) => {
     } else {
         key = type;
     }
-    console.log("Added key no " + itemsCount + ":" + key + ", value: " + value);
     sender.addItem(key, value);
+    console.log("Added key no " + sender.countItems() + ":" + key + ", value: " + value);
 }
 
 const end2MiliSeconds = () => {
