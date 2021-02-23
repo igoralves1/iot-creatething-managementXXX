@@ -1,7 +1,7 @@
 const db = require('mysql2/promise')
 
 module.exports.execute = async function (sql, args){
-    const connection = db.createConnection({
+    const connection = await db.createConnection({
         host     : process.env.rdsMySqlHost,
         user     : process.env.rdsMySqlUsername,
         password : process.env.rdsMySqlPassword,
@@ -9,5 +9,8 @@ module.exports.execute = async function (sql, args){
     })
     // query database using promises
     const [rows, fields] = await connection.execute(sql, args);
+
+    connection.end()
+    
     return rows;
 }
