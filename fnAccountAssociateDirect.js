@@ -25,19 +25,12 @@ var iotdata = new AWS.IotData({endpoint: process.env.MQTT_ENDPOINT});
 const MQTT_TOPIC_ENV = process.env.mqttTopicEnv
 const { getPasswordHash } = require('./utils/getPasswordHash')
 const { isValidUserLogin } = require('./utils/userAuthentication')
+const { getProductName } = require('./utils/ProductsData')
+const { getUserDetails } = require('./utils/UsersData')
+const { AssociateUnit } = require('./utils/ManageAssociations')
 
 
 const mysql = require('mysql2/promise')
-
-
-const pool = mysql.createPool({
-    host     : process.env.rdsMySqlHost,
-    user     : process.env.rdsMySqlUsername,
-    password : process.env.rdsMySqlPassword,
-    database : process.env.rdsMySqlDb,
-    connectionLimit: 10
-})
-
 
 const publishMqtt = (params) =>
     new Promise((resolve, reject) =>
@@ -49,213 +42,6 @@ const getRandomValue = () => {
     let hash = crypto.createHash('md5').update(String(randVal)).digest("hex")
 
     return hash
-}
-
-async function UserIdentification(account_email, account_password, axios) {
-
-    var url = "http://3.94.80.183/user-authentication" //"http://3.86.253.251/user-authentication"
-    var data
-
-    data = {
-        account_email: account_email,
-        account_password: account_password
-    }
-
-    var axiosconnect = await axios.create()
-    let res = await axiosconnect.post(url, data)
-// console.log("User Identification Email ==== ", res.data)
-    return res.data.success || false
-}
-
-/**
- * Activate online access for unit.
- * @param params - {user_id:'', useremail: '', serial_num: '' }
- * @returns string
- */
-async function AssociateUnit(params) {
-    const { user_id, useremail, serial_num} = params
-    let userPrevAssociated = false
-    let diff_assoc_email = ''
-    let isDisassociated = true
-    let ass_active = 0
-    let associationComplete = false
-    let ca_active_ref_id = ''
-    let diff_user_ref_id = ''
-    let ref_id = getRandomValue()
-
-    try {
-        const sql = `SELECT * FROM customers_units WHERE serial_num = '${serial_num}'`
-
-        const sqlResult = await pool.query(sql)
-        const res = sqlResult[0]
-
-        const data = res ? res : []
-
-        if ( data ) {
-            for( const k in data ) {
-                ass_active = data[k].association_active
-                if(useremail == data[k].user_email) {
-                    userPrevAssociated = true
-                    ca_active_ref_id = data[k].ca_active_ref_id
-
-                    if(ass_active) {
-                        isDisassociated = false
-                    }
-                }
-
-                if(ass_active && data[k].user_email !== useremail) {
-                    diff_assoc_email = data[k].user_email
-                    diff_user_ref_id = data[k].ca_active_ref_id
-                    isDisassociated = false
-                }
-            }
-        }
-
-        // disassociate previously associated use 
-        if(diff_assoc_email) {
-            //update customers_units table, set association_active=0
-            const sql1 = `UPDATE scican.customers_units SET
-            association_active=0,
-            association_from=NULL,
-            ca_active_ref_id=NULL,
-            web_conf_confirmed=0,
-            web_conf_confirmed_date='0000-00-00 00:00:00',
-            email_conf_sent_by_unit=0,
-            email_conf_sent_by_unit_date='0000-00-00 00:00:00',
-            current_location_date='0000-00-00 00:00:00',
-            latest_oas_update_date=NOW()
-            WHERE user_email= '${diff_assoc_email}' AND serial_num='${serial_num}'`
-
-            const sqlResult1 = await pool.query(sql1)
-
-            //set prev_assoc_email to empty
-            isDisassociated = sqlResult1[0] ? sqlResult1[0].changedRows : false
-
-            //update ustomers_units_assoc_dates table, set linked_to_user_end_date to now()
-            const sql2 = `UPDATE scican.customers_units_assoc_dates SET
-          linked_to_user_end_date=NOW(),
-            data_updated=NOW()
-          WHERE ca_active_ref_id='${diff_user_ref_id}' AND user_email='${diff_assoc_email}' AND serial_num='${serial_num}'`
-
-            const sqlResult2 = await pool.query(sql2)
-        }
-
-        //if current user has previous associated but is not associated
-        if (userPrevAssociated && isDisassociated) {
-            //Update customers_units table set association_active=1
-            const sql3 = `UPDATE scican.customers_units SET web_conf_confirmed=1,
-                web_conf_confirmed_date=NOW(),email_conf_sent_by_unit=1,email_conf_sent_by_unit_date=NOW(),
-                prev_associations_active=prev_associations_active+1,association_active=1,
-                ca_active_ref_id='${ca_active_ref_id}',latest_oas_update_date=NOW()
-                WHERE serial_num='${serial_num}' AND user_email='${useremail}'`
-
-            const sqlResult3 = await pool.query(sql3)
-            
-            ref_id = ca_active_ref_id
-
-            associationComplete = sqlResult3[0] ? sqlResult3[0].changedRows : false
-        } else if(!userPrevAssociated && isDisassociated) {
-            //Insert new data into customers_units table
-            const sql6 = `INSERT INTO customers_units
-                (idusers,user_email,prev_associations_active,association_active,serial_num,ca_active_ref_id,latest_oas_update_date,idunits_warranties,web_conf_confirmed, web_conf_confirmed_date,email_conf_sent_by_unit,email_conf_sent_by_unit_date) 
-                VALUES ('${user_id}','${useremail}',1,1,'${serial_num}','${ref_id}',NOW(),0,1,NOW(),1,NOW())`
-
-            const sqlResult6 = await pool.query(sql6)
-
-            associationComplete = sqlResult6[0] ? sqlResult6[0].affectedRows : false
-        }
-
-        //if insert/update of customer_units table was successfull, insert into customer_units_assoc_dates.
-        if(associationComplete) {
-            //Insert into customers_units_assoc_dates
-            const sql4 = `INSERT INTO scican.customers_units_assoc_dates
-                            (idusers,
-                            user_email,
-                            serial_num,
-                            ca_active_ref_id,
-                            linked_to_user_start_date,
-                            cycle_count_at_conf_assoc,
-                            data_updated)
-                            VALUES
-                            ('${user_id}',
-                            '${useremail}',
-                            '${serial_num}',
-                            '${ref_id}',
-                             NOW(),
-                             0,
-                             NOW())`
-    
-            const sqlResult4 = await pool.query(sql4)
-    
-        }
-
-        return associationComplete
-        
-    } catch (error) {
-        console.log("🚀 0.AssociateUnit - error:", error)
-        console.log("🚀 0.1.AssociateUnit - error:", error.stack)
-    }
-}
-
-/**
- * Returns an object with payload data ready for publishing
- * 
- * @param {string} user_email
- * @returns {Object} 
- */
-async function getUserDetails(user_email) {
-    let details = {}
-    try {
-        const sql = `SELECT idusers, firstname, lastname FROM users WHERE username = '${user_email}'`
-
-        if ( pool ) {
-            const sqlResult = await pool.query(sql)
-            const res = sqlResult[0]
-
-            if(res[0]) {
-                details.firstname = res[0].firstname
-                details.lastname = res[0].lastname
-                details.idusers = res[0].idusers
-            }
-        }
-        
-        return details
-
-    } catch (error) {
-        console.log("🚀 getUserDetails - error: ", error)
-        console.log("🚀 getUserDetails - error stack: ", error.stack)
-        return {}
-    }
-}
-
-/**
- * Returns product name
- * 
- * @param {string} serial_number
- * @returns {string} 
- */
-async function getProductName(serial_number) {
-    let product_name = ''
-    
-    try {
-        const sql = `SELECT model_general_name FROM units_models WHERE productSerialNumberPrefix = '${serial_number.slice(0, 4)}'`
-
-        if ( pool ) {
-            const sqlResult = await pool.query(sql)
-            const res = sqlResult[0]
-
-            if(res[0]) {
-                product_name = res[0].model_general_name
-            }
-        }
-        
-        return product_name
-
-    } catch (error) {
-        console.log("🚀 getProductName - error: ", error)
-        console.log("🚀 getProductName - error stack: ", error.stack)
-        return ''
-    }
 }
 
 const getEmailPayload = (params) => {
@@ -287,8 +73,10 @@ const getEmailPayload = (params) => {
 }
 
 module.exports.fnAccountAssociateDirect = async (event) => {
+    let connection
+
     try {
-        const axios = require('axios');
+        // const axios = require('axios')
         const retval = event.retval
         const topic = event.topic
         const res = topic.split("/")
@@ -299,19 +87,31 @@ module.exports.fnAccountAssociateDirect = async (event) => {
         const account_email = event.account_email
         const language = event.language_iso639 ? event.language_iso639 : 'en'
         const account_password = event.account_password
+        const unknown_error =  {
+            topic: `${MQTT_TOPIC_ENV}/scican/srv/${serialNumber}/response/account-associate-direct`,
+            payload: JSON.stringify({"result": "unknown_error"}),
+            qos: '0' 
+        }
 
         console.log('++++ Received Payload ', event);
 
-        const userIdres = await isValidUserLogin(account_email, account_password, pool)
+        connection = await mysql.createConnection({
+            host     : process.env.rdsMySqlHost,
+            user     : process.env.rdsMySqlUsername,
+            password : process.env.rdsMySqlPassword,
+            database : process.env.rdsMySqlDb
+        })
+
+        const userIdres = await isValidUserLogin(account_email, account_password)
 
         if (userIdres && userIdres != null){
             //get user's details
             const userDetails = await getUserDetails(account_email)
 
             //activate online access
-            associated = await AssociateUnit({user_id: userDetails.idusers, useremail: account_email, serial_num: serialNumber})
+            associated = await AssociateUnit({user_id: userDetails.user_id, useremail: account_email, serial_num: serialNumber})
 
-            if(associated) {
+            if(associated && associated != null) {
                 //get product name
                 const productName = await getProductName(serialNumber)
     
@@ -332,11 +132,19 @@ module.exports.fnAccountAssociateDirect = async (event) => {
                 }
 
                 console.info('+++ Sending Email ... ', publishParams)
-            } else {
+            } else if(!associated && associated != null) {
+                publishParams = {
+                    topic: `${MQTT_TOPIC_ENV}/scican/srv/${serialNumber}/response/account-associate-direct`,
+                    payload: JSON.stringify({"result": "was_associated"}),
+                    qos: '0' 
+                }
                 console.log("🚀 Already associated. Nothing Published:")
+            } else {
+                publishParams = unknown_error
+                console.log("🚀 Something went wrong. Nothing Published:")
             }
             
-        } else if(!userIdres && typeof userIdres != 'undefined') {
+        } else if(!userIdres && userIdres != null) {
             publishParams = {
                 topic: `${MQTT_TOPIC_ENV}/scican/srv/${serialNumber}/response/account-associate-direct`,
                 payload: JSON.stringify({"result": "invalid_credentials"}),
@@ -345,7 +153,10 @@ module.exports.fnAccountAssociateDirect = async (event) => {
             
             console.info('+++ Invalid Credentials ... ', publishParams)
         } else {
-            console.log("🚀 Something went wrong. Nothing Published: userIdres = ", Idres)
+            if(userIdres == null) {
+                publishParams = unknown_error
+            }
+            console.log("🚀 Something went wrong. Nothing Published: userIdres = ", userIdres)
         }
 
         if(Object.keys(publishParams).length > 0) {
@@ -355,12 +166,13 @@ module.exports.fnAccountAssociateDirect = async (event) => {
                 .then( () => console.log('Publish Done: Params - ', publishParams))
                 .catch(e => console.log(e))
 
-            if(associated) {
+            if(associated && associated != null) {
                 //publish to Account Event topic
                 const eventParams = {
                     "email": account_email,
                     "serial_number": serialNumber,
-                    "response_topic": `${MQTT_TOPIC_ENV}/scican/srv/${serialNumber}/event/account`
+                    "response_topic": `${MQTT_TOPIC_ENV}/scican/srv/${serialNumber}/event/account`,
+                    "error_topic": `${MQTT_TOPIC_ENV}/scican/srv/${serialNumber}/response/account-associate-direct`
                 }
                 const evPubParams = {
                     topic: `${MQTT_TOPIC_ENV}/scican/evn/get-account-information`,
@@ -378,6 +190,10 @@ module.exports.fnAccountAssociateDirect = async (event) => {
     } catch (error) {
         console.log("🚀 0 - error:", error)
         console.log("🚀 0.1 - error:", error.stack)
+    } finally {
+        if(connection){
+            connection.end();
+        }
     }
 }
 

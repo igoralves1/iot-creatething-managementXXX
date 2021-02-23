@@ -21,15 +21,6 @@ const { getProductName, unitActiveAssociation } = require('./utils/ProductsData'
 const { isUserExist } = require('./utils/UsersData')
 
 const mysql = require('mysql2/promise')
-const axios = require('axios')
-
-const pool = mysql.createPool({
-    host     : process.env.rdsMySqlHost,
-    user     : process.env.rdsMySqlUsername,
-    password : process.env.rdsMySqlPassword,
-    database : process.env.rdsMySqlDb,
-    connectionLimit: 10
-})
 
 const publishMqtt = (params) =>
     new Promise((resolve, reject) =>
@@ -37,6 +28,8 @@ const publishMqtt = (params) =>
 
 
 module.exports.fnAccountGet = async (event) => {
+    let connection
+
     try {
         const retval = event.retval
         const topic = event.topic
@@ -44,9 +37,16 @@ module.exports.fnAccountGet = async (event) => {
         const serial_number = res[2]
         let publishParams = {}
 
-        console.log('++++ Received Payload ', event);        
-
-        const association_data = await unitActiveAssociation(serial_number, pool)
+        console.log('++++ Received Payload ', event)   
+        
+        connection = await mysql.createConnection({
+            host     : process.env.rdsMySqlHost,
+            user     : process.env.rdsMySqlUsername,
+            password : process.env.rdsMySqlPassword,
+            database : process.env.rdsMySqlDb
+        })
+        
+        const association_data = await unitActiveAssociation(serial_number)
     console.log('==unit association ', association_data)
 
         if(association_data != null && Object.keys(association_data).length > 0) {
@@ -55,7 +55,8 @@ module.exports.fnAccountGet = async (event) => {
             const eventParams = {
                 "email": account_email,
                 "serial_number": serial_number,
-                "response_topic": `${MQTT_TOPIC_ENV}/scican/srv/${serial_number}/event/account`
+                "response_topic": `${MQTT_TOPIC_ENV}/scican/srv/${serial_number}/event/account`,
+                "error_topic": `${MQTT_TOPIC_ENV}/scican/srv/${serial_number}/response/account-get`
             }
 
             publishParams = {
@@ -77,6 +78,13 @@ module.exports.fnAccountGet = async (event) => {
 
             console.info('+++ No Associations found ... ', publishParams)
         } else {
+            if(association_data == null) {
+                publishParams = {
+                    topic: `${MQTT_TOPIC_ENV}/scican/srv/${serial_number}/response/account-get`,
+                    payload: JSON.stringify({"result": "unknown_error"}),
+                    qos: '0' 
+                }
+            }
             console.log("🚀 1-Something went wrong. Nothing Published: association_data = ", association_data)
         }
 
@@ -90,6 +98,10 @@ module.exports.fnAccountGet = async (event) => {
     } catch (error) {
         console.log("🚀 0 - error:", error)
         console.log("🚀 0.1 - error:", error.stack)
+    } finally {
+        if(connection){
+            connection.end();
+        }
     }
 }
 

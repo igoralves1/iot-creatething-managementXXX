@@ -29,17 +29,7 @@ const { getUserDetails, updateActivationKey } = require('./utils/UsersData')
 const { generateRandomValue } = require('./utils/helpers')
 
 const mysql = require('mysql2/promise')
-// const axios = require('axios')
 const { isatty } = require('tty')
-
-
-const pool = mysql.createPool({
-    host     : process.env.rdsMySqlHost,
-    user     : process.env.rdsMySqlUsername,
-    password : process.env.rdsMySqlPassword,
-    database : process.env.rdsMySqlDb,
-    connectionLimit: 10
-})
 
 const publishMqtt = (params) =>
     new Promise((resolve, reject) =>
@@ -84,8 +74,9 @@ const getEmailPayload = (params) => {
  * Only allow password change if there is online access active
 */
 module.exports.fnRequestAccountPasswordResetEmail = async (event) => {
+    let connection
+
     try {
-        const axios = require('axios');
         const retval = event.retval
         const topic = event.topic
         const res = topic.split("/")
@@ -98,11 +89,18 @@ module.exports.fnRequestAccountPasswordResetEmail = async (event) => {
 
         console.log('++++ Received Payload ', event)
 
-        let userDetails = await getUserDetails(account_email, pool)
+        connection = await mysql.createConnection({
+            host     : process.env.rdsMySqlHost,
+            user     : process.env.rdsMySqlUsername,
+            password : process.env.rdsMySqlPassword,
+            database : process.env.rdsMySqlDb
+        })
+
+        let userDetails = await getUserDetails(account_email)
         
         if(typeof userDetails == 'object' && Object.keys(userDetails).length > 0) {
             //check if online access is active for this unit
-            //isActive = checkOnlineAccessStatus(account_email, serialNumber, pool)
+            //isActive = checkOnlineAccessStatus(account_email, serialNumber)
         }
 
         if(typeof userDetails == 'object' && Object.keys(userDetails).length > 0) {
@@ -117,11 +115,11 @@ module.exports.fnRequestAccountPasswordResetEmail = async (event) => {
             console.log(' Password Hash = ', password_hash)
 
             if(password_hash) {
-                const activationKeyUpdated = await updateActivationKey(account_email, activation_key, pool)
+                const activationKeyUpdated = await updateActivationKey(account_email, activation_key)
             
-                if(activationKeyUpdated) {
+                if(activationKeyUpdated && activation_key != null) {
                     //get product name
-                    const productName = await getProductName(serialNumber, pool)
+                    const productName = await getProductName(serialNumber)
                 
                     //get email payload
                     const emailPayload = getEmailPayload({
@@ -143,6 +141,13 @@ module.exports.fnRequestAccountPasswordResetEmail = async (event) => {
 
                     console.info('+++ Sending Email ... ', publishParams)
                 } else {
+                    if(activation_key == null) {
+                        publishParams = {
+                            topic: `${MQTT_TOPIC_ENV}/scican/srv/${serialNumber}/response/account-password_reset_email`,
+                            payload: JSON.stringify({"result": "unknown_error"}),
+                            qos: '0' 
+                        }
+                    }
                     console.log('+++ Activation key not saved! - ', activationKeyUpdated)
                 }
             }
@@ -155,8 +160,14 @@ module.exports.fnRequestAccountPasswordResetEmail = async (event) => {
 
             console.info('+++ Account does not exist ... ', publishParams)
         } else {
+            if(userDetails == null) {
+                publishParams = {
+                    topic: `${MQTT_TOPIC_ENV}/scican/srv/${serialNumber}/response/account-password_reset_email`,
+                    payload: JSON.stringify({"result": "unknown_error"}),
+                    qos: '0' 
+                }
+            }
             console.log("🚀 1-Something went wrong. Nothing Published: userDetails = ", userDetails)
-            console.log("🚀 2- OR Online Access is not active. isActive = ", isActive)
         }
 
         if(Object.keys(publishParams).length > 0) {
@@ -169,6 +180,10 @@ module.exports.fnRequestAccountPasswordResetEmail = async (event) => {
     } catch (error) {
         console.log("🚀 0 - error:", error)
         console.log("🚀 0.1 - error:", error.stack)
+    } finally {
+        if(connection){
+            connection.end();
+        }
     }
 }
 

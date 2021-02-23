@@ -30,16 +30,6 @@ const { getUserDetails } = require('./utils/UsersData')
 const { disassociate } = require('./utils/ManageAssociations')
 
 const mysql = require('mysql2/promise')
-const axios = require('axios')
-
-
-const pool = mysql.createPool({
-    host     : process.env.rdsMySqlHost,
-    user     : process.env.rdsMySqlUsername,
-    password : process.env.rdsMySqlPassword,
-    database : process.env.rdsMySqlDb
-})
-
 
 const publishMqtt = (params) =>
     new Promise((resolve, reject) =>
@@ -82,11 +72,7 @@ const getEmailPayload = (params) => {
  * else if check entry in table query failed, do notthing
 */
 module.exports.fnAccountDisassociate = async (event) => {
-    console.log('🚀 - Getting a Connection  ......  ')
-
-    const connection = await pool.getConnection()
-    console.log('🚀 - Connection  ====  ', connection)
-
+    let connection
     try {
         const retval = event.retval
         const topic = event.topic
@@ -101,23 +87,30 @@ module.exports.fnAccountDisassociate = async (event) => {
         const language = event.language_iso639 ? event.language_iso639 : ''
 
         console.log('+++ Received payload', event)
+
+        connection = await mysql.createConnection({
+                host     : process.env.rdsMySqlHost,
+                user     : process.env.rdsMySqlUsername,
+                password : process.env.rdsMySqlPassword,
+                database : process.env.rdsMySqlDb
+            })
         
-        let checkRes = await associationDetails(account_email, serialNumber, connection)
+        let checkRes = await associationDetails(account_email, serialNumber)
 
         if (checkRes != null) {
             useremail = checkRes.length > 0 ? checkRes[0] : ""
             ca_active_ref_id = checkRes.length > 0 ? checkRes[1] : ""
         }
 
-        if (useremail && useremail != null) {
-            isDisassociated = await disassociate(useremail, serialNumber, ca_active_ref_id, connection)
+        if (useremail && useremail != null){
+            isDisassociated = await disassociate(useremail, serialNumber, ca_active_ref_id)
             
             if(isDisassociated) {
                 //get user's details
-                const userDetails = await getUserDetails(useremail, connection)
+                const userDetails = await getUserDetails(useremail)
 
                 //get product name
-                const productName = await getProductName(serialNumber, connection)
+                const productName = await getProductName(serialNumber)
 
                 const emailPayload = getEmailPayload({
                     email: useremail, 
@@ -189,7 +182,8 @@ module.exports.fnAccountDisassociate = async (event) => {
         console.log("🚀 0 - error:", error)
         console.log("🚀 0.1 - error:", error.stack)
     } finally {
-        await connection.release()
-        console.log('🚀 - Connection released - ', connection)
+        if(connection){
+            connection.end();
+        }
     }
 }

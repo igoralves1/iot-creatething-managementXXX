@@ -35,66 +35,17 @@ const crypto = require('crypto')
 var iotdata = new AWS.IotData({endpoint: process.env.MQTT_ENDPOINT});
 const MQTT_TOPIC_ENV = process.env.mqttTopicEnv
 const { getPasswordHash } = require('./utils/getPasswordHash')
+const { getProductName } = require('./utils/ProductsData')
+const { isUserExist, InsertUser, updateLastLogin } = require('./utils/UsersData')
+const { generateRandomValue } = require('./utils/helpers')
+const { AssociateUnit } = require('./utils/ManageAssociations')
 
 
 const mysql = require('mysql2/promise')
-// const axios = require('axios')
-
-
-const pool = mysql.createPool({
-    host     : process.env.rdsMySqlHost,
-    user     : process.env.rdsMySqlUsername,
-    password : process.env.rdsMySqlPassword,
-    database : process.env.rdsMySqlDb,
-    connectionLimit: 10
-})
-
 
 const publishMqtt = (params) =>
     new Promise((resolve, reject) =>
         iotdata.publish(params, (err, res) => resolve(res)))
-
-
-const getRandomValue = () => {
-    const randVal = Math.random() + Math.random() + Math.random() + Math.random() + Math.random()
-    let hash = crypto.createHash('md5').update(String(randVal)).digest("hex")
-
-    return hash
-}
-
-async function isUserExist(user_email) {
-    if(!user_email || user_email == null) {
-        return false
-    }
-
-    try {
-        if(!user_email ) {
-            return false
-        }
-
-        // console.log("pool ==== ", pool)
-
-        const sql = `SELECT count(1) AS numbers FROM users WHERE username = '${user_email}'`
-        console.log("sql ==== ", sql)
-
-        const sqlResult = await pool.query(sql)
-        const res = sqlResult[0]
-
-        console.log("sqlRes ==== ", sqlResult)
-
-        var userexist = false
-
-        if (res && res[0].numbers > 0) {
-            userexist = true
-        }
-
-        return userexist
-
-    } catch (error) {
-        console.log("🚀 0.isUserExist - error:", error)
-        console.log("🚀 0.1.isUserExist - error:", error.stack)
-    }
-}
 
 /**
  * Get password hash data
@@ -104,6 +55,7 @@ async function isUserExist(user_email) {
  * 
  * @returns Object
  */
+/*
 async function getPasswordHashData(user_email, password, axios){
     if(!user_email || user_email == null || !password || password == null) {
         console.log(' password hash missing data - user email', user_email)
@@ -137,9 +89,10 @@ async function getPasswordHashData(user_email, password, axios){
         console.log("🚀 0.1.getPasswordHashData - error:", error.stack)
     }
 }
-
-async function InsertUser(data){
-    const activation_key = getRandomValue()
+*/
+/*
+async function InsertUser(data, connection){
+    const activation_key = generateRandomValue()
     const { 
         account_email,
         password,
@@ -156,9 +109,9 @@ async function InsertUser(data){
 
     try {
         const sql = `INSERT INTO users(password, username, company, firstname, telephone, office_address_one, city, state_province_region, country, zip_postal_code, lang,groups, email, activationkey, activationstatus, activationdate) VALUES 
-                ('${password}','${account_email}','${account_company_name}','${account_contact_name}','${account_phone_number}','${account_address}','${account_city}','${account_subregion}','${account_country}','${account_zip_code}','${language}','customer','${account_email}','${activation_key}','activated',CURRENT_TIMESTAMP())`
-
-        const sqlResult6 = await pool.query(sql, );
+                (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,'customer', ?, ?,'activated',CURRENT_TIMESTAMP())`
+        const insertVals = [password,account_email,account_company_name,account_contact_name,account_phone_number,account_address,account_city,account_subregion,account_country,account_zip_code,language,account_email,activation_key]
+        const sqlResult6 = await connection.query(sql, insertVals)
     
         const result = sqlResult6 ? sqlResult6[0] : {}
 
@@ -168,8 +121,9 @@ async function InsertUser(data){
         console.log("🚀 0.1.InsertUser - error:", error.stack)
     }
 }
-
-async function updateLastLogin(params) {
+*/
+/*
+async function updateLastLogin(params, connection) {
     let isUpdated = false
     const {user_id, hash_time, email} = params
 
@@ -179,10 +133,10 @@ async function updateLastLogin(params) {
 
     try {
         const sql = `INSERT INTO lastlogin (idusers,uip,attempts,time,successfullogin,date,loggedinto,temail)
-        VALUES ('${user_id}','','0','${hash_time}','yes',NOW(),'Registered', '${email}')`
+        VALUES (?,'','0',?,'yes',NOW(),'Registered', ?)`
 
         if ( pool ) {
-            const sqlResult = await pool.query(sql)
+            const sqlResult = await connection.query(sql, [user_id, hash_time, email])
             const res = sqlResult[0]
 
             isUpdated = sqlResult[0] ? Boolean(sqlResult[0].affectedRows) : false
@@ -193,15 +147,18 @@ async function updateLastLogin(params) {
     } catch (error) {
         console.log("🚀 0.updateActivationKey - error: ", error)
         console.log("🚀 0.1updateActivationKey - error stack: ", error.stack)
+        return null
     }
 }
+*/
 
 /**
  * Activate online access for unit.
  * @param params - {user_id:'', useremail: '', serial_num: '' }
  * @returns string
  */
-async function AssociateUnit(params) {
+/*
+async function AssociateUnit(params, connection) {
     const { user_id, useremail, serial_num} = params
 
     if(!user_id || user_id == null || !serial_num || serial_num == null || !useremail || useremail == null) {
@@ -215,13 +172,13 @@ async function AssociateUnit(params) {
     let associationComplete = false
     let ca_active_ref_id = ''
     let diff_user_ref_id = ''
-    let ref_id = getRandomValue()
+    let ref_id = generateRandomValue()
 
     try {
-        const sql = `SELECT * FROM customers_units WHERE serial_num = '${serial_num}'`
+        const sql = `SELECT * FROM customers_units WHERE serial_num = ?`
         
 
-        const sqlResult = await pool.query(sql)
+        const sqlResult = await connection.query(sql, [serial_num])
         const res = sqlResult[0]
 
         const data = res ? res : []
@@ -259,9 +216,9 @@ async function AssociateUnit(params) {
             email_conf_sent_by_unit_date='0000-00-00 00:00:00',
             current_location_date='0000-00-00 00:00:00',
             latest_oas_update_date=NOW()
-            WHERE user_email= '${diff_assoc_email}' AND serial_num='${serial_num}'`
+            WHERE user_email= ? AND serial_num= ? `
 
-            const sqlResult1 = await pool.query(sql1)
+            const sqlResult1 = await connection.query(sql1, [diff_assoc_email, serial_num])
 
             //set prev_assoc_email to empty
             isDisassociated = sqlResult1[0] ? sqlResult1[0].changedRows : false
@@ -269,9 +226,9 @@ async function AssociateUnit(params) {
             //update ustomers_units_assoc_dates table, set linked_to_user_end_date to now()
             const sql2 = `UPDATE scican.customers_units_assoc_dates 
                         SET linked_to_user_end_date=NOW(), data_updated=NOW() 
-                        WHERE ca_active_ref_id='${diff_user_ref_id}' AND user_email='${diff_assoc_email}' AND serial_num='${serial_num}'`
+                        WHERE ca_active_ref_id = ? AND user_email = ? AND serial_num = ?`
 
-                const sqlResult2 = await pool.query(sql2)
+                const sqlResult2 = await connection.query(sql2, [diff_user_ref_id, diff_assoc_email, serial_num])
 
         }
 
@@ -281,10 +238,10 @@ async function AssociateUnit(params) {
             const sql3 = `UPDATE scican.customers_units SET web_conf_confirmed=1,
                 web_conf_confirmed_date=NOW(),email_conf_sent_by_unit=1,email_conf_sent_by_unit_date=NOW(),
                 prev_associations_active=prev_associations_active+1,association_active=1,
-                ca_active_ref_id='${ca_active_ref_id}',latest_oas_update_date=NOW()
-                WHERE serial_num='${serial_num}' AND user_email='${useremail}'`
+                ca_active_ref_id= ?,latest_oas_update_date=NOW()
+                WHERE serial_num= ? AND user_email= ?`
 
-            const sqlResult3 = await pool.query(sql3)
+            const sqlResult3 = await connection.query(sql3, [ca_active_ref_id, serial_num, useremail])
             
             ref_id = ca_active_ref_id
 
@@ -293,9 +250,9 @@ async function AssociateUnit(params) {
             //Insert new data into customers_units table
             const sql6 = `INSERT INTO customers_units
             (idusers,user_email,prev_associations_active,association_active,serial_num,ca_active_ref_id,latest_oas_update_date,idunits_warranties,web_conf_confirmed, web_conf_confirmed_date,email_conf_sent_by_unit,email_conf_sent_by_unit_date) 
-            VALUES ('${user_id}','${useremail}',1,1,'${serial_num}','${ref_id}',NOW(),0,1,NOW(),1,NOW())`
+            VALUES (?,?,1,1,?,?,NOW(),0,1,NOW(),1,NOW())`
 
-            const sqlResult6 = await pool.query(sql6)
+            const sqlResult6 = await connection.query(sql6, [user_id, useremail, serial_num, ref_id])
 
             associationComplete = sqlResult6[0] ? sqlResult6[0].affectedRows : false
 
@@ -314,15 +271,15 @@ async function AssociateUnit(params) {
                             cycle_count_at_conf_assoc,
                             data_updated)
                             VALUES
-                            ('${user_id}',
-                            '${useremail}',
-                            '${serial_num}',
-                            '${ref_id}',
+                            (?,
+                            ?,
+                            ?,
+                            ?,
                             NOW(),
                             0,
                             NOW())`
     
-            const sqlResult4 = await pool.query(sql4)
+            const sqlResult4 = await connection.query(sql4, [user_id, useremail, serial_num, ref_id])
         }
 
         return associationComplete
@@ -332,65 +289,7 @@ async function AssociateUnit(params) {
         console.log("🚀 0.1.AssociateUnit - error:", error.stack)
     }
 }
-
-/**
- * Returns an object with payload data ready for publishing
- * 
- * @param {string} user_email
- * @returns {Object} 
- */
-async function getUserDetails(user_email) {
-    let details = {}
-    try {
-        const sql = `SELECT firstname, lastname FROM users WHERE username = '${user_email}'`
-
-        if ( pool ) {
-            const sqlResult = await pool.query(sql)
-            const res = sqlResult[0]
-
-            if(res[0]) {
-                details.firstname = res[0].firstname || ''
-                details.lastname = res[0].lastname || ''
-            }
-        }
-        
-        return details
-
-    } catch (error) {
-        console.log("🚀 getUserDetails - error: ", error)
-        console.log("🚀 getUserDetails - error stack: ", error.stack)
-        return {}
-    }
-}
-
-/**
- * Returns product name
- * 
- * @param {string} serial_number
- * @returns {string} 
- */
-async function getProductName(serial_number) {
-    let product_name = ''
-    
-    try {
-        const sql = `SELECT model_general_name FROM units_models WHERE productSerialNumberPrefix = '${serial_number.slice(0, 4)}'`
-
-        if ( pool ) {
-            const sqlResult = await pool.query(sql)
-            const res = sqlResult[0]
-
-            if(res[0]) {
-                product_name = res[0].model_general_name
-            }
-        }
-        
-        return product_name
-
-    } catch (error) {
-        console.log("🚀 getProductName - error: ", error)
-        console.log("🚀 getProductName - error stack: ", error.stack)
-    }
-}
+*/
 
 const getEmailPayload = (params) => {
     const { email, firstname, lastname, product_name, serial_num, language } = params
@@ -422,8 +321,9 @@ const getEmailPayload = (params) => {
 }
 
 module.exports.fnAccountSignUpForm = async (event) => {
+    let connection
+
     try {
-        const axios = require('axios')
         const retval = event.retval
         const topic = event.topic
         const res = topic.split("/")
@@ -447,7 +347,15 @@ module.exports.fnAccountSignUpForm = async (event) => {
         
         console.log("++++ Received Event = ", event)
 
+        connection = await mysql.createConnection({
+            host     : process.env.rdsMySqlHost,
+            user     : process.env.rdsMySqlUsername,
+            password : process.env.rdsMySqlPassword,
+            database : process.env.rdsMySqlDb
+        })
+
         //get user's details
+        // const userExist = await isUserExist(data.account_email)
         const userExist = await isUserExist(data.account_email)
     console.log('==user Exists ', userExist)
 
@@ -474,12 +382,13 @@ module.exports.fnAccountSignUpForm = async (event) => {
             isLastLoginUpdated = await updateLastLogin(login_params)
             // }
 
-            if(user_id) {
+            if(user_id && user_id != null) {
                 //activate online access
-                associated = await AssociateUnit({user_id: user_id, useremail: data.account_email, serial_num: serialNumber})
+                associated = await AssociateUnit({user_id: user_id, useremail: data.account_email, serial_num: serialNumber}, connection)
 
-                if(associated) {
+                if(associated && associated != null) {
                 //get product name
+                // const productName = await getProductName(serialNumber)
                 const productName = await getProductName(serialNumber)
         
                     //get payload
@@ -499,6 +408,16 @@ module.exports.fnAccountSignUpForm = async (event) => {
                     }
 
                     console.info('+++ Sending Email ... ', publishParams)
+                } else if(!associated && associated != null) {
+                    publishParams = {
+                        topic: `${MQTT_TOPIC_ENV}/scican/srv/${serialNumber}/response/account-associate-direct`,
+                        payload: JSON.stringify({"result": "was_associated"}),
+                        qos: '0' 
+                    }
+                    console.log("🚀 Already associated. Nothing Published:")
+                } else {
+                    publishParams = unknown_error
+                    console.log("🚀 Something went wrong. Nothing Published:")
                 }
             }
         } else if(userExist && userExist !== null) {
@@ -510,6 +429,13 @@ module.exports.fnAccountSignUpForm = async (event) => {
 
             console.info('+++ Account already exists ... ', publishParams)
         } else {
+            if(userExist == null) {
+                publishParams = {
+                    topic: `${MQTT_TOPIC_ENV}/scican/srv/${serialNumber}/response/account-signup-form`,
+                    payload: JSON.stringify({"result": "unknown_error"}),
+                    qos: '0' 
+                }
+            }
             console.log("🚀 Something went wrong. Nothing Published: userExist = ", userExist)
         }
 
@@ -520,12 +446,13 @@ module.exports.fnAccountSignUpForm = async (event) => {
                 .then( () => console.log('Publish Done: Params - ', publishParams))
                 .catch(e => console.log(e))
 
-            if(associated) {
+            if(associated && associated != null) {
                 //publish to Account Event topic
                 const eventParams = {
                     "email": data.account_email,
                     "serial_number": serialNumber,
-                    "response_topic": `${MQTT_TOPIC_ENV}/scican/srv/${serialNumber}/event/account`
+                    "response_topic": `${MQTT_TOPIC_ENV}/scican/srv/${serialNumber}/event/account`,
+                    "error_topic": `${MQTT_TOPIC_ENV}/scican/srv/${serialNumber}/response/account-signup-form`
                 }
                 const evPubParams = {
                     topic: `${MQTT_TOPIC_ENV}/scican/evn/get-account-information`,
@@ -541,5 +468,9 @@ module.exports.fnAccountSignUpForm = async (event) => {
     } catch (error) {
         console.log("🚀 0 - error:", error)
         console.log("🚀 0.1 - error:", error.stack)
+    } finally {
+        if(connection){
+            connection.end();
+        }
     }
 }

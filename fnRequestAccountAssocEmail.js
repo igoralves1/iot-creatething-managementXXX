@@ -33,15 +33,6 @@ const mysql = require('mysql2/promise')
 const axios = require('axios');
 const { exist } = require('@hapi/joi');
 
-
-const pool = mysql.createPool({
-    host     : process.env.rdsMySqlHost,
-    user     : process.env.rdsMySqlUsername,
-    password : process.env.rdsMySqlPassword,
-    database : process.env.rdsMySqlDb,
-    connectionLimit: 10
-})
-
 const getEmailPayload = (params) => {
     const { email, firstname, lastname, product_name, serial_num, language } = params
     const lname = lastname ? `, ${lastname}` : ''
@@ -81,6 +72,8 @@ const publishMqtt = (params) =>
 
 
 module.exports.fnRequestAccountAssocEmail = async (event) => {
+    let connection
+
     try {
         const retval = event.retval
         const topic = event.topic
@@ -91,14 +84,21 @@ module.exports.fnRequestAccountAssocEmail = async (event) => {
         const account_email = event.account_email
         const language = event.language_iso639 ? event.language_iso639 : ''
 
-        let userDetails = await getUserDetails(account_email, pool)
+        connection = await mysql.createConnection({
+            host     : process.env.rdsMySqlHost,
+            user     : process.env.rdsMySqlUsername,
+            password : process.env.rdsMySqlPassword,
+            database : process.env.rdsMySqlDb
+        })
 
-        if(typeof userDetails == 'object' && Object.keys(userDetails).length > 0) {
+        let userDetails = await getUserDetails(account_email)
+
+        if(userDetails != null && typeof userDetails == 'object' && Object.keys(userDetails).length > 0) {
             //insert email and sn into online_access_email_request table
-            const saveRequest = await saveAssociationEmailRequest(serialNumber, account_email, pool)
+            const saveRequest = await saveAssociationEmailRequest(serialNumber, account_email)
 
             //get product name
-            const productName = await getProductName(serialNumber, pool)
+            const productName = await getProductName(serialNumber)
         
             const emailPayload = getEmailPayload({
                 email: account_email, 
@@ -125,6 +125,13 @@ module.exports.fnRequestAccountAssocEmail = async (event) => {
 
             console.info('+++ Account does not exist ... ', publishParams)
         } else {
+            if(userDetails == null) {
+                publishParams = {
+                    topic: `${MQTT_TOPIC_ENV}/scican/srv/${serialNumber}/response/account-associate-email`,
+                    payload: JSON.stringify({"result": "unknown_error"}),
+                    qos: '0' 
+                }
+            }
             console.log("🚀 Something went wrong. Nothing Published: userDetails = ", userDetails)
         }
 
@@ -138,6 +145,10 @@ module.exports.fnRequestAccountAssocEmail = async (event) => {
     } catch (error) {
         console.log("🚀 0 - error:", error)
         console.log("🚀 0.1 - error:", error.stack)
+    } finally {
+        if(connection){
+            connection.end();
+        }
     }
 }
 

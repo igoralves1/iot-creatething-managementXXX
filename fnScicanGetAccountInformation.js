@@ -45,8 +45,7 @@ const { getCustomerUnits } = require('./utils/ProductsData')
 const { getUserDetails } = require('./utils/UsersData')
 
 const mysql = require('mysql2/promise')
-const axios = require('axios');
-
+/*
 const pool = mysql.createPool({
     host     : process.env.rdsMySqlHost,
     user     : process.env.rdsMySqlUsername,
@@ -54,90 +53,11 @@ const pool = mysql.createPool({
     database : process.env.rdsMySqlDb,
     connectionLimit: 10
 })
-
+*/
 const publishMqtt = (params) =>
     new Promise((resolve, reject) =>
         iotdata.publish(params, (err, res) => resolve(res)))
 
-/**
- * Returns an object of user information
- * 
- * @param {string} email 
- * @returns {Object}
- */
-/*
-async function getUserDetails(email) {
-    let details = {}
-    try {
-        const sql = `SELECT username, firstname, lastname, telephone, company, office_address_one, office_address_two, city, country,  zip_postal_code, state_province_region FROM users WHERE username = '${email}'`
-
-        if ( pool ) {
-            const sqlResult = await pool.query(sql)
-            const res = sqlResult[0]
-
-            if(res[0]) {
-                details.firstname = res[0].firstname || ''
-                details.lastname = res[0].lastname || ''
-                details.email = res[0].username || ''
-                details.telephone = res[0].telephone || ''
-                details.company = res[0].company || ''
-                details.address1 = res[0].office_address_one || ''
-                details.address2 = res[0].office_address_two || ''
-                details.city = res[0].city || ''
-                details.country = res[0].country || ''
-                details.region = res[0].state_province_region || ''
-                details.zip_code = res[0].zip_postal_code || ''
-            }
-        }
-        console.log('details', details);
-        return details
-
-    } catch (error) {
-        console.log("🚀 getUserDetails - error: ", error)
-        console.log("🚀 getUserDetails - error stack: ", error.stack)
-        return {}
-    }
-}
-*/
-
-/**
- * Returns an array of units
- * 
- * @param {string} email 
- * @returns {Array}
- */
-/*
-async function getCustomerUnits(email) {
-    let units = []
-    
-    try {
-        const sql = `SELECT serial_num, association_active FROM customers_units WHERE association_active = 1 AND user_email = '${email}'`
-
-        if ( pool ) {
-            const sqlResult = await pool.query(sql)
-            const res = sqlResult[0]
-            const data = res && res != null ? res : []
-
-            if(data.length > 0) {
-                for( const k in data ) {
-                    units.push(
-                        {
-                            serial_number: data[k].serial_num,
-                            association_status: data[k].association_active
-                        }
-                    )
-                }
-            }
-        }
-        
-        return units
-    } catch (error) {
-        console.log("🚀 getProductName - error: ", error)
-        console.log("🚀 getProductName - error stack: ", error.stack)
-        return []
-    }
-}
-*/
 
 /**
  * Returns an object with payload data ready for publishing
@@ -152,7 +72,7 @@ const processPaylodData = (serial_num, userDetail, units ) => {
     const address = address1 +(address2 ? `, ${address2}` : '')
     let account_state = ""
     let customer_units = []
-console.log(userDetail);
+
     //process units
     for( const k in units) {
         if(units[k].serial_number == serial_num) {
@@ -192,10 +112,7 @@ console.log(userDetail);
 
 
 module.exports.fnScicanGetAccountInformation = async (event) => {
-    console.log('🚀 - Getting a Connection  ......  ')
-
-    const connection = await pool.getConnection()
-    console.log('🚀 - Connection  ===  ', connection)
+    let connection
 
     try {
         const retval = event.retval
@@ -207,6 +124,13 @@ module.exports.fnScicanGetAccountInformation = async (event) => {
         let publishParams = {}
 
         console.log('+++ Received payload == ', event)
+
+        connection = await mysql.createConnection({
+            host     : process.env.rdsMySqlHost,
+            user     : process.env.rdsMySqlUsername,
+            password : process.env.rdsMySqlPassword,
+            database : process.env.rdsMySqlDb
+        })
 
         let userDetails = await getUserDetails(email, connection)
 
@@ -245,8 +169,9 @@ module.exports.fnScicanGetAccountInformation = async (event) => {
         console.log("🚀 0 - error:", error)
         console.log("🚀 0.1 - error:", error.stack)
     } finally {
-        await connection.release()
-        console.log('🚀 - Connection released - ', connection)
+        if(connection){
+            connection.end();
+        }
     }
 }
 

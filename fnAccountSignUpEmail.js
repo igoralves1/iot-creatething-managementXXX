@@ -27,15 +27,6 @@ const { getProductName } = require('./utils/ProductsData')
 const { isUserExist } = require('./utils/UsersData')
 
 const mysql = require('mysql2/promise')
-const axios = require('axios')
-
-const pool = mysql.createPool({
-    host     : process.env.rdsMySqlHost,
-    user     : process.env.rdsMySqlUsername,
-    password : process.env.rdsMySqlPassword,
-    database : process.env.rdsMySqlDb,
-    connectionLimit: 10
-})
 
 const getEmailPayload = (params) => {
     const { email, product_name, serial_num, language } = params
@@ -74,6 +65,8 @@ const publishMqtt = (params) =>
 
 
 module.exports.fnAccountSignUpEmail = async (event) => {
+    let connection
+
     try {
         const retval = event.retval
         const topic = event.topic
@@ -83,17 +76,24 @@ module.exports.fnAccountSignUpEmail = async (event) => {
 
         const account_email = event.account_email
         const language = event.language_iso639 ? event.language_iso639 : ''
-        console.log('++++ Received Payload ', event);        
-
-        const userExist = await isUserExist(account_email, pool)
+        console.log('++++ Received Payload ', event);  
+        
+        connection = await mysql.createConnection({
+            host     : process.env.rdsMySqlHost,
+            user     : process.env.rdsMySqlUsername,
+            password : process.env.rdsMySqlPassword,
+            database : process.env.rdsMySqlDb
+        })
+        
+        const userExist = await isUserExist(account_email)
     console.log('==user Exists ', userExist)
 
         if(!userExist && userExist != null) {
             //insert email and sn into online_access_email_request table
-            const saveRequest = await saveAssociationEmailRequest(serialNumber, account_email, pool)
+            const saveRequest = await saveAssociationEmailRequest(serialNumber, account_email)
 
             //get product name
-            const productName = await getProductName(serialNumber, pool)
+            const productName = await getProductName(serialNumber)
 
             const emailPayload = getEmailPayload({
                 email: account_email, 
@@ -118,6 +118,13 @@ module.exports.fnAccountSignUpEmail = async (event) => {
 
             console.info('+++ Account Exist publishing to unit ... ', publishParams)
         } else {
+            if(userExist == null) {
+                publishParams = {
+                    topic: `${MQTT_TOPIC_ENV}/scican/srv/${serialNumber}/response/account-signup-email`,
+                    payload: JSON.stringify({"result": "unknown_error"}),
+                    qos: '0' 
+                }
+            }
             console.log("🚀 Something went wrong. Nothing Published: userExists = ", userExist)
         }
 
@@ -131,6 +138,10 @@ module.exports.fnAccountSignUpEmail = async (event) => {
     } catch (error) {
         console.log("🚀 0 - error:", error)
         console.log("🚀 0.1 - error:", error.stack)
+    } finally {
+        if(connection){
+            connection.end();
+        }
     }
 }
 
