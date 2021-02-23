@@ -1463,6 +1463,10 @@ functions:
       BUCKET_SCICAN_RND_LOGS: '${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}'
       ZABBIX_SERVER: 'ip-172-31-87-224.ec2.internal'
       ZABBIX_HOSTNAME: '${self:provider.stage}.fnWatchman'
+      rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
+      rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
+      rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
+      rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
 
 # ===========================================
 resources:
