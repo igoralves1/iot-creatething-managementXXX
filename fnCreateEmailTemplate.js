@@ -1,40 +1,4 @@
 'use strict'
-const crypto = require('crypto')
-
-const getRandomValue = () => {
-  const randVal = Math.random() + Math.random() + Math.random() + Math.random() + Math.random()
-  let hash = crypto.createHash('md5').update(String(randVal)).digest("hex")
-  const password = 'Sc1canLtd'
-  const time_now = Date.now()
-  const update_string = time_now.toLowerString() + password.toLowerString
-
-  let salt = crypto.createHash('sha256').update(update_string).digest("base64")
-
-  console.log('time now', time_ now)
-  console.log('update string - ', update_string)
-  console.log('salt - ', salt)
-
-  
-
-  return hash
-  /*
-  $salt = hash('sha256', strtolower($randomStr) . strtolower($username));
-  $hash = $salt . $password;
-  // Hash the salted password 95223 times
-  for ( $i = 0; $i < 95223; $i ++ )
-  {
-    $hash = hash('sha256', $hash);
-  }
-  // to find the hash later if needed.
-  $hash = $salt . $hash;
-
-  return $hash;
-  */
-}
-
-module.exports.fnGetPasswordHash = async (event) => {
-  getRandomValue()
-}
 
 const getEmailTemplate = (body) => {
   const template = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">'
