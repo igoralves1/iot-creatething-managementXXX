@@ -9,8 +9,6 @@ module.exports.execute = async function (sql, args){
     })
     // query database using promises
     const [rows, fields] = await connection.execute(sql, args);
-
-    connection.end()
-    
+    connection.end();
     return rows;
 }
