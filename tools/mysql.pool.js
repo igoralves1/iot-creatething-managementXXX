@@ -15,3 +15,9 @@ module.exports.execute = async function (sql, args){
     const [rows, fields] = await promisePool.execute(sql, args);
     return rows;
 }
+
+module.exports.end = async () => {
+    if (dbPool) {
+        dbPool.end();
+    }
+}
