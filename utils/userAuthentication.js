@@ -1,60 +1,65 @@
 
-async function ep(username, password, pool){
+async function ep(username, password){
+    try{
+        const { execute } = require('../tools/mysql.conn')
 
-    var randomStr = Math.round(Date.now() / 1000)
+        var randomStr = Math.round(Date.now() / 1000)
 
-    const sql1 = `SELECT idusers FROM users WHERE username='${username}' AND activationstatus='activated'`
+        const sql1 = `SELECT idusers FROM users WHERE username='${username}' AND activationstatus='activated'`
 
-	const sqlResult1 = await pool.query(sql1)
-	const res1 = sqlResult1[0]
-	
-	const data1 = res1 && res1.length > 0 ? res1[0] : []
-// console.log('+++ data1 = ', data1)
-    if ( data1 && Object.keys(data1).length > 0 ) {
-        const idusersQ1 = data1.idusers
-// console.log('idusersQ1', idusersQ1)
-        const sql2 = `SELECT MAX(ullid) AS ullid, idusers, time, successfullogin FROM lastlogin WHERE idusers='${idusersQ1}' AND successfullogin='Yes'`
-// console.log('sql2 - ', sql2)
-	    const sqlResult2 = await pool.query(sql2)
-	    const res2 = sqlResult2[0]
-	
-	    const data2 = res2 && res2.length > 0 ? res2[0] : []
-// console.log('++ res 2 - ', res2)
-        if ( data2 && Object.keys(data2).length > 0 ) {
+        const sqlResult1 = await execute(sql1)
+        const res1 = sqlResult1[0]
+        
+        const data1 = sqlResult1 && sqlResult1.length > 0 ? sqlResult1[0] : []
+    
+        if ( data1 && Object.keys(data1).length > 0 ) {
+            const idusersQ1 = data1.idusers
+    
+            const sql2 = `SELECT MAX(ullid) AS ullid, idusers, time, successfullogin FROM lastlogin WHERE idusers='${idusersQ1}' AND successfullogin='Yes'`
+    
+            const sqlResult2 = await execute(sql2)
+            const res2 = sqlResult2[0]
+        
+            const data2 = sqlResult2 && sqlResult2.length > 0 ? sqlResult2[0] : []
+    
+            if ( data2 && Object.keys(data2).length > 0 ) {
 
-            const idusersQ2 = data2.idusers
-            const ullidQ2 = data2.ullid
+                const idusersQ2 = data2.idusers
+                const ullidQ2 = data2.ullid
 
-            const sql3 = `SELECT * FROM lastlogin WHERE idusers='${idusersQ2}' AND ullid='${ullidQ2}'`
+                const sql3 = `SELECT * FROM lastlogin WHERE idusers='${idusersQ2}' AND ullid='${ullidQ2}'`
 
-	        const sqlResult3 = await pool.query(sql3)
-	        const res3 = sqlResult3[0]
-// console.log(' === res 3 ', res3)
-	        const data3 = res3 && res3.length > 0 ? res3[0] : []
-            if ( data3 && Object.keys(data3).length > 0 ) {
-                const unixTimestampQ3 = data3.time
-                randomStr = unixTimestampQ3
-            // console.log('===random = ', randomStr)
-            // console.log(' === data 3 ', data3)
+                const sqlResult3 = await execute(sql3)
+                const res3 = sqlResult3[0]
+    
+                const data3 = sqlResult3 && sqlResult3.length > 0 ? sqlResult3[0] : []
+                if ( data3 && Object.keys(data3).length > 0 ) {
+                    const unixTimestampQ3 = data3.time
+                    randomStr = unixTimestampQ3
+                }
             }
+        } else {
+            randomStr = username
         }
-    } else {
-        randomStr = username
+    
+        return _ep(username, randomStr, password)
+    } catch (error) {
+        console.log("🚀 ep - error: ", error)
+        console.log("🚀 ep - error stack: ", error.stack)
+        return null
     }
-// console.log('++ rand str - ', randomStr)
-    return _ep(username, randomStr, password)
 }
 
-async function updateUserPassword(epHash, usernamed, pool){
+async function updateUserPassword(epHash, usernamed, connection){
     const sql = `UPDATE users SET password='${epHash}' WHERE username='${username}'`
 
-    const sqlResult = await pool.query(sql)
+    const sqlResult = await connection.query(sql)
 }
 
-async function updateLastloginSuccessfullToYes(timeNow, idusers, ullid, loggedinto, pool){
+async function updateLastloginSuccessfullToYes(timeNow, idusers, ullid, loggedinto, connection){
     const sql = `UPDATE lastlogin SET time='${timeNow}',successfullogin='Yes',date=NOW(),loggedinto='${loggedinto}' WHERE idusers='${idusers}' AND ullid='${ullid}'`
 
-	const sqlResult = await pool.query(sql)
+	const sqlResult = await connection.query(sql)
 }
 
 function _ep(username, randomStr, password) {
@@ -75,20 +80,20 @@ function _ep(username, randomStr, password) {
 	return hash
 }
 
-async function insertIntoLastloginNewRow (idusers, uip, attempts, time, successfullogin, loggedinto, temail, pool) {
+async function insertIntoLastloginNewRow (idusers, uip, attempts, time, successfullogin, loggedinto, temail, connection) {
     const sql = `INSERT INTO lastlogin (  idusers   ,   uip  ,   attempts  ,    time   ,   successfullogin  ,date ,   loggedinto  ,  temail)
     VALUES ('${idusers}','${uip}','${attempts}','${time}','${successfullogin}',NOW(),'${loggedinto}', '${temail}')`
 
-	const sqlResult = await pool.query(sql)
+	const sqlResult = await connection.query(sql)
 
 }
 
-async function updatePasswordmd5HashToNewOne(username, unHashPassword, time, pool){
+async function updatePasswordmd5HashToNewOne(username, unHashPassword, time, connection){
     const epHash = _ep(username, time, unHashPassword)
 
     const sql1 = `SELECT password, idusers, email, username FROM users WHERE username='${username}' AND activationstatus='activated'`
 
-	const sqlResult1 = await pool.query(sql1)
+	const sqlResult1 = await connection.query(sql1)
 	const res1 = sqlResult1[0]
 	
 	const data1 = res1 && res1.length > 0 ? res1[0] : []
@@ -115,7 +120,7 @@ async function updatePasswordmd5HashToNewOne(username, unHashPassword, time, poo
 
         const sql3 = `SELECT idusers, ullid FROM lastlogin WHERE idusers='${idusersQ1}' AND successfullogin='No'`
 // console.log('===sql3', sql3)
-        const sqlResult3 = await pool.query(sql3)
+        const sqlResult3 = await connection.query(sql3)
         const res3 = sqlResult3[0]
 	
         const data3 = res3 && res3.length > 0 ? res3[0] : []
@@ -146,24 +151,30 @@ async function updatePasswordmd5HashToNewOne(username, unHashPassword, time, poo
 
 
 
-exports.isValidUserLogin = async (username, unHashPassword, pool) => {
+exports.isValidUserLogin = async (username, unHashPassword) => {
+    try {
+        const { execute } = require('../tools/mysql.conn')
+        const unixTimestamp = Math.round(Date.now() / 1000)
 
-    const unixTimestamp = Math.round(Date.now() / 1000)
+        // updatePasswordmd5HashToNewOne(username, unHashPassword, unixTimestamp)
 
-    // updatePasswordmd5HashToNewOne(username, unHashPassword, unixTimestamp, pool)
+        const password = await ep(username, unHashPassword)
 
-    const password = await ep(username, unHashPassword, pool)
-
-    const sql = `SELECT * FROM users WHERE username='${username}' AND password='${password}' AND activationstatus='activated'`
-// console.log('sql - ', sql)
-    const sqlResult = await pool.query(sql)
-    const res = sqlResult[0]
-console.log('res 0 = ', res)
-    const data3 = res && res.length > 0 ? res : []
+        const sql = `SELECT * FROM users WHERE username='${username}' AND password='${password}' AND activationstatus='activated'`
     
-    if ( data3 && data3.length > 0 ) {
-        return true
-    } else {
-        return false
+        const sqlResult = await execute(sql)
+        const res = sqlResult[0]
+
+        const data3 = sqlResult && sqlResult.length > 0 ? sqlResult : []
+
+        if ( data3 && data3.length > 0 ) {
+            return true
+        } else {
+            return false
+        }
+    } catch (error) {
+        console.log("🚀 isValidUserLogin - error: ", error)
+        console.log("🚀 isValidUserLogin - error stack: ", error.stack)
+        return null
     }
 }
