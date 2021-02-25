@@ -1,8 +1,7 @@
 'use strict'
 /* requires env ZABBIX_HOSTNAME and ZABBIX_SERVER, read the system-monitoring project info*/
-const watchdog = require('./tools/watchdog');
-watchdog.start();
 
+const watchdog = require('./tools/watchdog');
 const mongodb =  require('./tools/mongodb.topic_data');
 const rndLogs =  require('./tools/s3.rnd_logs');
 const dbPool =  require('./tools/mysql.pool');
@@ -17,53 +16,43 @@ const error = function(err, resource){
 
 module.exports.handler = async (event) => {
     try {
+        watchdog.start();
         console.log("Watchman start execution for payload: " + JSON.stringify(event));
         watchdog.info("Watchman start execution for payload: " + JSON.stringify(event));
-        return Promise.all([
-                /* Check the S3 resource */
-                rndLogs.uploadToS3(JSON.stringify(event))
-                    .then(console.log("Write OK to S3"))
-                    .catch(err => error(err, "S3"))
-                ,
-                /* Check the MongoDB resource */
-                mongodb.insert(event)
-                    .then((result) => console.log("Insert OK to mongodb:" + JSON.stringify(result)))
-                    .catch(err => error(err, "MongoDB"))
-                ,
-                /* Check the Mysql DB single query resource */
-                dbconnection.execute("SELECT 1", [])
+        /* Check the S3 resource */
+        await rndLogs.uploadToS3(JSON.stringify(event))
+            .then(console.log("Write OK to S3"))
+            .catch(err => error(err, "S3"));
+        /* Check the MongoDB resource */
+        await mongodb.insert(event)
+            .then((result) => console.log("Insert OK to mongodb:" + JSON.stringify(result)))
+            .catch(err => error(err, "MongoDB"))
+        /* Check the Mysql DB single query resource */
+        await dbconnection.execute("SELECT 1", [])
                     .then(console.log("DB [" + process.env.rdsMySqlHost + "] single connection OK select"))
                     .catch(err => error(err, "DB [" + process.env.rdsMySqlHost + "] connection"))
-                ,
-                /* Check the Mysql DB single query resource */
-                dbconnection.execute("SHOW STATUS WHERE `variable_name` = 'Threads_connected';", [])
-                    .then(result => {
-                            console.log("DB [" + process.env.rdsMySqlHost + "] CONNECTIONS: " + JSON.stringify(result));
-                            watchdog.info(parseInt(result.Value), 'mysql_connected_clients');
-                        }
-                    )
-                    .catch(err => error(err, "DB [" + process.env.rdsMySqlHost + "] connection")),
+        /* Check the Mysql DB single query resource */
+        await dbconnection.execute("SHOW STATUS WHERE `variable_name` = 'Threads_connected';", [])
+                .then(result => {
+                        console.log("DB [" + process.env.rdsMySqlHost + "] CONNECTIONS: " + JSON.stringify(result));
+                        watchdog.info(parseInt(result[0].Value), 'mysql_connected_clients');
+                    }
+                )
+                .catch(err => error(err, "DB [" + process.env.rdsMySqlHost + "] connection"))
 
-                /* Check the Mysql DB pool resource */
-                dbPool.execute("SELECT 1", [])
+        /* Check the Mysql DB pool resource */
+        await dbPool.execute("SELECT 1", [])
                     .then(console.log("DB [" + process.env.rdsMySqlHost + "] pool OK select:" + process.env.rdsMySqlHost))
-                    .catch(err => error(err, "DB [" + process.env.rdsMySqlHost + "] pool"))
-                /* @TODO the rest of the important resources */
-            ]
-            ).then(() => {
-                    console.log("Watchman  execution successful");
-                    watchdog.info("Watchman  execution successful");
-                    watchdog.send();
-            }).then(() =>  { return  {statusCode: 200,   body: '{}'} }
-            ).catch((err) => {
-                    watchdog.error("Watchman  execution fail:" + err);
-                    console.log(err.stack)
-                    watchdog.send();
-                    return  {statusCode: 503,   body: JSON.stringify({error: err, stack: err.stack })};
-            });
+                    .catch(err => error(err, "DB [" + process.env.rdsMySqlHost + "] pool"));
+        /* @TODO the rest of the important resources */
+        console.log("Watchman  execution successful");
+        watchdog.info("Watchman  execution successful");
+        return watchdog.send();
     } catch (err) {
         error(err, 'Watchman handler');
-        watchdog.send();
+        watchdog.error("Watchman  execution fail:" + err);
+        console.log(err.stack)
+        return watchdog.send();
     }
 }
 

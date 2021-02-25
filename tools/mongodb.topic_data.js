@@ -9,11 +9,5 @@ module.exports.insert = async function  (params) {
     const conn = await MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true });
     const db = await conn.db('mqtt');
     const collection = await db.collection('topic_data');
-    return collection.insertOne(params, (err, result)=>{
-        if(err) {
-            throw err;
-        } else {
-            return result.insertedId;
-        }
-    });
+    return collection.insertOne(params);
 }

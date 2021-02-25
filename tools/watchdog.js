@@ -1,5 +1,6 @@
 // Zabbix sender
-const ZabbixSender = require('node-zabbix-sender');
+const ZabbixSender = require('./zabbix-sender.js');
+
 // Performace lib
 const {performance} = require('perf_hooks');
 
@@ -12,14 +13,14 @@ let startMemBytes = process.memoryUsage().rss;
 
 // Instantiate the Zabbix Sender client
 const configured = typeof process.env.ZABBIX_SERVER !== "undefined" && typeof process.env.ZABBIX_HOSTNAME !== "undefined"
-const sender = new ZabbixSender({
+var sender = new ZabbixSender({
     host: process.env.ZABBIX_SERVER,
     items_host: process.env.ZABBIX_HOSTNAME,
-    timeout: 5000
+    timeout: 15000
 });
-
 // Private item adding
 const addItem = (type, code, value) => {
+
     // Trapper key, can be [err] or [err.svc]
     let key;
     if (code) {
@@ -93,9 +94,10 @@ exports.custom = (value, code) => {
 }
 /**
  * Sender function
- * @returns {Promise<void>}
+ *
  */
 exports.send = async () => {
+    var startTime = new Date();
     if(!configured){
         console.warning("Zabbix server and host seem to not be properly configured");
         return ;
@@ -107,23 +109,29 @@ exports.send = async () => {
         addItem('inf', 'mem', end2MemMB());
     } catch (err) {
         console.error("Error on collecting base time and memory metrics, error:" + err);
+        console.error("Error :" + err.stack);
         // Add time duration
         addItem('inf', 'tim', 0);
         // Add memory item
         addItem('inf', 'mem', 0);
     }
     try {
-        sender.send(function (err, res) {
-            if (err) {
-                console.error("Error received from metrics server: " + process.env.ZABBIX_SERVER
-                    + ", error:" + err)
-            }
-            console.dir(res);
+        return new Promise((resolve, reject) => {
+            sender.send(function (err, res) {
+                if (err) {
+                    console.error("Error received from metrics server: " + process.env.ZABBIX_SERVER
+                        + ", error:" + err + ", started at: " + startTime.toISOString());
+                    console.error("Error trace: " + err.stack);
+                    reject(err);
+                }else{
+                    console.info("Sent metrics successful: "+ JSON.stringify(res) + ", started at: " + startTime.toISOString());
+                    resolve(1);
+                }
+            })
         });
     } catch (err) {
         console.error("Error on sending metrics to server: " + process.env.ZABBIX_SERVER
-            + ", error:" + err)
-    } finally {
-        console.info("Sent metrics successful");
+            + ", error:" + err + ", started at: " + startTime.toISOString())
+        console.error("Error trace: " + err.stack);
     }
 }
