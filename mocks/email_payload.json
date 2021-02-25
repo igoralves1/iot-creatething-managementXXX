@@ -1,0 +1,11 @@
+{
+  "mail": "digitalgroupbravog4demo@gmail.com",
+  "subject": "Testing",
+  "body": "Body demo <br > Follow this link to continue.",
+  "mqtt_response_topic": "/scican/srv/1234AB5678/response/account-associate-email",
+  "mqtt_response_payload": {
+      "result": "email_sent"
+  },
+  "template": "test_welcome_en",
+  "variables": ""
+}

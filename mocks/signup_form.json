@@ -1,0 +1,17 @@
+{
+  "account_email": "digitalgroupbravog4demo@gmail.com",
+  "account_password": "sc&canltd",
+
+  "account_company_name": "Bob Company",
+  "account_contact_name": "Bob Demo",
+  "account_phone_number": "+14167778888",
+  "account_address": "1440 Don Mills",
+  "account_city": "Toronto",
+  "account_subregion": "Ontario",
+  "account_country": "Canada",
+  "account_zip_code": "m1m 4m4",
+
+  "language_iso639": "en",
+  "language_iso3166": "US",
+  "topic": "P/scican/1234AB5678/srv/request/account-signup-form"
+}
