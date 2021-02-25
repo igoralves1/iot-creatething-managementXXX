@@ -1461,8 +1461,13 @@ functions:
     vpc: ${file(env.yml):vpc-${self:provider.stage}}
     environment:
       BUCKET_SCICAN_RND_LOGS: '${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}'
-      ZABBIX_SERVER: 'ip-172-31-87-224.ec2.internal'
-      ZABBIX_HOSTNAME: '${self:provider.stage}.fnWatchman'
+      ZABBIX_SERVER: '172.31.87.224'
+      # see: https://wsmonitoring.scicanapi.com/hosts.php?form=update&hostid=10380
+      ZABBIX_HOSTNAME: 'HOST.${self:provider.stage}.Watchman'
+      rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
+      rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
+      rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
+      rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
 
 # ===========================================
 resources:

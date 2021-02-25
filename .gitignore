@@ -63,3 +63,5 @@ fabric.properties
 # modules.xml
 
 .env.*.DS_Store
+# The package-lock.json should not be on git.
+package-lock.json
