@@ -81,10 +81,10 @@ function _ep(username, randomStr, password) {
 }
 
 async function insertIntoLastloginNewRow (idusers, uip, attempts, time, successfullogin, loggedinto, temail, connection) {
-    const sql = `INSERT INTO lastlogin (  idusers   ,   uip  ,   attempts  ,    time   ,   successfullogin  ,date ,   loggedinto  ,  temail)
-    VALUES ('${idusers}','${uip}','${attempts}','${time}','${successfullogin}',NOW(),'${loggedinto}', '${temail}')`
+    const sql = `INSERT INTO lastlogin (  idusers   ,   uip  ,   attempts  ,    time   ,   successfullogin  ,date , loggedinto, temail)
+    VALUES (?,?,?,?,?,NOW(),?, ?)`
 
-	const sqlResult = await connection.query(sql)
+	const sqlResult = await connection.query(sql, [idusers,uip,attempts,time,successfullogin,loggedinto, temail])
 
 }
 
@@ -159,10 +159,10 @@ exports.isValidUserLogin = async (username, unHashPassword) => {
         // updatePasswordmd5HashToNewOne(username, unHashPassword, unixTimestamp)
 
         const password = await ep(username, unHashPassword)
-
-        const sql = `SELECT * FROM users WHERE username='${username}' AND password='${password}' AND activationstatus='activated'`
+console.log('+++++++++++++password hash', password)
+        const sql = `SELECT * FROM users WHERE username=? AND password=? AND activationstatus='activated'`
     
-        const sqlResult = await execute(sql)
+        const sqlResult = await execute(sql,[username, password])
         const res = sqlResult[0]
 
         const data3 = sqlResult && sqlResult.length > 0 ? sqlResult : []

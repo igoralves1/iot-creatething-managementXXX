@@ -123,7 +123,7 @@ module.exports.fnAccountSignUpForm = async (event) => {
 
             // const hash_data = await getPasswordHashData(data.account_email, account_password, axios)
             const password_hash = getPasswordHash(data.account_email, account_password, hash_time)
-            
+
             // if (hash_data && hash_data != null) {
             // if (password_hash) {
             data.password = password_hash || ''
