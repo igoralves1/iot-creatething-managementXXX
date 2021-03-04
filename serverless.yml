@@ -598,7 +598,7 @@ functions:
     events:
     - iot:
         name: ${self:provider.stage}_${self:custom.fnBootFwUpdateDone}
-        sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/MSSTER/+/CAN/EVN/FW_UPDATE_DONE/#' "
+        sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/MSSTER/+/CAN/EVN/UPDATE_FIRMWARE_FINISHED/#' "
     memorySize: 256
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnBootFwUpdateDone}
     iamRoleStatements:

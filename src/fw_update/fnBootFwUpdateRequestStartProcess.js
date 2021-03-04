@@ -31,6 +31,7 @@ async function createRef (version,FIRMWARE_BUCKET_NAME) {
     const refString = ref.toString('utf8')
     // refConcatenated = refString
     let str2arr = refString.split('\n')
+    str2arr.shift()
     refConcatenated = str2arr.join('\n')
     // TODO handle the new lines - is not working when publishing in the MQTT broker
     // let arrRef = refString.split('\n')
