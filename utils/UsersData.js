@@ -35,21 +35,7 @@ exports.getUserDetails = async (user_email) => {
             details.region = res.state_province_region || ''
             details.zip_code = res.zip_postal_code || ''
         }
-        /*if(res[0]) {
-            details.user_id = res[0].idusers || ''
-            details.firstname = res[0].firstname || ''
-            details.lastname = res[0].lastname || ''
-            details.email = res[0].username || ''
-            details.telephone = res[0].telephone || ''
-            details.company = res[0].company || ''
-            details.address1 = res[0].office_address_one || ''
-            details.address2 = res[0].office_address_two || ''
-            details.city = res[0].city || ''
-            details.country = res[0].country || ''
-            details.region = res[0].state_province_region || ''
-            details.zip_code = res[0].zip_postal_code || ''
-        }*/
-  
+
         return details
 
     } catch (error) {

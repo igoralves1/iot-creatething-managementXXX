@@ -17,7 +17,7 @@ exports.saveAssociationEmailRequest = async (serial_number, email) => {
               Values (?, ?, NOW() )`
 
     const queryResult = await execute(sql, [serial_number, email])
-    const res = queryResult //queryResult[0]
+    const res = queryResult
 
     return (Object.keys(res).length > 0 && res.affectedRows  != null) ? Boolean(res.affectedRows) : false
   } catch (error) {
@@ -78,8 +78,6 @@ exports.disassociate = async (user_email, serial_num, ca_active_ref_id) => {
           latest_oas_update_date=NOW()
       WHERE user_email=? AND serial_num=?`
 
-
-      // console.log("Update sql ==== ", sql)
       const sqlResult = await execute(sql, [user_email, serial_num])
 
       await updateAssociationEndDate(user_email, serial_num, ca_active_ref_id)
@@ -108,8 +106,6 @@ exports.updateAssociation = async (user_email, serial_num, ca_active_ref_id) => 
           latest_oas_update_date=NOW()
           WHERE user_email = ? AND serial_num = ?`
 
-
-    // console.log("Update sql ==== ", sql)
     const sqlResult = await execute(sql, [ca_active_ref_id, user_email, serial_num])
 
     // update unit associate dates table
@@ -131,7 +127,6 @@ exports.insertAssociation = async (user_id, useremail, serial_num, ref_id) => {
                 (idusers,user_email,prev_associations_active,association_active,serial_num,ca_active_ref_id,latest_oas_update_date,idunits_warranties,web_conf_confirmed, web_conf_confirmed_date,email_conf_sent_by_unit,email_conf_sent_by_unit_date) 
                 VALUES (?,?,1,1,?,?,NOW(),0,1,NOW(),1,NOW())`
 
-      // console.log("Update sql ==== ", sql)
       const sqlResult = await execute(sql, [user_id, useremail, serial_num, ref_id])
 
       return sqlResult ? Boolean(sqlResult.affectedRows) : false

@@ -97,7 +97,7 @@ async function updatePasswordmd5HashToNewOne(username, unHashPassword, time, con
 	const res1 = sqlResult1[0]
 	
 	const data1 = res1 && res1.length > 0 ? res1[0] : []
-// console.log('=== data 1 - ' , data1)
+
     if ( data1 && Object.keys(data1).length > 0) {
 
         const passwordQ1 = data1.password
@@ -119,14 +119,14 @@ async function updatePasswordmd5HashToNewOne(username, unHashPassword, time, con
         }
 
         const sql3 = `SELECT idusers, ullid FROM lastlogin WHERE idusers='${idusersQ1}' AND successfullogin='No'`
-// console.log('===sql3', sql3)
+
         const sqlResult3 = await connection.query(sql3)
         const res3 = sqlResult3[0]
 	
         const data3 = res3 && res3.length > 0 ? res3[0] : []
-// console.log('--- data3 ', data3)        
+
         if ( data3 && Object.keys(res3).length > 0 && passwordMD5Match) {
-// console.log(' Updating data 3 ', data3)
+
             const idusersQ3 = data3.idusers
             const ullidQ3 = data3.ullid
             
@@ -135,13 +135,12 @@ async function updatePasswordmd5HashToNewOne(username, unHashPassword, time, con
             updateUserPassword(epHash, username)
 
         } else if (usernameQ1 == unHashPassword &&  passwordMD5Match) {
-    // console.log(' Inserting data 3 ', data3)
+
             insertIntoLastloginNewRow(idusersQ1, '0.0.0.0', 0, time, 'yes', 'RecoverPW', emailQ1)
 
             updateUserPassword(epHash, username)
 
         } else if (passwordQ1 == unHashPassword &&  passwordMD5Match) {
-    // console.log('last else data 3 ', data3)           
             insertIntoLastloginNewRow(idusersQ1, '0.0.0.0', 0, time, 'yes', 'RecoverPW', emailQ1)
 
             updateUserPassword(epHash, username)
@@ -159,7 +158,7 @@ exports.isValidUserLogin = async (username, unHashPassword) => {
         // updatePasswordmd5HashToNewOne(username, unHashPassword, unixTimestamp)
 
         const password = await ep(username, unHashPassword)
-console.log('+++++++++++++password hash', password)
+
         const sql = `SELECT * FROM users WHERE username=? AND password=? AND activationstatus='activated'`
     
         const sqlResult = await execute(sql,[username, password])
