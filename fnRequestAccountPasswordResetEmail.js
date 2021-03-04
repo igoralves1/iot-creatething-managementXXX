@@ -26,6 +26,7 @@ const MQTT_TOPIC_ENV = process.env.mqttTopicEnv
 const { getPasswordHash } = require('./utils/getPasswordHash')
 const { getProductName, checkOnlineAccessStatus } = require('./utils/ProductsData')
 const { getUserDetails, updateActivationKey } = require('./utils/UsersData')
+const { iso3LanguageCode } = require('./utils/Data')
 const { generateRandomValue } = require('./utils/helpers')
 
 const mysql = require('mysql2/promise')
@@ -37,12 +38,11 @@ const publishMqtt = (params) =>
 
 
 const getEmailPayload = (params) => {
-    const { email, firstname, lastname, product_name, serial_num, language, country_code, password_hash, activation_key } = params
+    const { email, firstname, lastname, product_name, serial_num, language, iso3_lang, country_code, password_hash, activation_key } = params
     const lname = lastname ? ` ${lastname}` : ''
     const baseUrl = "https://updates.scican.com"
     const locale = language && country_code ? `${language.toLowerCase()}_${country_code.toUpperCase()}` : 'en_US'
     const templateName = `iot_reset_password_${locale}`
-    const iso3_lang = 'ENG'
     const vars = {
         "name": `${firstname}${lname}`, 
         "linkUrl": baseUrl, 
@@ -52,7 +52,6 @@ const getEmailPayload = (params) => {
         "activation_key": activation_key,
         "lang": iso3_lang
     }
-    
 
     const payload = {
         "mail": email,
@@ -117,6 +116,12 @@ module.exports.fnRequestAccountPasswordResetEmail = async (event) => {
                 if(activationKeyUpdated && activation_key != null) {
                     //get product name
                     const productName = await getProductName(serialNumber)
+
+                    //get ISO639_2 language code
+                    let iso3_lang = 'ENG'
+                    if(language && language != null) {
+                        iso3_lang = await iso3LanguageCode(language)
+                    }
                 
                     //get email payload
                     const emailPayload = getEmailPayload({
@@ -126,6 +131,7 @@ module.exports.fnRequestAccountPasswordResetEmail = async (event) => {
                         product_name: productName,
                         serial_num: serialNumber, 
                         language: language,
+                        iso3_lang: iso3_lang,
                         country_code: country_code,
                         password_hash: password_hash,
                         activation_key: activation_key 
