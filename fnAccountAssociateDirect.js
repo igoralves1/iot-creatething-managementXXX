@@ -45,28 +45,27 @@ const getRandomValue = () => {
 }
 
 const getEmailPayload = (params) => {
-    const { email, firstname, lastname, product_name, serial_num, language } = params
+    const { email, firstname, lastname, product_name, serial_num, language, country_code } = params
     const lname = lastname ? `, ${lastname}` : ''
-    const linkUrl = "updates.scican.com"
-    const source = "no-reply.notification@scican.com"
-    const templateName = "template_name"
-    let subject = "Online Access Activation"
-    let body = `Dear ${firstname}${lname},  <br /><br /> `
-            + `${serial_num} has been successfully registered and activated on your account on  <a href='https://updates.scican.com'>updates.scican.com</a>. You can now access your cycle data, unit information by logging into your account. <br /><br />`
-            + `Please feel free to contact SciCan or your local dealer for more information about ${product_name} and its G4<sup>+</sup> features. <br /><br />`
-            + `Regards, <br /><br />`
-            + `SciCan Team`
+    const baseUrl = "https://updates.scican.com"
+    const locale = language && country_code ? `${language.toLowerCase()}_${country_code.toUpperCase()}` : 'en_US'
+    const templateName = `iot_associate_direct_${locale}`
+    const vars = {
+        "name": `${firstname}${lname}`, 
+        "linkUrl": baseUrl, 
+        "email": email, 
+        "product_name": product_name,
+        "serial_num": serial_num
+    }
 
     const payload = {
         "mail": email,
-        "subject": subject,
-        "body": body,
         "mqtt_response_topic": `/scican/srv/${serial_num}/response/account-associate-direct`,
         "mqtt_response_payload": {
             "result": "associated"
         },
-        // "template": templateName,
-        // "variables": ""
+        "template": templateName,
+        "variables": vars
     }
 
     return payload
@@ -76,7 +75,6 @@ module.exports.fnAccountAssociateDirect = async (event) => {
     let connection
 
     try {
-        // const axios = require('axios')
         const retval = event.retval
         const topic = event.topic
         const res = topic.split("/")
@@ -85,7 +83,8 @@ module.exports.fnAccountAssociateDirect = async (event) => {
         let associated = false
 
         const account_email = event.account_email
-        const language = event.language_iso639 ? event.language_iso639 : 'en'
+        const language = event.language_iso639 ? event.language_iso639 : ''
+        const country_code = event.language_iso3166 ? event.language_iso3166 : ''
         const account_password = event.account_password
         const unknown_error =  {
             topic: `${MQTT_TOPIC_ENV}/scican/srv/${serialNumber}/response/account-associate-direct`,
@@ -122,7 +121,8 @@ module.exports.fnAccountAssociateDirect = async (event) => {
                     lastname: userDetails.lastname, 
                     product_name: productName,
                     serial_num: serialNumber, 
-                    language: language 
+                    language: language,
+                    country_code: country_code 
                 })
     
                 publishParams = {

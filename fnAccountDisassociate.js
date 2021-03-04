@@ -37,30 +37,27 @@ const publishMqtt = (params) =>
 
 
 const getEmailPayload = (params) => {
-    const { email, firstname, lastname, product_name, serial_num, language } = params
+    const { email, firstname, lastname, product_name, serial_num, language, country_code } = params
     const lname = lastname ? `, ${lastname}` : ''
-    const linkUrl = "updates.scican.com"
-    const source = "no-reply.notification@scican.com"
-    const templateName = "template_name"
-    let subject = "Account Disassociation"
-    let body = `Dear ${firstname}${lname},  <br /><br /> `
-            + `You have selected to disassociate your ${product_name} with serial number ${serial_num} from your account ${email}. You can still access the cycle data prior to disassociation by logging in to your account on <a href='https://updates.scican.com'>updates.scican.com</a>.`
-            +` Your ${product_name} will not be able to upload any cycle data after the disassociation date and you will not be able to create any reports. <br /><br />`
-            + `If you want to associate your ${product_name} with serial number ${serial_num} again, please follow the Online Access steps from the unit. <br /><br />`
-            + `Please feel free to contact SciCan for more information <br /><br />`
-            + `Regards, <br /><br />`
-            + `SciCan Team`
+    const baseUrl = "https://updates.scican.com"
+    const locale = language && country_code ? `${language.toLowerCase()}_${country_code.toUpperCase()}` : 'en_US'
+    const templateName = `iot_disassociate_${locale}`
+    const vars = {
+        "name": `${firstname}${lname}`, 
+        "linkUrl": baseUrl, 
+        "email": email, 
+        "product_name": product_name,
+        "serial_num": serial_num
+    }
 
     const payload = {
         "mail": email,
-        "subject": subject,
-        "body": body,
         "mqtt_response_topic": `/scican/srv/${serial_num}/response/account-disassociate`,
         "mqtt_response_payload": {
             "result": "disassociated"
         },
-        // "template": templateName,
-        // "variables": ""
+        "template": templateName,
+        "variables": vars
     }
 
     return payload
@@ -85,6 +82,7 @@ module.exports.fnAccountDisassociate = async (event) => {
 
         const account_email = event.account_email
         const language = event.language_iso639 ? event.language_iso639 : ''
+        const country_code = event.language_iso3166 ? event.language_iso3166 : ''
 
         console.log('+++ Received payload', event)
 
@@ -118,7 +116,8 @@ module.exports.fnAccountDisassociate = async (event) => {
                     lastname: userDetails.lastname || '', 
                     product_name: productName,
                     serial_num: serialNumber, 
-                    language: language 
+                    language: language,
+                    country_code: country_code 
                 })
 
                 publishParams = {

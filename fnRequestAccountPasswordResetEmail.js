@@ -37,30 +37,31 @@ const publishMqtt = (params) =>
 
 
 const getEmailPayload = (params) => {
-    const { email, firstname, lastname, product_name, serial_num, language, password_hash, activation_key } = params
-    const lname = lastname ? `, ${lastname}` : ''
-    const linkUrl = "updates.scican.com"
-    const source = "no-reply.notification@scican.com"
-    const templateName = "template_name"
-    const lang = 'ENG'
-    let subject = "Reset Password"
-    let body = `Dear ${firstname}${lname},  <br /><br /> `
-            + `You recently requested to reset your password for your Updates.SciCan page account. Click the button bellow to reset it.  <br /><br />`
-            + `<a href='https://updates.scican.com/passwordChange.php?user=${email}&keyid=${password_hash}&key=${activation_key}&lang=${lang}'>Reset your password</a> <br /><br />`
-            + `If you did not request a password reset, please ignore this email. This password reset is only valid for the next 60 minutes.  <br /><br />`
-            + `Regards, <br /><br />`
-            + `SciCan Team`
+    const { email, firstname, lastname, product_name, serial_num, language, country_code, password_hash, activation_key } = params
+    const lname = lastname ? ` ${lastname}` : ''
+    const baseUrl = "https://updates.scican.com"
+    const locale = language && country_code ? `${language.toLowerCase()}_${country_code.toUpperCase()}` : 'en_US'
+    const templateName = `iot_reset_password_${locale}`
+    const iso3_lang = 'ENG'
+    const vars = {
+        "name": `${firstname}${lname}`, 
+        "linkUrl": baseUrl, 
+        "email": email, 
+        "product_name": product_name,
+        "password_hash" : password_hash,
+        "activation_key": activation_key,
+        "lang": iso3_lang
+    }
+    
 
     const payload = {
         "mail": email,
-        "subject": subject,
-        "body": body,
         "mqtt_response_topic": `/scican/srv/${serial_num}/response/account-password_reset_email`,
         "mqtt_response_payload": {
             "result": "email_sent"
         },
-        // "template": templateName,
-        // "variables": ""
+        "template": templateName,
+        "variables": vars
     }
 
     return payload
@@ -86,6 +87,7 @@ module.exports.fnRequestAccountPasswordResetEmail = async (event) => {
 
         const account_email = event.account_email
         const language = event.language_iso639 ? event.language_iso639 : ''
+        const country_code = event.language_iso3166 ? event.language_iso3166 : ''
 
         console.log('++++ Received Payload ', event)
 
@@ -97,11 +99,6 @@ module.exports.fnRequestAccountPasswordResetEmail = async (event) => {
         })
 
         let userDetails = await getUserDetails(account_email)
-        
-        if(typeof userDetails == 'object' && Object.keys(userDetails).length > 0) {
-            //check if online access is active for this unit
-            //isActive = checkOnlineAccessStatus(account_email, serialNumber)
-        }
 
         if(typeof userDetails == 'object' && Object.keys(userDetails).length > 0) {
             //get activation key
@@ -112,7 +109,7 @@ module.exports.fnRequestAccountPasswordResetEmail = async (event) => {
 
             //get password hash
             const password_hash = getPasswordHash(account_email, new_password, Date.now())
-            console.log(' Password Hash = ', password_hash)
+            // console.log(' Password Hash = ', password_hash)
 
             if(password_hash) {
                 const activationKeyUpdated = await updateActivationKey(account_email, activation_key)
@@ -129,6 +126,7 @@ module.exports.fnRequestAccountPasswordResetEmail = async (event) => {
                         product_name: productName,
                         serial_num: serialNumber, 
                         language: language,
+                        country_code: country_code,
                         password_hash: password_hash,
                         activation_key: activation_key 
                     })

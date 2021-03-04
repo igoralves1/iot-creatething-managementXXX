@@ -29,31 +29,26 @@ const { isUserExist } = require('./utils/UsersData')
 const mysql = require('mysql2/promise')
 
 const getEmailPayload = (params) => {
-    const { email, product_name, serial_num, language } = params
-    const linkUrl = "updates.scican.com"
-    const source = "no-reply.notification@scican.com"
-    const templateName = "template_name"
-    let subject = "Account SignUp"
-    let body = `Dear Sir/Madam  <br /><br /> `
-            + `Thank you for choosing ${product_name}. <br /><br />`
-            + `Please, click <a href='https://${linkUrl}/register.php?user=CUSTOMER&action=onlineaccess&email=${email}&sn=${serial_num}&pub=1'>here</a> to complete your registration and online activation for ${serial_num}.<br /><br /> `
-            + `You can access your cycle data, unit information and manuals by logging into your account on <a href='https://updates.scican.com'>updates.scican.com</a>. <br /><br />`
-            + `Please feel free to contact SciCan or your local dealer for more information about ${product_name} and its G4<sup>+</sup> features. <br /><br />`
-            + `Regards, <br /><br />`
-            + `SciCan Team`
-
-    
+    const { email, product_name, serial_num, language, country_code } = params
+    const baseUrl = "https://updates.scican.com"
+    const locale = language && country_code ? `${language.toLowerCase()}_${country_code.toUpperCase()}` : 'en_US'
+    const templateName = `iot_signup_email_${locale}`
+    const vars = {
+        "name": "Sir/Madam",
+        "linkUrl": baseUrl, 
+        "email": email, 
+        "product_name": product_name,
+        "serial_num": serial_num
+    }
 
     const payload = {
         "mail": email,
-        "subject": subject,
-        "body": body,
         "mqtt_response_topic": `/scican/srv/${serial_num}/response/account-signup-email`,
         "mqtt_response_payload": {
             "result": "email_sent"
         },
-        //"template": templateName,
-        // "variables": ""
+        "template": templateName,
+        "variables": vars
     }
 
     return payload
@@ -76,6 +71,8 @@ module.exports.fnAccountSignUpEmail = async (event) => {
 
         const account_email = event.account_email
         const language = event.language_iso639 ? event.language_iso639 : ''
+        const country_code = event.language_iso3166 ? event.language_iso3166 : ''
+
         console.log('++++ Received Payload ', event);  
         
         connection = await mysql.createConnection({
@@ -86,7 +83,6 @@ module.exports.fnAccountSignUpEmail = async (event) => {
         })
         
         const userExist = await isUserExist(account_email)
-    console.log('==user Exists ', userExist)
 
         if(!userExist && userExist != null) {
             //insert email and sn into online_access_email_request table
@@ -99,7 +95,8 @@ module.exports.fnAccountSignUpEmail = async (event) => {
                 email: account_email, 
                 product_name: productName,
                 serial_num: serialNumber, 
-                language: language 
+                language: language,
+                country_code: country_code 
             })
 
             publishParams = {

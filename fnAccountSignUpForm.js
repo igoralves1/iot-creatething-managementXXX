@@ -49,29 +49,26 @@ const publishMqtt = (params) =>
 
 
 const getEmailPayload = (params) => {
-    const { email, firstname, lastname, product_name, serial_num, language } = params
-    const linkUrl = "updates.scican.com"
-    const source = "no-reply.notification@scican.com"
-    const templateName = "template_name"
-    let subject = "Account Sign Up and Online Activation"
-    let body = `Dear ${firstname},  <br /><br /> `
-            + `Welcome to  <a href='https://updates.scican.com'>updates.scican.com</a>. You have successfully created an account on our website using “email address”. Feel free to sign-in to your account and edit your profile. <br /><br />`
-            + `Thank you for choosing ${product_name}. <br /><br />`
-            + `${serial_num} has been successfully registered and activated on your account on <a href='https://updates.scican.com'>updates.scican.com</a>. You can now access your cycle data, unit information and manuals by logging into your account. `
-            + `Please feel free to contact SciCan or your local dealer for more information about ${product_name} and its G4<sup>+</sup> features. <br /><br />`
-            + `Regards, <br /><br />`
-            + `SciCan Team`
+    const { email, firstname, lastname, product_name, serial_num, language, country_code } = params
+    const baseUrl = "https://updates.scican.com"
+    const locale = language && country_code ? `${language.toLowerCase()}_${country_code.toUpperCase()}` : 'en_US'
+    const templateName = `iot_signup_form_${locale}`
+    const vars = {
+        "firstname": `${firstname}`, 
+        "linkUrl": baseUrl, 
+        "email": email, 
+        "product_name": product_name,
+        "serial_num": serial_num
+    }
 
     const payload = {
         "mail": email,
-        "subject": subject,
-        "body": body,
         "mqtt_response_topic": `/scican/srv/${serial_num}/response/account-signup-form`,
         "mqtt_response_payload": {
             "result": "associated"
         },
-        //"template": templateName,
-        //"variables": ""
+        "template": templateName,
+        "variables": vars
     }
 
     return payload
@@ -99,7 +96,8 @@ module.exports.fnAccountSignUpForm = async (event) => {
             account_country:  event.account_country || '',
             account_zip_code:  event.account_zip_code || '',
             language:  event.language_iso639 || '',
-            language_iso3166:  event.language_iso3166 || ''
+            language_iso3166:  event.language_iso3166 || '',
+            country_code: event.language_iso3166 || ''
         }
         
         console.log("++++ Received Event = ", event)
@@ -112,22 +110,16 @@ module.exports.fnAccountSignUpForm = async (event) => {
         })
 
         //get user's details
-        // const userExist = await isUserExist(data.account_email)
         const userExist = await isUserExist(data.account_email)
-    console.log('==user Exists ', userExist)
 
         if (data.account_email && !userExist && userExist != null){
             let user_id = ''
             let isLastLoginUpdated = false
             const hash_time = Date.now()
 
-            // const hash_data = await getPasswordHashData(data.account_email, account_password, axios)
             const password_hash = getPasswordHash(data.account_email, account_password, hash_time)
 
-            // if (hash_data && hash_data != null) {
-            // if (password_hash) {
             data.password = password_hash || ''
-            // const hash_time = hash_data.hash_time || ''
 
             user_id = await InsertUser(data)
 
@@ -145,7 +137,6 @@ module.exports.fnAccountSignUpForm = async (event) => {
 
                 if(associated && associated != null) {
                 //get product name
-                // const productName = await getProductName(serialNumber)
                 const productName = await getProductName(serialNumber)
         
                     //get payload
@@ -155,7 +146,8 @@ module.exports.fnAccountSignUpForm = async (event) => {
                         lastname: data.lastname || '', 
                         product_name: productName,
                         serial_num: serialNumber, 
-                        language: data.language 
+                        language: data.language,
+                        country_code: data.country_code 
                     })
     
                     publishParams = {
