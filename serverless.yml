@@ -52,7 +52,8 @@ custom:
   # ------ TESTS ------
   fnAutomatedTests: 'fnAutomatedTests'
   fnFwUpdateFlow_test: 'fnFwUpdateFlow_test'
-  fnWatchman: 'fnWatchman'
+  fnWatchmanCron: 'fnWatchmanCron'
+  fnWatchmanMqtt: 'fnWatchmanMqtt'
 
 
 
@@ -1427,19 +1428,16 @@ functions:
       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
       mqttTopicEnv: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
 
-  fnWatchman:
-    name: ${self:provider.stage}-${self:custom.fnWatchman}
-    handler: fnWatchman.handler
+  fnWatchmanCron:
+    name: ${self:provider.stage}-${self:custom.fnWatchmanCron}
+    handler: fnWatchman.handlerCron
     events:
-      - iot:
-          name: ${self:provider.stage}_${self:custom.fnWatchman}
-          sql: "SELECT * AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/watchman' "
       - schedule: cron(0/5 * * * ? *)
     memorySize: 256
     timeout: 10
     maximumEventAge: 120
     maximumRetryAttempts: 1
-    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnWatchman}
+    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnWatchmanCron}
     iamRoleStatements:
       - Effect: "Allow"
         Action:
@@ -1464,10 +1462,42 @@ functions:
       ZABBIX_SERVER: '172.31.87.224'
       # see: https://wsmonitoring.scicanapi.com/hosts.php?form=update&hostid=10380
       ZABBIX_HOSTNAME: 'HOST.${self:provider.stage}.Watchman'
+      WATCHMAN_MQTT_RECEIVER_TOPIC: 'scican/watchman'
+      MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
       rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
       rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
       rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
       rdsMySqlPassword: ${ssm:rdsMySqlPassword-${self:provider.stage}~true}
+
+  fnWatchmanMqtt:
+    name: ${self:provider.stage}-${self:custom.fnWatchmanMqtt}
+    handler: fnWatchman.handlerMqtt
+    events:
+      - iot:
+          name: ${self:provider.stage}_${self:custom.fnWatchmanMqtt}
+          sql: "SELECT * AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/scican/watchman' "
+    memorySize: 128
+    timeout: 5
+    maximumEventAge: 120
+    maximumRetryAttempts: 1
+    iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnWatchmanMqtt}
+    iamRoleStatements:
+      - Effect: "Allow"
+        Action:
+          - "iot:*"
+        Resource: '*'
+      - Effect: 'Allow'
+        Action:
+          - 'logs:CreateLogGroup'
+          - 'logs:CreateLogStream'
+          - 'logs:PutLogEvents'
+        Resource: "*"
+    vpc: ${file(env.yml):vpc-${self:provider.stage}}
+    environment:
+      BUCKET_SCICAN_RND_LOGS: '${file(env.yml):BUCKET_SCICAN_RND_LOGS}${self:provider.stage}'
+      ZABBIX_SERVER: '172.31.87.224'
+      # see: https://wsmonitoring.scicanapi.com/hosts.php?form=update&hostid=10380
+      ZABBIX_HOSTNAME: 'HOST.${self:provider.stage}.Watchman'
 
 # ===========================================
 resources:

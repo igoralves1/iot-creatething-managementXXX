@@ -1,16 +1,6 @@
 // Zabbix sender
 const ZabbixSender = require('./zabbix-sender.js');
 
-// Performace lib
-const {performance} = require('perf_hooks');
-
-//Milliseconds start
-let startMiliSeconds = performance.now();
-
-//Memory start
-let startMemBytes = process.memoryUsage().rss;
-
-
 // Instantiate the Zabbix Sender client
 const configured = typeof process.env.ZABBIX_SERVER !== "undefined" && typeof process.env.ZABBIX_HOSTNAME !== "undefined"
 var sender = new ZabbixSender({
@@ -33,23 +23,8 @@ const addItem = (type, code, value) => {
     console.log("Added key no " + sender.countItems() + ":" + key + ", value: " + value);
 }
 
-const end2MiliSeconds = () => {
-    return parseFloat(performance.now() - startMiliSeconds).toFixed(4);
-}
-
-const end2MemMB = () => {
-    // Started memory minus current started memory
-    // Count inside used memory, not by entire start up
-    return Number.parseFloat((process.memoryUsage().rss - startMemBytes) /  (1024 * 1024)).toFixed(4);
-}
-
-// Start timer
-exports.start = () => {
-    startMiliSeconds = performance.now();
-    startMemBytes = process.memoryUsage().rss;
-}
 /**
- *  Send error message or value to zabbix trapper item.
+ *  Send error message or value to zabbix trapper item: err.{code}
  * @param value string
  * @param code (optional)
  */
@@ -58,7 +33,7 @@ exports.error = (value, code) => {
 }
 
 /**
- *  Send info message or value to zabbix trapper item.
+ *  Send info message or value to zabbix trapper item: inf.{code}
  * @param value string
  * @param code (optional)
  */
@@ -67,7 +42,7 @@ exports.info = (value, code) => {
 }
 
 /**
- *  Send warning message or value to zabbix trapper item.
+ *  Send warning message or value to zabbix trapper item: war.{code}
  * @param value string
  * @param code (optional)
  */
@@ -76,7 +51,7 @@ exports.warning = (value, code) => {
 }
 
 /**
- *  Send debug message or value to zabbix trapper item.
+ *  Send debug message or value to zabbix trapper item: dev.{code}
  * @param value string
  * @param code (optional)
  */
@@ -101,19 +76,6 @@ exports.send = async () => {
     if(!configured){
         console.warning("Zabbix server and host seem to not be properly configured");
         return ;
-    }
-    try {
-        // Add time duration
-        addItem('inf', 'tim', end2MiliSeconds());
-        // Add memory item
-        addItem('inf', 'mem', end2MemMB());
-    } catch (err) {
-        console.error("Error on collecting base time and memory metrics, error:" + err);
-        console.error("Error :" + err.stack);
-        // Add time duration
-        addItem('inf', 'tim', 0);
-        // Add memory item
-        addItem('inf', 'mem', 0);
     }
     try {
         return new Promise((resolve, reject) => {
