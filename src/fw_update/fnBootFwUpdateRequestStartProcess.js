@@ -134,7 +134,7 @@ P/SCICAN/AJCPA009/CAN/CMD/boot_fw_update_request_start_process/PROCESS_0_v1-11-3
             "data" : {
                 "node" : "PROCESS",
                 "config":`ref_table=${refString}`,
-                "quiet" : "1"
+                "quiet" : "0"
             }
         }
         console.log("🚀 14 - bodyJson:", bodyJson)
