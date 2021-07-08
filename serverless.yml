@@ -1423,7 +1423,7 @@ functions:
           - 'ec2:CreateNetworkInterface'
           - 'ec2:DescribeNetworkInterfaces'
           - 'ec2:DeleteNetworkInterfaces'
-        Resource: "*"    
+        Resource: "*"
     vpc: ${file(env.yml):vpc-${self:provider.stage}}
     environment:
       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
