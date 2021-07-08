@@ -402,6 +402,7 @@ functions:
         path: publishmqtt
         method: post
         private: false
+        cors: true
     environment:
       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
     memorySize: 256
