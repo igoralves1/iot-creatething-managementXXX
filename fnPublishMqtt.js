@@ -8,7 +8,7 @@ const publishMqtt = (params) =>
   iotdata.publish(params, (err, res) => resolve(res)))
 
 module.exports.fnPublishMqtt = async (event, context, callback) => {
-  
+
     const jsonBody = JSON.parse(event.body)
 
     const schema = Joi.object({
@@ -21,13 +21,17 @@ module.exports.fnPublishMqtt = async (event, context, callback) => {
     if (!(typeof error === 'undefined')) {
         return {
             statusCode: 401,
+            headers: {
+              'Access-Control-Allow-Origin': '*',
+              'Access-Control-Allow-Credentials': true,
+            },
             body: JSON.stringify({ 'message':'The provided JSON is not valid' })
         }
     }
 
     const { topic, payload } = jsonBody
 
-    // TODO This is the JSON String to be published 
+    // TODO This is the JSON String to be published
     /*
     {"topic": "testpub/1", "payload": "{'tes':'igor'}"}
     But this JSON doesn't work.
@@ -54,6 +58,10 @@ module.exports.fnPublishMqtt = async (event, context, callback) => {
 
     return {
         statusCode: 200,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Credentials': true,
+        },
         body: JSON.stringify(response)
     }
 }
