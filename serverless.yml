@@ -9,8 +9,10 @@ plugins:
 - serverless-domain-manager
 - serverless-add-api-key
 - serverless-iam-roles-per-function
+- serverless-plugin-log-retention
 
 custom:
+  logRetentionInDays: 60
   fnCreateThing: 'createThing'
   fnCertificateInfo: 'certificateInfo'
   fnToken: 'token'
