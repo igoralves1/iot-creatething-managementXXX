@@ -23,7 +23,7 @@ module.exports.fnPublishMqtt = async (event, context, callback) => {
             statusCode: 401,
             headers: {
               'Access-Control-Allow-Origin': '*',
-              'Access-Control-Allow-Credentials': true,
+              'Access-Control-Allow-Credentials': true
             },
             body: JSON.stringify({ 'message':'The provided JSON is not valid' })
         }
@@ -31,21 +31,11 @@ module.exports.fnPublishMqtt = async (event, context, callback) => {
 
     const { topic, payload } = jsonBody
 
-    // TODO This is the JSON String to be published
-    /*
-    {"topic": "testpub/1", "payload": "{'tes':'igor'}"}
-    But this JSON doesn't work.
-
-    This is the JSON that works and should be published:
-    '{"ddd":"zzz"}',
-    */
-
     //! NOTE: Use iot-pubSub-tests-NodeJs: node post.js to publish.
     //! If we use POSTMAN the JSON string is not well configured - we will have the follow error in the MQTT broker (We cannot display the message as JSON, and are instead displaying it as UTF-8 String.)
 
     var params = {
         topic: topic,
-        // payload: '{"ddd":"zzz"}',
         payload: payload,
         qos: '0'
     };
@@ -60,7 +50,7 @@ module.exports.fnPublishMqtt = async (event, context, callback) => {
         statusCode: 200,
         headers: {
           'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Credentials': true,
+          'Access-Control-Allow-Credentials': true
         },
         body: JSON.stringify(response)
     }
