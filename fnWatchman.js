@@ -68,6 +68,11 @@ module.exports.handlerCron = async (event) => {
                         error(err, "DB [" + process.env.rdsMySqlHost + "] pool");
                         watchdog.info(0, 'mysql.pool_connection');
                     });
+        await dbPool.execute("SHOW STATUS WHERE `variable_name` = 'Threads_connected';", [])
+                    .then(result => {
+                        console.log("DB POOL [" + process.env.rdsMySqlHost + "] CONNECTIONS: " + JSON.stringify(result));
+                    })
+                    .catch(err => error(err, "DB POOL [" + process.env.rdsMySqlHost + "] connection"));            
         /* Check the MQTT DB pool resource */
         const topicPrefix = process.env.MQTT_TOPIC_ENV ? process.env.MQTT_TOPIC_ENV.trim() : 'Q/';
         const topic = process.env.WATCHMAN_MQTT_RECEIVER_TOPIC ? process.env.WATCHMAN_MQTT_RECEIVER_TOPIC:  'scican/watchman';
