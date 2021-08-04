@@ -8,7 +8,12 @@ module.exports.execute = async function (sql, args){
         database : process.env.rdsMySqlDb,
     })
     // query database using promises
-    const [rows, fields] = await connection.execute(sql, args);
-    connection.end();
-    return rows;
+    try {
+        const [rows, fields] = await connection.execute(sql, args);
+        return rows;
+    } catch (err) {
+        console.error('Database error:' + err);
+    } finally {
+        connection.end();
+    }
 }
