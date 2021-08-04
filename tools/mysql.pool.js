@@ -10,10 +10,10 @@ var dbPool = pool.createPool({
  * Set timeout on db pool to avoid the connect timeout.
  * Be sure the mysql is properly configured.
  */
-setInterval(() => {
+/*setInterval(() => {
     dbPool.query('SELECT 1')
 }, 30000);
-
+*/
 module.exports.execute = async function (sql, args){
     // query database using promises
     const [rows, fields] = await dbPool.execute(sql, args);
