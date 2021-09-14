@@ -6,7 +6,7 @@
  *   "mail": "nicolicioiu.liviu@enode.ro",
  *   "subject": "Demo Subject",
  *   "body": "Body demo <br >",
- *   "mqtt_response_topic": "/de/null/",
+ *   "mqtt_response_topic": "/dev/null/",
  *   "mqtt_response_payload": {},
  *   "template": 'template_name',
  *   "variables": {},
@@ -231,6 +231,7 @@ module.exports.fnSendEmail = async function (event, context, callback) {
             response = await new AWS.SES({apiVersion: '2010-12-01'}).sendEmail(params).promise();
         }
         console.log("Sent email message id: " + response.MessageId + "");
+        console.log("Sent email response payload: " + JSON.stringify(response));
         data.result.message_id = response.MessageId;
         data.mqtt_response_payload.result = (data.mqtt_response_payload &&  data.mqtt_response_payload.result != null) ? data.mqtt_response_payload.result : 'email_sent';
         // Add message id to the data.
