@@ -233,7 +233,7 @@ module.exports.fnSendEmail = async function (event, context, callback) {
         console.log("Sent email message id: " + response.MessageId + "");
         console.log("Sent email response payload: " + JSON.stringify(response));
         data.result.message_id = response.MessageId;
-        data.mqtt_response_payload.result = (data.mqtt_response_payload &&  data.mqtt_response_payload.result != null) ? data.mqtt_response_payload.result : 'email_sent';
+        data.mqtt_response_payload.result = 'email_sent';
         // Add message id to the data.
         if(data.mqtt_response_topic) {
             return new Promise((resolve, reject) => {
