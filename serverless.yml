@@ -598,7 +598,7 @@ functions:
 
   fnBootFwUpdateDone:
     name: ${self:provider.stage}-${self:custom.fnBootFwUpdateDone}
-    handler: fnBootFwUpdateDone.fnBootFwUpdateDone
+    handler: src/fw_update/fnBootFwUpdateDone.fnBootFwUpdateDone
     events:
     - iot:
         name: ${self:provider.stage}_${self:custom.fnBootFwUpdateDone}
