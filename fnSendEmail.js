@@ -23,12 +23,12 @@
  "mqtt_response_topic": "/dev/null"
  }
 
-Before use this payload, please check if the template has been created, using the method:
+ Before use this payload, please check if the template has been created, using the method:
  https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/ses-examples-creating-template.html
 
 
  Test template email:
-{
+ {
 "mail": "nicolicioiu.liviu@enode.ro",
 "template": "test_welcome_en",
 "variables": {"name":"John Doe"},
@@ -79,7 +79,7 @@ const preProcessPayload = (receivedData) => {
         body: '',
         mqtt_response_topic: '',
         mqtt_response_payload: {
-            result: "email_not_sent"
+            result: 'email_not_sent'
         },
         mqtt_qos: '0',
         template: '',
@@ -125,9 +125,10 @@ const preProcessPayload = (receivedData) => {
     if (!data.body && !data.template) {
         console.warn('Invalid payload fields configuration: body and template are not defined.');
     }
+    // The result data is preserved to be sent back.
     if (receivedData.mqtt_response_payload &&  receivedData.mqtt_response_payload.result != null) {
         data.mqtt_response_payload.result = receivedData.mqtt_response_payload.result
-    } 
+    }
     return data;
 }
 
@@ -177,16 +178,6 @@ module.exports.fnSendEmail = async function (event, context, callback) {
     console.log('Sending email start process handler from payload:' + JSON.stringify(event));
     let data = preProcessPayload(event);
     try {
-
-        let params = {
-            Destination: { /* required */
-                ToAddresses: [
-                    data.mail
-                    /* more items */
-                ]
-            },
-            Source: data.source, /* required */
-        }
         let response =  null;
         // Sending with template
         if (data.template && data.template !== ''){
@@ -233,7 +224,11 @@ module.exports.fnSendEmail = async function (event, context, callback) {
         console.log("Sent email message id: " + response.MessageId + "");
         console.log("Sent email response payload: " + JSON.stringify(response));
         data.result.message_id = response.MessageId;
-        data.mqtt_response_payload.result = 'email_sent';
+        // Override the result only if was locally added
+        if (data.mqtt_response_payload.hasOwnProperty('result') && data.mqtt_response_payload.result === 'email_not_sent' ) {
+            data.mqtt_response_payload.result = 'email_sent';    
+        }
+        
         // Add message id to the data.
         if(data.mqtt_response_topic) {
             return new Promise((resolve, reject) => {
