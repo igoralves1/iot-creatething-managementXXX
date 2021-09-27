@@ -1225,10 +1225,6 @@ functions:
       Action:
       - "iot:*"
       Resource: '*'
-    - Effect: "Allow"
-      Action:
-      - "AWSLambdaVPCAccessExecutionRole"
-      Resource: '*'
     - Effect: 'Allow'
       Action:
       - 'logs:CreateLogGroup'
