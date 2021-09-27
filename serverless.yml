@@ -522,6 +522,9 @@ functions:
         name: ${self:provider.stage}_${self:custom.fnBootFwWrite}
         sql: "SELECT *, topic() AS topic FROM '${file(env.yml):mqttTopicEnv-${self:provider.stage}}/MSSTER/+/CAN/RSP/boot_fw_write/#' "
     memorySize: 256
+    timeout: 3
+    maximumEventAge: 10
+    maximumRetryAttempts: 3
     iamRoleStatementsName: ${self:provider.stage}-${self:custom.fnBootFwWrite}
     iamRoleStatements:
     - Effect: "Allow"
@@ -1221,6 +1224,10 @@ functions:
     - Effect: "Allow"
       Action:
       - "iot:*"
+      Resource: '*'
+    - Effect: "Allow"
+      Action:
+      - "AWSLambdaVPCAccessExecutionRole"
       Resource: '*'
     - Effect: 'Allow'
       Action:

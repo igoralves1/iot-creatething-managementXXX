@@ -1,7 +1,24 @@
 'use strict'
-const AWS = require('aws-sdk')
-const S3 = new AWS.S3()
-const iotdata = new AWS.IotData({endpoint: process.env.MQTT_ENDPOINT})
+const AWS = require('aws-sdk');const https = require('https');
+
+const agent = new https.Agent({
+    keepAlive: true
+});
+
+const httpOptions = {
+    connectTimeout: 2000,
+    agent: agent
+}
+
+const S3 = new AWS.S3({
+    httpOptions: httpOptions
+});
+
+const iotdata = new AWS.IotData({
+    endpoint: process.env.MQTT_ENDPOINT,
+    httpOptions: httpOptions
+});
+
 const BUCKET = process.env.BUCKET_FIRMWARE
 const MQTT_TOPIC_ENV = process.env.mqttTopicEnv
 
@@ -108,7 +125,7 @@ module.exports.fnBootFwWrite = async event => {
             console.log("🚀 14 - key:", key)
             let chunk = await getObject(BUCKET, key)
             console.log("🚀 15 - chunk:", chunk)
-            let publishTopic = ''
+            let publishTopic = '';
             
             if (typeof chunk == 'undefined') {
                 console.log("🚀 16 - IF chunk == undefined:", chunk)
