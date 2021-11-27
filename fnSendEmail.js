@@ -113,8 +113,12 @@ const preProcessPayload = (receivedData) => {
         data.variables = receivedData.variables;
     }
     data.mqtt_response_topic = receivedData.mqtt_response_topic;
-    if (receivedData.source) {
-        data.source = receivedData.source;
+    if (receivedData.source && receivedData.source !== '') {
+        if (process.env.AWS_SES_EMAIL_SENDERS.contains("," +  receivedData.source + ",")) {
+            data.source = receivedData.source;
+        } else{
+            console.warn('Invalid payload field: source: ' + receivedData.source);
+        }
     }
     if (!data.mqtt_response_topic) {
         console.warn('Invalid payload field: mqtt_response_topic.');
