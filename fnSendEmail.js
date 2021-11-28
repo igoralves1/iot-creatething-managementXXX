@@ -115,10 +115,14 @@ const preProcessPayload = (receivedData) => {
     data.mqtt_response_topic = receivedData.mqtt_response_topic;
     // Add the sender from the source
     if (receivedData.source && receivedData.source !== '') {
-        if (process.env.AWS_SES_EMAIL_SENDERS.contains("," +  receivedData.source + ",")) {
-            data.source = receivedData.source;
-        } else{
-            console.warn('Invalid payload field: source: ' + receivedData.source);
+        if (process.env.AWS_SES_EMAIL_SENDERS !== null && process.env.AWS_SES_EMAIL_SENDERS !== '') {
+            if (process.env.AWS_SES_EMAIL_SENDERS.includes("," + receivedData.source + ",")) {
+                data.source = receivedData.source;
+            } else {
+                console.warn('Invalid payload field: source: ' + receivedData.source);
+            }
+        } else {
+            console.warn('Invalid config parameter: AWS_SES_EMAIL_SENDERS, source will be ignored');
         }
     }
     if (!data.mqtt_response_topic) {
