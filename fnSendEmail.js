@@ -113,6 +113,7 @@ const preProcessPayload = (receivedData) => {
         data.variables = receivedData.variables;
     }
     data.mqtt_response_topic = receivedData.mqtt_response_topic;
+    // Add the sender from the source
     if (receivedData.source && receivedData.source !== '') {
         if (process.env.AWS_SES_EMAIL_SENDERS.contains("," +  receivedData.source + ",")) {
             data.source = receivedData.source;

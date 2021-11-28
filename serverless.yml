@@ -1246,6 +1246,7 @@ functions:
       MQTT_TOPIC_ENV: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
       AWS_SES_REGION: ${file(env.yml):AWS_SES_REGION}
       AWS_SES_EMAIL_SENDER: ${file(env.yml):AWS_SES_EMAIL_SENDER}
+      AWS_SES_EMAIL_SENDERS: ${file(env.yml):AWS_SES_EMAIL_SENDERS}
 
   fnAutomatedTests:
     name: ${self:provider.stage}-${self:custom.fnAutomatedTests}
