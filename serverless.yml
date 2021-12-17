@@ -1471,6 +1471,7 @@ functions:
       ZABBIX_HOSTNAME: 'HOST.${self:provider.stage}.Watchman'
       WATCHMAN_MQTT_RECEIVER_TOPIC: 'scican/watchman'
       MQTT_ENDPOINT: '${file(env.yml):mqttEndPoint}${self:provider.region}.amazonaws.com'
+      MQTT_TOPIC_ENV: ${file(env.yml):mqttTopicEnv-${self:provider.stage}}
       rdsMySqlDb: ${ssm:rdsMySqlDb-${self:provider.stage}~true}
       rdsMySqlHost: ${ssm:rdsMySqlHost-${self:provider.stage}~true}
       rdsMySqlUsername: ${ssm:rdsMySqlUsername-${self:provider.stage}~true}
