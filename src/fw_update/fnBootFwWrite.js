@@ -1,5 +1,6 @@
 'use strict'
-const AWS = require('aws-sdk');const https = require('https');
+const AWS = require('aws-sdk');
+const https = require('https');
 
 const agent = new https.Agent({
     keepAlive: true

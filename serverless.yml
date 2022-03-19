@@ -1247,6 +1247,7 @@ functions:
       AWS_SES_REGION: ${file(env.yml):AWS_SES_REGION}
       AWS_SES_EMAIL_SENDER: ${file(env.yml):AWS_SES_EMAIL_SENDER}
       AWS_SES_EMAIL_SENDERS: ${file(env.yml):AWS_SES_EMAIL_SENDERS}
+      AWS_SES_EMAIL_CONFIGURATION_SET: ${file(env.yml):AWS_SES_EMAIL_CONFIGURATION_SET}
 
   fnAutomatedTests:
     name: ${self:provider.stage}-${self:custom.fnAutomatedTests}

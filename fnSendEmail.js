@@ -186,6 +186,7 @@ module.exports.fnSendEmail = async function (event, context, callback) {
     //Preprocess the payload
     console.log('Sending email start process handler from payload:' + JSON.stringify(event));
     let data = preProcessPayload(event);
+    let AWSconfigurationSet =  process.env.AWS_SES_EMAIL_CONFIGURATION_SET ?  process.env.AWS_SES_EMAIL_CONFIGURATION_SET : "";
     try {
         let response =  null;
         // Sending with template
@@ -202,6 +203,13 @@ module.exports.fnSendEmail = async function (event, context, callback) {
                 TemplateData: JSON.stringify(data.variables),
                 Source: data.source, /* required */
             };
+
+            /**
+             * Add configuration sets
+             */
+            if (AWSconfigurationSet) {
+                params.ConfigurationSetName = AWSconfigurationSet;
+            }
             console.log('Sending email with template collected SES parameters :' + JSON.stringify(params));
             response = await new AWS.SES({apiVersion: '2010-12-01'}).sendTemplatedEmail(params).promise();
         }else {
@@ -227,6 +235,12 @@ module.exports.fnSendEmail = async function (event, context, callback) {
                 },
                 Source: data.source, /* required */
             };
+            /**
+             * Add configuration sets
+             */
+            if (AWSconfigurationSet) {
+                params.ConfigurationSetName = AWSconfigurationSet;
+            }
             console.log('Sending raw email collected SES parameters :' + JSON.stringify(params));
             response = await new AWS.SES({apiVersion: '2010-12-01'}).sendEmail(params).promise();
         }

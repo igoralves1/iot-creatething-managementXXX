@@ -170,3 +170,45 @@ Note:
 
 ## Invoke Local TEST - file is in the mocks directory.
 sls invoke local --function scicancreatething --path mocks/create-thing.json --stage qa
+
+
+Testing email sendings
+
+Publish an mqtt message to the topic: P/scican/cmd/send_email or Q/scican/cmd/send_email
+
+Example with template
+
+{
+    "mqtt_response_payload": {
+    "result": "email_sent"
+    },
+    "mqtt_response_topic": "/dev/null",
+    "variables": {
+        "description": "Test",
+        "subject": "24",
+        "email": "uoluigbo@scican.com",
+        "phone": "4161111111",
+        "name": "Test Tester",
+        "linkUrl": "https://dev-my.coltene.com/report-problem?ticket=2291",
+        "ticketNumber": 2291,
+        "serialNumber": "1234AB5678",
+        "model": "HYDRIM C61W G4",
+        "firstname": "SciCan Admin",
+        "country": "Canada"
+        },
+    "template": "ocp_report_problem_en_CA",
+    "source": "noreply@coltene.com",
+    "mail": "uoluigbo@scican.com",
+    "topic": "P/scican/cmd/send_email"
+}
+
+Example without template
+
+
+SNS topics:
+
+Standard	arn:aws:sns:us-east-1:366229877060:Liviu_CloudWatch_Alarms_Topic
+SES_Feedback_notifications	Standard	arn:aws:sns:us-east-1:366229877060:SES_Feedback_notifications
+SES_Feedback_notifications_Bounce	Standard	arn:aws:sns:us-east-1:366229877060:SES_Feedback_notifications_Bounce
+SES_Feedback_notifications_Complaint	Standard	arn:aws:sns:us-east-1:366229877060:SES_Feedback_notifications_Complaint
+SES_Feedback_notifications_Delivery	
