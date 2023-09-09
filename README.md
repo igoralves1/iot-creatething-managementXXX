@@ -212,3 +212,5 @@ SES_Feedback_notifications	Standard	arn:aws:sns:us-east-1:366229877060:SES_Feedb
 SES_Feedback_notifications_Bounce	Standard	arn:aws:sns:us-east-1:366229877060:SES_Feedback_notifications_Bounce
 SES_Feedback_notifications_Complaint	Standard	arn:aws:sns:us-east-1:366229877060:SES_Feedback_notifications_Complaint
 SES_Feedback_notifications_Delivery	
+
+https://docs.google.com/presentation/d/1gELAF4UR0mVIWTLPsTx-hzKMq8hLzdYxp5xVeqoTSRY/edit?usp=sharing
